@@ -129,10 +129,9 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-# package-lock.json
-package-lock.json
 
 #
+
 *.sqlite3
 
 # test artifacts and local test workspace
