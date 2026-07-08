@@ -1,5 +1,5 @@
 <script>
-  import { StartPage } from "@edwinspire/libopenfusionapigui";
+  import { StartPage } from "@rdsslab/libopenfusionapigui";
 </script>
 
 <StartPage></StartPage>

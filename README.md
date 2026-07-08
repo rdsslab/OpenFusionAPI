@@ -6,7 +6,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-v20%2B-green.svg)](https://nodejs.org)
-[![Docker](https://img.shields.io/badge/Docker-ready-blue.svg)](https://hub.docker.com/r/edwinspire/openfusionapi)
+[![Docker](https://img.shields.io/badge/Docker-ready-blue.svg)](https://hub.docker.com/r/rdsslab/openfusionapi)
 [![Live Demo](https://img.shields.io/badge/Production-openfusionapi.com-orange.svg)](http://www.openfusionapi.com)
 
 ![Main interface](docs/img/main.png)
@@ -93,9 +93,9 @@ OpenFusion API delivers most of its value as an ecosystem of complementary libra
 
 | Component | Role in the ecosystem | Strategic benefit |
 |---|---|---|
-| [libOpenFusionAPI](https://github.com/edwinspire/libOpenFusionAPI) | Core platform engine (endpoint model, handlers, validation, governance) | Standardizes endpoint delivery and reduces repetitive backend coding |
-| [libOpenFusionAPIGUI](https://github.com/edwinspire/libOpenFusionAPIGUI) | Svelte-based management interface | Enables faster onboarding for technical and non-specialist integration teams |
-| [@edwinspire/universal-fetch](https://github.com/edwinspire/universal-fetch) | Universal HTTP layer for Node/browser and resilient batch requests | Improves reliability in integration-heavy workloads and AI-driven automation flows |
+| [libOpenFusionAPI](https://github.com/rdsslab/libOpenFusionAPI) | Core platform engine (endpoint model, handlers, validation, governance) | Standardizes endpoint delivery and reduces repetitive backend coding |
+| [libOpenFusionAPIGUI](https://github.com/rdsslab/libOpenFusionAPIGUI) | Svelte-based management interface | Enables faster onboarding for technical and non-specialist integration teams |
+| [@rdsslab/uFetch](https://github.com/rdsslab/uFetch) | Universal HTTP layer for Node/browser and resilient batch requests | Improves reliability in integration-heavy workloads and AI-driven automation flows |
 
 Together they provide a full path from endpoint design to production operation with a model that works for developers, integration teams, and AI agents.
 
@@ -188,7 +188,7 @@ This makes OpenFusion API one of the few platforms where an agent can go from **
 - **Structured contracts**: JSON Schema reduces ambiguity in tool invocation.
 - **MCP-native exposure**: endpoints can be described and consumed as tools.
 - **Reusable configuration model**: app-level variables let agents reuse host/auth settings safely.
-- **Reliable network workflows**: the ecosystem can leverage `@edwinspire/universal-fetch` for robust request execution and fail-safe batch patterns.
+- **Reliable network workflows**: the ecosystem can leverage `@rdsslab/uFetch` for robust request execution and fail-safe batch patterns.
 
 ---
 
@@ -220,7 +220,7 @@ See [`docker-compose.yml`](docker-compose.yml) for full configuration.
 ### Option B — Local (Node.js v20+)
 
 ```bash
-git clone https://github.com/edwinspire/OpenFusionAPI.git
+git clone https://github.com/rdsslab/OpenFusionAPI.git
 cd OpenFusionAPI
 npm install
 npm run build
@@ -316,10 +316,10 @@ Each environment can be independently enabled or disabled via environment variab
 ## 📚 Documentation
 
 - [Tutorial & full guide](docs/README.md)
-- [Handler reference](https://github.com/edwinspire/libOpenFusionAPI/blob/main/docs/handlers/README.md)
-- [Creating endpoints](https://github.com/edwinspire/libOpenFusionAPI/blob/main/docs/endpoint/README.md)
-- [Creating applications](https://github.com/edwinspire/libOpenFusionAPI/blob/main/docs/App/README.md)
-- [Core library (libOpenFusionAPI)](https://github.com/edwinspire/libOpenFusionAPI)
+- [Handler reference](https://github.com/rdsslab/libOpenFusionAPI/blob/main/docs/handlers/README.md)
+- [Creating endpoints](https://github.com/rdsslab/libOpenFusionAPI/blob/main/docs/endpoint/README.md)
+- [Creating applications](https://github.com/rdsslab/libOpenFusionAPI/blob/main/docs/App/README.md)
+- [Core library (libOpenFusionAPI)](https://github.com/rdsslab/libOpenFusionAPI)
 
 ---
 

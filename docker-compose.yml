@@ -1,9 +1,9 @@
 services:
   openfusionapi:
+    build: .
     image: edwinspire/openfusionapi:latest
     container_name: openfusionapi
     restart: unless-stopped
-    pull_policy: always
     ports:
       - "3000:3000"
     environment:
@@ -11,8 +11,8 @@ services:
       PUBLIC_API_SERVER_HOST: "http://TU_DOMINIO_O_IP:3000"
       JWT_KEY: "CAMBIA_ESTA_LLAVE_POR_UNA_SEGURA"
       DATABASE_URI_API: "sqlite:/data/openfusionapi.sqlite"
-      EXPOSE_DEV_API: "false"
-      EXPOSE_QA_API: "false"
+      EXPOSE_DEV_API: "true"
+      EXPOSE_QA_API: "true"
       EXPOSE_PRD_API: "true"
       PATH_APP_FUNCTIONS: "src/fn"
     volumes:

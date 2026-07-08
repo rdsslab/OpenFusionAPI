@@ -3,10 +3,10 @@
 Official Docker image for OpenFusion API: a production-ready, low-code, AI-friendly platform to create and deploy integration endpoints quickly.
 
 Repositorio / Repository:
-https://github.com/edwinspire/OpenFusionAPI
+https://github.com/rdsslab/OpenFusionAPI
 
 Dockerfile:
-https://github.com/edwinspire/OpenFusionAPI/blob/main/Dockerfile
+https://github.com/rdsslab/OpenFusionAPI/blob/main/Dockerfile
 
 ## Landing copy (Docker Hub)
 
@@ -33,7 +33,7 @@ CTA: **Pull the image and launch your first endpoint in minutes.**
 ## Quick start
 
 ```bash
-docker pull edwinspire/openfusionapi:latest
+docker pull rdsslab/openfusionapi:latest
 
 docker run -d \
   --name openfusionapi \
@@ -48,7 +48,7 @@ docker run -d \
   -e EXPOSE_PRD_API=true \
   -e PATH_APP_FUNCTIONS=src/fn \
   -v openfusionapi_data:/data \
-  edwinspire/openfusionapi:latest
+  rdsslab/openfusionapi:latest
 ```
 
 Application URL:

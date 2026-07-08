@@ -1,5 +1,5 @@
 # OPEN FUSION API
-# edwinspire@gmail.com
+# rdsslab
 # Imagen LTS Debian slim para reducir superficie de ataque
 FROM node:22-bookworm-slim
 
@@ -21,6 +21,8 @@ WORKDIR /app
 
 # Instalar dependencias mínimas necesarias de Chromium
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends ca-certificates \
+    build-essential \
+    python3 \
     chromium \
     fonts-liberation \
     git \
@@ -59,7 +61,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
 COPY package.json package-lock.json ./
 
 # Instalar dependencias del proyecto (incluyendo siempre devDependencies)
-RUN npm install --include=dev
+RUN npm install --include=dev && npm rebuild sqlite3 --build-from-source
 
 # Copiar el resto del código fuente
 COPY . .
@@ -70,7 +72,7 @@ RUN npm install pm2 -g
 # Instalar el módulo de rotación de logs de PM2
 RUN pm2 install pm2-logrotate \
     && pm2 set pm2-logrotate:max_days 3 \
-    && pm2 set pm2-logrotate:retain 3
+    && pm2 set pm2-logrotate:retain 1
 
 # Ejecutar la compilación de la aplicación
 RUN NODE_OPTIONS=${BUILD_NODE_OPTIONS} npm run build

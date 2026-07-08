@@ -12,7 +12,7 @@ rm -rf /app/*
 
 # Clonar el repositorio en /app
 echo "Clonando el repositorio en /app..."
-git clone https://github.com/edwinspire/OpenFusionAPI.git /app
+git clone https://github.com/rdsslab/OpenFusionAPI.git /app
 
 # Ingresar en la carpeta /app
 cd /app || exit

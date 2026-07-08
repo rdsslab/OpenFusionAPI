@@ -274,6 +274,9 @@ function form(validate_or_fn, maybe_fn) {
     Object.defineProperty(instance, "pending", {
       get: () => 0
     });
+    Object.defineProperty(instance, "submitted", {
+      get: () => false
+    });
     Object.defineProperty(instance, "preflight", {
       // preflight is a noop on the server
       value: () => instance

@@ -1,4 +1,4 @@
-import OpenFusionAPI from "@edwinspire/libopenfusionapi";
+import OpenFusionAPI from "@rdsslab/libopenfusionapi";
 
 //
 

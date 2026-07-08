@@ -1,6 +1,6 @@
 {
 	"name": "openfusionapi",
-	"version": "3.0.0",
+	"version": "4.1.0",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "node --max-old-space-size=6144 ./node_modules/vite/bin/vite.js build",
@@ -39,8 +39,8 @@
 		"tar": "^7.5.8"
 	},
 	"dependencies": {
-		"@edwinspire/libopenfusionapi": "https://github.com/edwinspire/libOpenFusionAPI.git",
-		"@edwinspire/libopenfusionapigui": "https://github.com/edwinspire/libOpenFusionAPIGUI.git",
+		"@rdsslab/libopenfusionapi": "https://github.com/rdsslab/libOpenFusionAPI.git",
+		"@rdsslab/libopenfusionapigui": "https://github.com/rdsslab/libOpenFusionAPIGUI.git",
 		"jsonwebtoken": "^9.0.0"
 	}
 }

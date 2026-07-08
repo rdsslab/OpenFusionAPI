@@ -1,6 +1,6 @@
 import { a7 as attr_class, a8 as bind_props, a9 as ensure_array_like, a6 as stringify, e as escape_html, a4 as attr, aa as clsx, ab as head } from "../../../chunks/index.js";
 import "clsx";
-import "@edwinspire/universal-fetch";
+import "@rdsslab/uFetch";
 /* empty css                                                       */
 import "events";
 import "prettier-plugin-sql";
@@ -31,13 +31,13 @@ function Notifications($$renderer, $$props) {
     notifications_store.subscribe((value) => {
       list_notify = value;
     });
-    $$renderer2.push(`<div class="bottom-right svelte-5sfib3"><!--[-->`);
+    $$renderer2.push(`<div class="bottom-right svelte-qo16om"><!--[-->`);
     const each_array = ensure_array_like(list_notify);
     for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
       let s = each_array[$$index];
       if (!s.hidden) {
         $$renderer2.push("<!--[0-->");
-        $$renderer2.push(`<article${attr_class(`message is-small is-${stringify(s.color)}`, "svelte-5sfib3")}>`);
+        $$renderer2.push(`<article${attr_class(`message is-small is-${stringify(s.color)}`, "svelte-qo16om")}>`);
         if (s.title) {
           $$renderer2.push("<!--[0-->");
           $$renderer2.push(`<div class="message-header"><p>${escape_html(s.title)}</p> <button class="delete is-small" aria-label="delete"></button></div>`);
@@ -53,7 +53,7 @@ function Notifications($$renderer, $$props) {
     $$renderer2.push(`<!--]--></div>`);
   });
 }
-const version = "1.5.4";
+const version = "2.0.2";
 function Login($$renderer, $$props) {
   $$renderer.component(($$renderer2) => {
     let username = "";
@@ -64,16 +64,16 @@ function Login($$renderer, $$props) {
     Modal($$renderer2, {
       show: true,
       children: ($$renderer3) => {
-        $$renderer3.push(`<div${attr_class("login-wrapper svelte-ogcakf", void 0, { "is-visible": mounted })}><div class="orb orb-1 svelte-ogcakf"></div> <div class="orb orb-2 svelte-ogcakf"></div> <div class="orb orb-3 svelte-ogcakf"></div> <div class="login-card box svelte-ogcakf"><div class="brand-header has-text-centered svelte-ogcakf"><div class="logo-ring svelte-ogcakf"><div class="logo-figure svelte-ogcakf"><img${attr("src", Logo)} alt="OpenFusionAPI" class="logo-img svelte-ogcakf"/></div></div> <h1 class="title is-4 mt-3 brand-title svelte-ogcakf">Open Fusion API</h1> <p class="subtitle is-6 brand-subtitle svelte-ogcakf"><span class="tag is-dark is-rounded svelte-ogcakf"><span class="icon is-small svelte-ogcakf"><i class="fa-solid fa-server svelte-ogcakf"></i></span> <span class="svelte-ogcakf">MCP Server</span></span></p></div> <div class="divider-line svelte-ogcakf"></div> <form class="login-form svelte-ogcakf"><div class="field svelte-ogcakf"><label class="label has-text-grey-light is-small svelte-ogcakf" for="login-username">Username</label> <p class="control has-icons-left svelte-ogcakf"><input id="login-username"${attr_class("input is-rounded svelte-ogcakf", void 0, { "is-danger": processing.error })} type="text" placeholder="Enter your username"${attr("value", username)} autocomplete="username"/> <span class="icon is-small is-left svelte-ogcakf"><i class="fa-solid fa-user svelte-ogcakf"></i></span></p></div> <div class="field svelte-ogcakf"><label class="label has-text-grey-light is-small svelte-ogcakf" for="login-password">Password</label> <p class="control has-icons-left has-icons-right svelte-ogcakf"><input id="login-password"${attr_class("input is-rounded svelte-ogcakf", void 0, { "is-danger": processing.error })}${attr("type", "password")} placeholder="Enter your password"${attr("value", password)} autocomplete="current-password"/> <span class="icon is-small is-left svelte-ogcakf"><i class="fa-solid fa-lock svelte-ogcakf"></i></span> <button type="button" class="icon is-small is-right is-clickable eye-icon svelte-ogcakf"${attr("title", "Show password")}${attr("aria-label", "Show password")}><i${attr_class(clsx("fa-solid fa-eye"), "svelte-ogcakf")}></i></button></p></div> `);
+        $$renderer3.push(`<div${attr_class("login-wrapper svelte-imjmcm", void 0, { "is-visible": mounted })}><div class="orb orb-1 svelte-imjmcm"></div> <div class="orb orb-2 svelte-imjmcm"></div> <div class="orb orb-3 svelte-imjmcm"></div> <div class="login-card box svelte-imjmcm"><div class="brand-header has-text-centered svelte-imjmcm"><div class="logo-ring svelte-imjmcm"><div class="logo-figure svelte-imjmcm"><img${attr("src", Logo)} alt="OpenFusionAPI" class="logo-img svelte-imjmcm"/></div></div> <h1 class="title is-4 mt-3 brand-title svelte-imjmcm">Open Fusion API</h1> <p class="subtitle is-6 brand-subtitle svelte-imjmcm"><span class="tag is-dark is-rounded svelte-imjmcm"><span class="icon is-small svelte-imjmcm"><i class="fa-solid fa-server svelte-imjmcm"></i></span> <span class="svelte-imjmcm">MCP Server</span></span></p></div> <div class="divider-line svelte-imjmcm"></div> <form class="login-form svelte-imjmcm"><div class="field svelte-imjmcm"><label class="label has-text-grey-light is-small svelte-imjmcm" for="login-username">Username</label> <p class="control has-icons-left svelte-imjmcm"><input id="login-username"${attr_class("input is-rounded svelte-imjmcm", void 0, { "is-danger": processing.error })} type="text" placeholder="Enter your username"${attr("value", username)} autocomplete="username"/> <span class="icon is-small is-left svelte-imjmcm"><i class="fa-solid fa-user svelte-imjmcm"></i></span></p></div> <div class="field svelte-imjmcm"><label class="label has-text-grey-light is-small svelte-imjmcm" for="login-password">Password</label> <p class="control has-icons-left has-icons-right svelte-imjmcm"><input id="login-password"${attr_class("input is-rounded svelte-imjmcm", void 0, { "is-danger": processing.error })}${attr("type", "password")} placeholder="Enter your password"${attr("value", password)} autocomplete="current-password"/> <span class="icon is-small is-left svelte-imjmcm"><i class="fa-solid fa-lock svelte-imjmcm"></i></span> <button type="button" class="icon is-small is-right is-clickable eye-icon svelte-imjmcm"${attr("title", "Show password")}${attr("aria-label", "Show password")}><i${attr_class(clsx("fa-solid fa-eye"), "svelte-imjmcm")}></i></button></p></div> `);
         {
           $$renderer3.push("<!--[-1-->");
         }
-        $$renderer3.push(`<!--]--> <div class="field mt-4 svelte-ogcakf"><p class="control svelte-ogcakf"><button type="submit"${attr_class("button is-fullwidth is-rounded login-btn svelte-ogcakf", void 0, { "is-loading": processing.waiting })}${attr("disabled", !username, true)}>`);
+        $$renderer3.push(`<!--]--> <div class="field mt-4 svelte-imjmcm"><p class="control svelte-imjmcm"><button type="submit"${attr_class("button is-fullwidth is-rounded login-btn svelte-imjmcm", void 0, { "is-loading": processing.waiting })}${attr("disabled", !username, true)}>`);
         {
           $$renderer3.push("<!--[0-->");
-          $$renderer3.push(`<span class="icon svelte-ogcakf"><i class="fa-solid fa-right-to-bracket svelte-ogcakf"></i></span> <span class="svelte-ogcakf">Sign In</span>`);
+          $$renderer3.push(`<span class="icon svelte-imjmcm"><i class="fa-solid fa-right-to-bracket svelte-imjmcm"></i></span> <span class="svelte-imjmcm">Sign In</span>`);
         }
-        $$renderer3.push(`<!--]--></button></p></div></form> <p class="version-tag has-text-centered has-text-grey svelte-ogcakf"><span class="icon is-small svelte-ogcakf"><i class="fa-solid fa-code-branch svelte-ogcakf"></i></span> GUI v${escape_html(version)} <span class="version-separator svelte-ogcakf">|</span> <span class="icon is-small svelte-ogcakf"><i class="fa-solid fa-server svelte-ogcakf"></i></span> Server v${escape_html(serverVersion)}</p></div></div>`);
+        $$renderer3.push(`<!--]--></button></p></div></form> <p class="version-tag has-text-centered has-text-grey svelte-imjmcm"><span class="icon is-small svelte-imjmcm"><i class="fa-solid fa-code-branch svelte-imjmcm"></i></span> GUI v${escape_html(version)} <span class="version-separator svelte-imjmcm">|</span> <span class="icon is-small svelte-imjmcm"><i class="fa-solid fa-server svelte-imjmcm"></i></span> Server v${escape_html(serverVersion)}</p></div></div>`);
       },
       $$slots: { default: true }
     });

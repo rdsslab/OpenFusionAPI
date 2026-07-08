@@ -1,5 +1,5 @@
 <script>
-  import { OpenFusionAPIGUI } from "@edwinspire/libopenfusionapigui";
+  import { OpenFusionAPIGUI } from "@rdsslab/libopenfusionapigui";
 </script>
 
 <svelte:head>

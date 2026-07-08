@@ -2,7 +2,7 @@
 
 The **FETCH handler** enables OpenFusionAPI to act as a robust HTTP proxy, forwarding requests to external services while managing headers, caching, and response transformation.
 
-Internally it uses `@edwinspire/universal-fetch` to perform standardized HTTP requests.
+Internally it uses `@rdsslab/uFetch` to perform standardized HTTP requests.
 
 ---
 
@@ -38,7 +38,7 @@ https://api.partner.com/{{ENV}}/orders
 Use the GitHub API to return a user profile. Set the Code field to:
 
 ```text
-https://api.github.com/users/edwinspire
+https://api.github.com/users/rdsslab
 ```
 
 Method: `GET` | Access: `Public`

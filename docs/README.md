@@ -22,7 +22,7 @@ OpenFusion API can be used standalone, but it is strongest when aligned with its
 
 - **libOpenFusionAPI**: core endpoint engine, handlers, access control, and governance
 - **libOpenFusionAPIGUI**: UI layer for fast endpoint management and onboarding
-- **@edwinspire/universal-fetch**: resilient HTTP execution and batch orchestration for integrations and AI workflows
+- **@rdsslab/uFetch**: resilient HTTP execution and batch orchestration for integrations and AI workflows
 
 ---
 

@@ -56,7 +56,7 @@
     "name": "server"
   },
   "_start_page.svelte_svelte_type_style_lang.js": {
-    "file": "_app/immutable/assets/start_page.n-K-K9Mb.css",
+    "file": "_app/immutable/assets/start_page.BQTTAfWR.css",
     "src": "_start_page.svelte_svelte_type_style_lang.js"
   },
   "_utils.js": {
@@ -69,14 +69,6 @@
   "_utils2.js": {
     "file": "chunks/utils2.js",
     "name": "utils"
-  },
-  "node_modules/@edwinspire/libopenfusionapigui/dist/OpenFusionAPI/img/android-chrome-512x512.png": {
-    "file": "_app/immutable/assets/android-chrome-512x512.Dq1KWJkx.png",
-    "src": "node_modules/@edwinspire/libopenfusionapigui/dist/OpenFusionAPI/img/android-chrome-512x512.png"
-  },
-  "node_modules/@edwinspire/libopenfusionapigui/dist/OpenFusionAPI/img/flame.png": {
-    "file": "_app/immutable/assets/flame.pI4vnDs3.png",
-    "src": "node_modules/@edwinspire/libopenfusionapigui/dist/OpenFusionAPI/img/flame.png"
   },
   "node_modules/@fortawesome/fontawesome-free/webfonts/fa-brands-400.woff2": {
     "file": "_app/immutable/assets/fa-brands-400.BK5CuonO.woff2",
@@ -93,6 +85,14 @@
   "node_modules/@fortawesome/fontawesome-free/webfonts/fa-v4compatibility.woff2": {
     "file": "_app/immutable/assets/fa-v4compatibility.CMhGCN2W.woff2",
     "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-v4compatibility.woff2"
+  },
+  "node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/img/android-chrome-512x512.png": {
+    "file": "_app/immutable/assets/android-chrome-512x512.Dq1KWJkx.png",
+    "src": "node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/img/android-chrome-512x512.png"
+  },
+  "node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/img/flame.png": {
+    "file": "_app/immutable/assets/flame.pI4vnDs3.png",
+    "src": "node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/img/flame.png"
   },
   "node_modules/@sveltejs/kit/src/runtime/app/server/remote/index.js": {
     "file": "remote-entry.js",
@@ -154,7 +154,7 @@
       "_index.js"
     ],
     "css": [
-      "_app/immutable/assets/start_page.n-K-K9Mb.css"
+      "_app/immutable/assets/start_page.BQTTAfWR.css"
     ],
     "assets": [
       "_app/immutable/assets/android-chrome-512x512.Dq1KWJkx.png",
@@ -175,7 +175,7 @@
       "_index2.js"
     ],
     "css": [
-      "_app/immutable/assets/start_page.n-K-K9Mb.css"
+      "_app/immutable/assets/start_page.BQTTAfWR.css"
     ],
     "assets": [
       "_app/immutable/assets/fa-brands-400.BK5CuonO.woff2",
