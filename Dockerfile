@@ -3,6 +3,10 @@
 # Imagen LTS Debian slim para reducir superficie de ataque
 FROM node:22-bookworm-slim
 
+# Antes de subir la imagen ejecuta en consola los comandos para actualizar las librerias a su ultima version sin tener que reinstalar todo.
+# npm update @rdsslab/libopenfusionapi @rdsslab/libopenfusionapigui
+
+
 # Permite ajustar memoria de Node durante la compilacion (default: 4 GB)
 ARG BUILD_NODE_OPTIONS=--max-old-space-size=4096
 # Permite ajustar memoria de Node en runtime/start (default: 4 GB)
