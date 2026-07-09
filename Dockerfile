@@ -3,9 +3,6 @@
 # Imagen LTS Debian slim para reducir superficie de ataque
 FROM node:22-bookworm-slim
 
-# Antes de subir la imagen ejecuta en consola los comandos para actualizar las librerias a su ultima version sin tener que reinstalar todo.
-# npm update @rdsslab/libopenfusionapi @rdsslab/libopenfusionapigui
-
 
 # Permite ajustar memoria de Node durante la compilacion (default: 4 GB)
 ARG BUILD_NODE_OPTIONS=--max-old-space-size=4096
@@ -66,6 +63,10 @@ COPY package.json package-lock.json ./
 
 # Instalar dependencias del proyecto (incluyendo siempre devDependencies)
 RUN npm install --include=dev && npm rebuild sqlite3 --build-from-source
+
+# Invalidar la caché de Docker para forzar la actualización de las dependencias locales en cada build
+ARG CACHEBUST=1
+RUN npm update @rdsslab/libopenfusionapi @rdsslab/libopenfusionapigui
 
 # Copiar el resto del código fuente
 COPY . .
