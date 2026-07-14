@@ -41,6 +41,7 @@
 	"dependencies": {
 		"@rdsslab/libopenfusionapi": "https://github.com/rdsslab/libOpenFusionAPI.git",
 		"@rdsslab/libopenfusionapigui": "https://github.com/rdsslab/libOpenFusionAPIGUI.git",
+		"cookie": "^0.6.0",
 		"jsonwebtoken": "^9.0.0"
 	}
 }
