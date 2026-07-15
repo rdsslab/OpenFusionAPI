@@ -456,6 +456,18 @@ function defer_effect(effect, dirty_effects, maybe_dirty_effects) {
   clear_marked(effect.deps);
   set_signal_status(effect, CLEAN);
 }
+function without_reactive_context(fn) {
+  var previous_reaction = active_reaction;
+  var previous_effect = active_effect;
+  set_active_reaction(null);
+  set_active_effect(null);
+  try {
+    return fn();
+  } finally {
+    set_active_reaction(previous_reaction);
+    set_active_effect(previous_effect);
+  }
+}
 function createSubscriber(start) {
   let subscribers = 0;
   let version = source(0);
@@ -943,9 +955,13 @@ function freeze_derived_effects(derived2) {
   for (const e of derived2.effects) {
     if (e.teardown || e.ac) {
       e.teardown?.();
-      e.ac?.abort(STALE_REACTION);
+      if (e.ac !== null) {
+        without_reactive_context(() => {
+          e.ac.abort(STALE_REACTION);
+          e.ac = null;
+        });
+      }
       if (e.fn !== null) e.teardown = noop;
-      e.ac = null;
       remove_reactions(e, 0);
       destroy_effect_children(e);
     }
@@ -1275,6 +1291,9 @@ class Batch {
     const mark = (value) => {
       var reactions = value.reactions;
       if (reactions === null) return;
+      if ((value.f & DERIVED) !== 0 && (value.f & (DIRTY | MAYBE_DIRTY)) === 0) {
+        return;
+      }
       for (const reaction of reactions) {
         var flags2 = reaction.f;
         if ((flags2 & DERIVED) !== 0) {
@@ -1850,18 +1869,6 @@ function mark_reactions(signal, status, updated_during_traversal) {
     }
   }
 }
-function without_reactive_context(fn) {
-  var previous_reaction = active_reaction;
-  var previous_effect = active_effect;
-  set_active_reaction(null);
-  set_active_effect(null);
-  try {
-    return fn();
-  } finally {
-    set_active_reaction(previous_reaction);
-    set_active_effect(previous_effect);
-  }
-}
 let is_updating_effect = false;
 let is_destroying_effect = false;
 function set_is_destroying_effect(value) {
@@ -2097,6 +2104,12 @@ function remove_reaction(signal, dependency) {
     if (derived2.v !== UNINITIALIZED) {
       update_derived_status(derived2);
     }
+    if (derived2.ac !== null) {
+      without_reactive_context(() => {
+        derived2.ac.abort(STALE_REACTION);
+        derived2.ac = null;
+      });
+    }
     freeze_derived_effects(derived2);
     remove_reactions(derived2, 0);
   }
@@ -2117,7 +2130,7 @@ function update_effect(effect) {
   var previous_effect = active_effect;
   var was_updating_effect = is_updating_effect;
   active_effect = effect;
-  is_updating_effect = true;
+  is_updating_effect = (flags2 & (BRANCH_EFFECT | ROOT_EFFECT)) === 0;
   try {
     if ((flags2 & (BLOCK_EFFECT | MANAGED_EFFECT)) !== 0) {
       destroy_block_effect_children(effect);
