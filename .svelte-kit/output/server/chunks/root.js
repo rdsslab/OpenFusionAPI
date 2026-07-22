@@ -1,6 +1,6 @@
 import { r as run_all, H as HYDRATION_ERROR, C as COMMENT_NODE, a as HYDRATION_END, b as HYDRATION_START, c as HYDRATION_START_ELSE, S as STATE_SYMBOL, o as object_prototype, d as array_prototype, U as UNINITIALIZED, f as get_descriptor, h as get_prototype_of, i as is_array, j as is_extensible, k as CLASS_CACHE, A as ATTRIBUTES_CACHE, l as STYLE_CACHE, T as TEXT_CACHE, D as DESTROYED, B as BOUNDARY_EFFECT, R as REACTION_RAN, E as ERROR_VALUE, m as EFFECT, p as CONNECTED, q as CLEAN, M as MAYBE_DIRTY, s as DIRTY, t as DERIVED, W as WAS_MARKED, u as HYDRATION_START_FAILED, v as EFFECT_TRANSPARENT, w as EFFECT_PRESERVED, I as INERT, x as STALE_REACTION, n as noop, y as BLOCK_EFFECT, z as ASYNC, F as EAGER_EFFECT, G as deferred, J as RENDER_EFFECT, K as MANAGED_EFFECT, L as ROOT_EFFECT, N as BRANCH_EFFECT, O as includes, P as REACTION_IS_UPDATING, Q as index_of, V as HEAD_EFFECT, X as DESTROYING, Y as USER_EFFECT, Z as define_property, _ as array_from, $ as is_passive_event, a0 as LEGACY_PROPS, a1 as render, a2 as setContext, a3 as derived } from "./index.js";
-import { D as DEV } from "./false.js";
 import { s as safe_equals, e as equals } from "./equality.js";
+const DEV = false;
 function effect_update_depth_exceeded() {
   {
     throw new Error(`https://svelte.dev/e/effect_update_depth_exceeded`);
@@ -2108,6 +2108,7 @@ function remove_reaction(signal, dependency) {
       without_reactive_context(() => {
         derived2.ac.abort(STALE_REACTION);
         derived2.ac = null;
+        set_signal_status(derived2, DIRTY);
       });
     }
     freeze_derived_effects(derived2);
@@ -2968,6 +2969,7 @@ function Root($$renderer, $$props) {
 }
 const root = asClassComponent(Root);
 export {
+  DEV as D,
   root as r
 };
 //# sourceMappingURL=root.js.map
