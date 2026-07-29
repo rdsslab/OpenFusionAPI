@@ -605,15 +605,54 @@ class Boundary {
    */
   #hydrate_failed_content(error) {
     const failed = this.#props.failed;
+    const { reset, invoke_onerror } = this.#create_reset(error);
+    queue_micro_task(invoke_onerror);
     if (!failed) return;
     this.#failed_effect = branch(() => {
       failed(
         this.#anchor,
         () => error,
-        () => () => {
-        }
+        () => reset
       );
     });
+  }
+  /**
+   * Creates the `reset` function for a failed boundary, along with a function
+   * that invokes `onerror` with it (if provided)
+   * @param {unknown} error
+   * @returns {{ reset: () => void, invoke_onerror: () => void }}
+   */
+  #create_reset(error) {
+    var did_reset = false;
+    var calling_on_error = false;
+    const reset = () => {
+      if (did_reset) {
+        svelte_boundary_reset_noop();
+        return;
+      }
+      did_reset = true;
+      if (calling_on_error) {
+        svelte_boundary_reset_onerror();
+      }
+      if (this.#failed_effect !== null) {
+        pause_effect(this.#failed_effect, () => {
+          this.#failed_effect = null;
+        });
+      }
+      this.#run(() => {
+        this.#render();
+      });
+    };
+    const invoke_onerror = () => {
+      try {
+        calling_on_error = true;
+        this.#props.onerror?.(error, reset);
+        calling_on_error = false;
+      } catch (err) {
+        invoke_error_boundary(err, this.#effect && this.#effect.parent);
+      }
+    };
+    return { reset, invoke_onerror };
   }
   #hydrate_pending_content() {
     const pending = this.#props.pending;
@@ -810,36 +849,10 @@ class Boundary {
       next();
       set_hydrate_node(skip_nodes());
     }
-    var onerror = this.#props.onerror;
     let failed = this.#props.failed;
-    var did_reset = false;
-    var calling_on_error = false;
-    const reset = () => {
-      if (did_reset) {
-        svelte_boundary_reset_noop();
-        return;
-      }
-      did_reset = true;
-      if (calling_on_error) {
-        svelte_boundary_reset_onerror();
-      }
-      if (this.#failed_effect !== null) {
-        pause_effect(this.#failed_effect, () => {
-          this.#failed_effect = null;
-        });
-      }
-      this.#run(() => {
-        this.#render();
-      });
-    };
     const handle_error_result = (transformed_error) => {
-      try {
-        calling_on_error = true;
-        onerror?.(transformed_error, reset);
-        calling_on_error = false;
-      } catch (error2) {
-        invoke_error_boundary(error2, this.#effect && this.#effect.parent);
-      }
+      const { reset, invoke_onerror } = this.#create_reset(transformed_error);
+      invoke_onerror();
       if (failed) {
         this.#failed_effect = this.#run(() => {
           try {
