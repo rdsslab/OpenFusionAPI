@@ -81,6 +81,7 @@ declare module '$env/static/private' {
 	export const DriverData: string;
 	export const EFC_13140_1262719628: string;
 	export const EFC_13140_1592913036: string;
+	export const npm_lifecycle_event: string;
 	export const PKG_CONFIG_SYSTEM_LIBRARY_PATH: string;
 	export const INIT_CWD: string;
 	export const INFOPATH: string;
@@ -94,8 +95,6 @@ declare module '$env/static/private' {
 	export const ESET_OPTIONS: string;
 	export const EXEPATH: string;
 	export const npm_config_noproxy: string;
-	export const NPM_CLI_JS: string;
-	export const NPM_PREFIX_JS: string;
 	export const FPS_BROWSER_APP_PROFILE_STRING: string;
 	export const FPS_BROWSER_USER_PROFILE_STRING: string;
 	export const GOPATH: string;
@@ -113,12 +112,9 @@ declare module '$env/static/private' {
 	export const MSYSTEM: string;
 	export const MSYSTEM_PREFIX: string;
 	export const NODE: string;
-	export const NODE_EXE: string;
 	export const VSCODE_GIT_IPC_HANDLE: string;
 	export const npm_command: string;
-	export const NPM_PREFIX_NPM_CLI_JS: string;
 	export const npm_config_prefix: string;
-	export const npm_lifecycle_event: string;
 	export const npm_lifecycle_script: string;
 	export const npm_node_execpath: string;
 	export const WINDIR: string;
@@ -300,6 +296,7 @@ declare module '$env/dynamic/private' {
 		DriverData: string;
 		EFC_13140_1262719628: string;
 		EFC_13140_1592913036: string;
+		npm_lifecycle_event: string;
 		PKG_CONFIG_SYSTEM_LIBRARY_PATH: string;
 		INIT_CWD: string;
 		INFOPATH: string;
@@ -313,8 +310,6 @@ declare module '$env/dynamic/private' {
 		ESET_OPTIONS: string;
 		EXEPATH: string;
 		npm_config_noproxy: string;
-		NPM_CLI_JS: string;
-		NPM_PREFIX_JS: string;
 		FPS_BROWSER_APP_PROFILE_STRING: string;
 		FPS_BROWSER_USER_PROFILE_STRING: string;
 		GOPATH: string;
@@ -332,12 +327,9 @@ declare module '$env/dynamic/private' {
 		MSYSTEM: string;
 		MSYSTEM_PREFIX: string;
 		NODE: string;
-		NODE_EXE: string;
 		VSCODE_GIT_IPC_HANDLE: string;
 		npm_command: string;
-		NPM_PREFIX_NPM_CLI_JS: string;
 		npm_config_prefix: string;
-		npm_lifecycle_event: string;
 		npm_lifecycle_script: string;
 		npm_node_execpath: string;
 		WINDIR: string;

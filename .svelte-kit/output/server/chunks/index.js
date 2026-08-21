@@ -77,6 +77,19 @@ const ELEMENT_IS_NAMESPACED = 1;
 const ELEMENT_PRESERVE_ATTRIBUTE_CASE = 1 << 1;
 const ELEMENT_IS_INPUT = 1 << 2;
 const UNINITIALIZED = Symbol("uninitialized");
+function get_parent_context(context) {
+  let parent = context.p;
+  while (parent !== null && parent.c === null) {
+    parent = parent.p;
+  }
+  return parent?.c ?? null;
+}
+function get_or_init_context_map(context, name) {
+  if (context === null) {
+    lifecycle_outside_component();
+  }
+  return context.c ??= new Map(get_parent_context(context) || void 0);
+}
 const DOM_BOOLEAN_ATTRIBUTES = [
   "allowfullscreen",
   "async",
@@ -207,7 +220,7 @@ function to_style(value, styles) {
       normal_styles = styles;
     }
     if (value) {
-      value = String(value).replaceAll(/\s*\/\*.*?\*\/\s*/g, "").trim();
+      value = String(value).replaceAll(/\/\*.*?\*\//g, "").trim();
       var in_str = false;
       var in_apo = 0;
       var in_comment = false;
@@ -279,6 +292,29 @@ function abort() {
   controller?.abort(STALE_REACTION);
   controller = null;
 }
+var ssr_context = null;
+function set_ssr_context(v) {
+  ssr_context = v;
+}
+function getContext(key) {
+  const context_map = get_or_init_context_map(ssr_context);
+  const result = (
+    /** @type {T} */
+    context_map.get(key)
+  );
+  return result;
+}
+function setContext(key, context) {
+  get_or_init_context_map(ssr_context).set(key, context);
+  return context;
+}
+function push(fn) {
+  ssr_context = { p: ssr_context, c: null, r: null };
+}
+function pop() {
+  ssr_context = /** @type {SSRContext} */
+  ssr_context.p;
+}
 function await_invalid() {
   const error = new Error(`await_invalid
 Encountered asynchronous work while rendering synchronously.
@@ -306,46 +342,6 @@ Could not resolve \`render\` context.
 https://svelte.dev/e/server_context_required`);
   error.name = "Svelte error";
   throw error;
-}
-var ssr_context = null;
-function set_ssr_context(v) {
-  ssr_context = v;
-}
-function getContext(key) {
-  const context_map = get_or_init_context_map();
-  const result = (
-    /** @type {T} */
-    context_map.get(key)
-  );
-  return result;
-}
-function setContext(key, context) {
-  get_or_init_context_map().set(key, context);
-  return context;
-}
-function get_or_init_context_map(name) {
-  if (ssr_context === null) {
-    lifecycle_outside_component();
-  }
-  return ssr_context.c ??= new Map(get_parent_context(ssr_context) || void 0);
-}
-function push(fn) {
-  ssr_context = { p: ssr_context, c: null, r: null };
-}
-function pop() {
-  ssr_context = /** @type {SSRContext} */
-  ssr_context.p;
-}
-function get_parent_context(ssr_context2) {
-  let parent = ssr_context2.p;
-  while (parent !== null) {
-    const context_map = parent.c;
-    if (context_map !== null) {
-      return context_map;
-    }
-    parent = parent.p;
-  }
-  return null;
 }
 function unresolved_hydratable(key, stack) {
   {
@@ -727,6 +723,7 @@ class Renderer {
    */
   copy() {
     const copy = new Renderer(this.global, this.#parent);
+    copy.type = this.type;
     copy.#out = this.#out.map((item) => item instanceof Renderer ? item.copy() : item);
     copy.promise = this.promise;
     return copy;

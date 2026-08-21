@@ -132,8 +132,8 @@ COPY --from=builder /app /app
 # Instalar PM2 globalmente para runtime
 RUN npm install -g pm2 \
     && pm2 install pm2-logrotate \
-    && pm2 set pm2-logrotate:max_days 1 \
-    && pm2 set pm2-logrotate:retain 1 \
+    && pm2 set pm2-logrotate:max_days 2 \
+    && pm2 set pm2-logrotate:retain 2 \
     && npm cache clean --force
 
 # Exponer el puerto en el que correrá la aplicación

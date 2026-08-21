@@ -1228,6 +1228,7 @@ class Batch {
       }
     }
     if (next_batch !== null) {
+      old_values.clear();
       next_batch.#process();
     }
   }
@@ -1787,7 +1788,11 @@ function set(source2, value, should_proxy = false) {
 }
 function internal_set(source2, value, updated_during_traversal = null) {
   if (!source2.equals(value)) {
-    old_values.set(source2, is_destroying_effect ? value : source2.v);
+    if (is_destroying_effect) {
+      old_values.set(source2, value);
+    } else if (!old_values.has(source2)) {
+      old_values.set(source2, source2.v);
+    }
     var batch = Batch.ensure();
     batch.capture(source2, value);
     if ((source2.f & DERIVED) !== 0) {
@@ -2520,6 +2525,7 @@ const event_symbol = Symbol("events");
 const all_registered_events = /* @__PURE__ */ new Set();
 const root_event_handles = /* @__PURE__ */ new Set();
 let last_propagated_event = null;
+let last_propagated_event_clear_scheduled = false;
 function handle_event_propagation(event) {
   var handler_element = this;
   var owner_document = (
@@ -2533,6 +2539,13 @@ function handle_event_propagation(event) {
     path[0] || event.target
   );
   last_propagated_event = event;
+  if (!last_propagated_event_clear_scheduled) {
+    last_propagated_event_clear_scheduled = true;
+    setTimeout(() => {
+      last_propagated_event_clear_scheduled = false;
+      last_propagated_event = null;
+    });
+  }
   var path_idx = 0;
   var handled_at = last_propagated_event === event && event[event_symbol];
   if (handled_at) {
