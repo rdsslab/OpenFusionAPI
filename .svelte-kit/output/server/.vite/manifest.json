@@ -51,7 +51,7 @@
     "name": "server"
   },
   "_start_page.svelte_svelte_type_style_lang.js": {
-    "file": "_app/immutable/assets/start_page.NeybJC6G.css",
+    "file": "_app/immutable/assets/start_page.yxdPpBap.css",
     "src": "_start_page.svelte_svelte_type_style_lang.js"
   },
   "_utils.js": {
@@ -147,7 +147,7 @@
       "_index.js"
     ],
     "css": [
-      "_app/immutable/assets/start_page.NeybJC6G.css"
+      "_app/immutable/assets/start_page.yxdPpBap.css"
     ],
     "assets": [
       "_app/immutable/assets/android-chrome-512x512.Dq1KWJkx.png",
@@ -168,7 +168,7 @@
       "_index2.js"
     ],
     "css": [
-      "_app/immutable/assets/start_page.NeybJC6G.css"
+      "_app/immutable/assets/start_page.yxdPpBap.css"
     ],
     "assets": [
       "_app/immutable/assets/fa-brands-400.Bs6tcqqs.woff2",
