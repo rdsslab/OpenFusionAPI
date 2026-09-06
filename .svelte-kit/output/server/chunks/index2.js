@@ -1,5 +1,4 @@
-import { n as noop } from "./index.js";
-import { a as safe_not_equal } from "./equality.js";
+import { n as noop, am as safe_not_equal, an as subscribe_to_store } from "./index.js";
 const subscriber_queue = [];
 function readable(value, start) {
   return {
@@ -53,7 +52,13 @@ function writable(value, start = noop) {
   }
   return { set, update, subscribe };
 }
+function get(store) {
+  let value;
+  subscribe_to_store(store, (_) => value = _)();
+  return value;
+}
 export {
+  get as g,
   readable as r,
   writable as w
 };

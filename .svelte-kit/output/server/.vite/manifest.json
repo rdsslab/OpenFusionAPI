@@ -10,10 +10,6 @@
       "_internal.js"
     ]
   },
-  "_equality.js": {
-    "file": "chunks/equality.js",
-    "name": "equality"
-  },
   "_exports.js": {
     "file": "chunks/exports.js",
     "name": "exports"
@@ -26,8 +22,7 @@
     "file": "chunks/index2.js",
     "name": "index",
     "imports": [
-      "_index.js",
-      "_equality.js"
+      "_index.js"
     ]
   },
   "_internal.js": {
@@ -42,8 +37,7 @@
     "file": "chunks/root.js",
     "name": "root",
     "imports": [
-      "_index.js",
-      "_equality.js"
+      "_index.js"
     ]
   },
   "_server.js": {
@@ -51,7 +45,7 @@
     "name": "server"
   },
   "_start_page.svelte_svelte_type_style_lang.js": {
-    "file": "_app/immutable/assets/start_page.yxdPpBap.css",
+    "file": "_app/immutable/assets/start_page.Dj5PWzfW.css",
     "src": "_start_page.svelte_svelte_type_style_lang.js"
   },
   "_utils.js": {
@@ -124,7 +118,7 @@
     "isEntry": true,
     "imports": [
       "_utils.js",
-      "_root.js",
+      "_index.js",
       "_server.js",
       "_exports.js",
       "_utils2.js",
@@ -147,7 +141,7 @@
       "_index.js"
     ],
     "css": [
-      "_app/immutable/assets/start_page.yxdPpBap.css"
+      "_app/immutable/assets/start_page.Dj5PWzfW.css"
     ],
     "assets": [
       "_app/immutable/assets/android-chrome-512x512.Dq1KWJkx.png",
@@ -168,7 +162,7 @@
       "_index2.js"
     ],
     "css": [
-      "_app/immutable/assets/start_page.yxdPpBap.css"
+      "_app/immutable/assets/start_page.Dj5PWzfW.css"
     ],
     "assets": [
       "_app/immutable/assets/fa-brands-400.Bs6tcqqs.woff2",
