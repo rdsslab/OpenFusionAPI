@@ -4074,7 +4074,7 @@ function App($$renderer, $$props) {
   });
 }
 const ChartWidgets = { Base: Chart, TimeSeries };
-const version = "9.0.2";
+const version = "9.1.2";
 function Login($$renderer, $$props) {
   $$renderer.component(($$renderer2) => {
     let noty = new Notifications$1();
@@ -4895,7 +4895,13 @@ function Basic($$renderer, $$props) {
       } else {
         $$renderer3.push("<!--[-1-->");
       }
-      $$renderer3.push(`<!--]--></p></div></div> <div class="column"><div class="field has-addons"><p class="control"><a class="button is-static is-small">Enabled</a></p> <p class="control">`);
+      $$renderer3.push(`<!--]--></p></div></div> <div class="column"><div class="field has-addons"><p class="control"><a class="button is-static is-small">JWT Key</a></p> <p class="control is-expanded">`);
+      if (app) {
+        $$renderer3.push(`<!--[0--><input class="input is-small" type="text" readonly="" placeholder="JWT Key"${attr("value", app.jwt_key)} title="Signing key used to mint the API keys of this application."/>`);
+      } else {
+        $$renderer3.push("<!--[-1-->");
+      }
+      $$renderer3.push(`<!--]--></p> <p class="control"><button class="button is-small" title="Generate a new JWT signing key"><span class="icon is-small"><i class="fa-solid fa-rotate"></i></span> <span>Generate</span></button></p></div></div> <div class="column"><div class="field has-addons"><p class="control"><a class="button is-static is-small">Enabled</a></p> <p class="control">`);
       if (app) {
         $$renderer3.push(`<!--[0--><input type="button"${attr("value", app.enabled)}${attr_class(clsx(app.enabled ? "button is-success is-selected is-small" : "button is-danger is-small"))}/>`);
       } else {
@@ -12408,6 +12414,7 @@ function Apikeys($$renderer, $$props) {
     const canDelete = derived(() => currentUserHasPermission(currentUser(), permEnv, "apiclients", "delete"));
     let showEditor = false;
     let selectedRow = {
+      idkey: "",
       idclient: "",
       enabled: true,
       startAt: "",
@@ -12416,6 +12423,8 @@ function Apikeys($$renderer, $$props) {
       token: "",
       idapp
     };
+    let jwtCopied = false;
+    const isEditing = derived(() => !!selectedRow.idkey);
     const todayISO = () => (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
     const nextMonthISO = () => {
       const d = /* @__PURE__ */ new Date();
@@ -12423,6 +12432,7 @@ function Apikeys($$renderer, $$props) {
       return d.toISOString().split("T")[0];
     };
     let optionsClients = [{ name: "dsdf", value: "dsdf" }];
+    const clientLabel = derived(() => (optionsClients || []).find((c) => String(c.value) === String(selectedRow?.idclient))?.name || selectedRow?.idclient || "");
     let DataTableAPIs = [];
     let columns = {
       idkey: { hidden: true },
@@ -12497,6 +12507,7 @@ function Apikeys($$renderer, $$props) {
     }
     function fnDefaulValues() {
       selectedRow = {
+        idkey: "",
         idclient: "",
         enabled: true,
         startAt: todayISO(),
@@ -12520,17 +12531,22 @@ function Apikeys($$renderer, $$props) {
           showDeleteButton: canDelete(),
           showEditButton: canEdit(),
           oneditrow: (r) => {
-            selectedRow.enabled = r.task_enabled;
-            selectedRow.startAt = r.datestart || "";
-            selectedRow.endAt = r.dateend || "";
+            selectedRow.idkey = r.idkey || "";
+            selectedRow.enabled = Boolean(r.enabled);
+            selectedRow.startAt = r.startAt || "";
+            selectedRow.endAt = r.endAt || "";
             selectedRow.idclient = r.idclient || "";
             selectedRow.token = r.token || "";
             selectedRow.description = r.description || "";
             selectedRow.idapp = idapp;
+            snapshot(selectedRow);
+            jwtCopied = false;
             showEditor = true;
           },
           onnewrow: () => {
             fnDefaulValues();
+            snapshot(selectedRow);
+            jwtCopied = false;
             console.log("TABLE > NEW ", selectedRow);
             showEditor = true;
           },
@@ -12572,34 +12588,45 @@ function Apikeys($$renderer, $$props) {
           children: ($$renderer4) => {
             {
               let r01 = function($$renderer5) {
-                $$renderer5.push(`<div class="field has-addons"><p class="control"><button class="button is-small is-link"><span class="icon is-small"><i class="fa-solid fa-rocket"></i></span> <span>Save &amp; Deploy</span></button></p> <p class="control"><button class="button is-small"><span class="icon is-small"><i class="fa-solid fa-xmark"></i></span> <span>Cancel</span></button></p></div>`);
+                $$renderer5.push(`<div class="field has-addons">`);
+                if (isEditing()) {
+                  $$renderer5.push(`<!--[0--><p class="control"><button class="button is-small is-warning is-light" title="Re-sign the token with the current application JWT key"><span class="icon is-small"><i class="fa-solid fa-rotate"></i></span> <span>Regenerate JWT</span></button></p> <p class="control"><button class="button is-small is-link"><span class="icon is-small"><i class="fa-solid fa-save"></i></span> <span>Save</span></button></p>`);
+                } else {
+                  $$renderer5.push(`<!--[-1--><p class="control"><button class="button is-small is-link"><span class="icon is-small"><i class="fa-solid fa-rocket"></i></span> <span>Save &amp; Deploy</span></button></p>`);
+                }
+                $$renderer5.push(`<!--]--> <p class="control"><button class="button is-small"><span class="icon is-small"><i class="fa-solid fa-xmark"></i></span> <span>${escape_html(isEditing() ? "Close" : "Cancel")}</span></button></p></div>`);
               };
               Level($$renderer4, { left: [], right: [r01] });
             }
             $$renderer4.push(`<!----> <div>`);
-            Predictive($$renderer4, {
-              label: "API Client",
-              classLabel: "is-small",
-              classInput: "is-small",
-              onselect: (e) => {
-                console.log(e, selectedRow);
-              },
-              get options() {
-                return optionsClients;
-              },
-              set options($$value) {
-                optionsClients = $$value;
-                $$settled = false;
-              },
-              get selectedValue() {
-                return selectedRow.idclient;
-              },
-              set selectedValue($$value) {
-                selectedRow.idclient = $$value;
-                $$settled = false;
-              }
-            });
-            $$renderer4.push(`<!----> <div class="columns"><div class="column is-one-third">`);
+            if (isEditing()) {
+              $$renderer4.push(`<!--[0--><div class="field has-addons"><p class="control"><span class="button is-static is-small">API Client</span></p> <p class="control is-expanded"><input class="input is-small" type="text" readonly=""${attr("value", clientLabel())}/></p></div>`);
+            } else {
+              $$renderer4.push("<!--[-1-->");
+              Predictive($$renderer4, {
+                label: "API Client",
+                classLabel: "is-small",
+                classInput: "is-small",
+                onselect: (e) => {
+                  console.log(e, selectedRow);
+                },
+                get options() {
+                  return optionsClients;
+                },
+                set options($$value) {
+                  optionsClients = $$value;
+                  $$settled = false;
+                },
+                get selectedValue() {
+                  return selectedRow.idclient;
+                },
+                set selectedValue($$value) {
+                  selectedRow.idclient = $$value;
+                  $$settled = false;
+                }
+              });
+            }
+            $$renderer4.push(`<!--]--> <div class="columns"><div class="column is-one-third">`);
             Basic$1($$renderer4, {
               type: "boolean",
               label: "Enabled",
@@ -12612,30 +12639,58 @@ function Apikeys($$renderer, $$props) {
               }
             });
             $$renderer4.push(`<!----></div> <div class="column is-one-third">`);
-            Basic$1($$renderer4, {
-              type: "date",
-              label: "Date Start: ",
-              get value() {
-                return selectedRow.startAt;
-              },
-              set value($$value) {
-                selectedRow.startAt = $$value;
-                $$settled = false;
-              }
-            });
-            $$renderer4.push(`<!----></div> <div class="column is-one-third">`);
-            Basic$1($$renderer4, {
-              type: "date",
-              label: "Date End: ",
-              get value() {
-                return selectedRow.endAt;
-              },
-              set value($$value) {
-                selectedRow.endAt = $$value;
-                $$settled = false;
-              }
-            });
-            $$renderer4.push(`<!----></div></div> <div class="columns"><div class="column is-full">`);
+            if (isEditing()) {
+              $$renderer4.push("<!--[0-->");
+              Basic$1($$renderer4, {
+                type: "date",
+                label: "Date Start: ",
+                value: selectedRow.startAt,
+                readonly: true
+              });
+            } else {
+              $$renderer4.push("<!--[-1-->");
+              Basic$1($$renderer4, {
+                type: "date",
+                label: "Date Start: ",
+                get value() {
+                  return selectedRow.startAt;
+                },
+                set value($$value) {
+                  selectedRow.startAt = $$value;
+                  $$settled = false;
+                }
+              });
+            }
+            $$renderer4.push(`<!--]--></div> <div class="column is-one-third">`);
+            if (isEditing()) {
+              $$renderer4.push("<!--[0-->");
+              Basic$1($$renderer4, {
+                type: "date",
+                label: "Date End: ",
+                value: selectedRow.endAt,
+                readonly: true
+              });
+            } else {
+              $$renderer4.push("<!--[-1-->");
+              Basic$1($$renderer4, {
+                type: "date",
+                label: "Date End: ",
+                get value() {
+                  return selectedRow.endAt;
+                },
+                set value($$value) {
+                  selectedRow.endAt = $$value;
+                  $$settled = false;
+                }
+              });
+            }
+            $$renderer4.push(`<!--]--></div></div> `);
+            if (selectedRow.token) {
+              $$renderer4.push(`<!--[0--><div class="columns"><div class="column is-full"><div class="field has-addons"><p class="control"><span class="button is-static is-small">JWT Token</span></p> <p class="control is-expanded"><input class="input is-small" type="text" readonly=""${attr("value", selectedRow.token)}/></p> <p class="control"><button class="button is-small" title="Copy token"><span class="icon is-small"><i${attr_class(clsx(jwtCopied ? "fa-solid fa-check" : "fa-regular fa-copy"))}></i></span> <span>${escape_html(jwtCopied ? "Copied" : "Copy")}</span></button></p></div></div></div>`);
+            } else {
+              $$renderer4.push("<!--[-1-->");
+            }
+            $$renderer4.push(`<!--]--> <div class="columns"><div class="column is-full">`);
             TextArea$1($$renderer4, {
               label: "Description",
               get value() {
