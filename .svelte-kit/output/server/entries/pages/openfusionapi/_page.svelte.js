@@ -204,7 +204,9 @@ const equalObjs = (value, new_value) => {
 };
 const jsonToHtmlString = (obj) => {
   let jsonString = JSON.stringify(obj, null, 2);
-  return jsonString.split("\n").map((line) => line.replace(/ /g, "&nbsp;")).join("<br>");
+  return jsonString.split("\n").map(
+    (line) => line.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;").replace(/ /g, "&nbsp;")
+  ).join("<br>");
 };
 function createEndpoint(method, app, resource, environment) {
   return `${method == "WS" ? "/ws/" : "/api/"}${app}${resource}/${environment}`;
@@ -4074,7 +4076,7 @@ function App($$renderer, $$props) {
   });
 }
 const ChartWidgets = { Base: Chart, TimeSeries };
-const version = "9.1.2";
+const version = "9.3.5";
 function Login($$renderer, $$props) {
   $$renderer.component(($$renderer2) => {
     let noty = new Notifications$1();
@@ -4133,7 +4135,7 @@ function Login($$renderer, $$props) {
         recoveryInfo = typeof data?.message === "string" ? data.message : "If the account exists and the selected channel is available, you will receive a verification code.";
         recoveryStep = "code";
       } catch (error) {
-        console.trace(error);
+        console.error(error);
         recoveryError = error.message || "The code could not be sent. Try again later.";
       } finally {
         recoveryBusy = false;
@@ -4178,7 +4180,7 @@ function Login($$renderer, $$props) {
           recoveryError = data?.error || data?.message || "The code is invalid or has expired.";
         }
       } catch (error) {
-        console.trace(error);
+        console.error(error);
         recoveryError = error.message || "The password could not be updated.";
       } finally {
         recoveryBusy = false;
@@ -4240,7 +4242,7 @@ function Login($$renderer, $$props) {
           forcedChangeError = result?.error || result?.message || "Password could not be changed.";
         }
       } catch (error) {
-        console.trace(error);
+        console.error(error);
         forcedChangeError = error.message || "Password could not be changed.";
       }
     }
@@ -4259,6 +4261,8 @@ function Login($$renderer, $$props) {
     function $$render_inner($$renderer3) {
       Modal($$renderer3, {
         show: true,
+        closeOnEscape: false,
+        closeOnBackground: false,
         children: ($$renderer4) => {
           $$renderer4.push(`<div${attr_class("login-wrapper svelte-imjmcm", void 0, { "is-visible": mounted, "overlay-mode": isOverlay })}><div class="orb orb-1 svelte-imjmcm"></div> <div class="orb orb-2 svelte-imjmcm"></div> <div class="orb orb-3 svelte-imjmcm"></div> <div class="login-card box svelte-imjmcm"><div class="brand-header has-text-centered svelte-imjmcm"><div class="logo-ring svelte-imjmcm"><div class="logo-figure svelte-imjmcm"><img${attr("src", Logo)} alt="OpenFusionAPI" class="logo-img svelte-imjmcm"/></div></div> <h1 class="title is-4 mt-3 brand-title svelte-imjmcm">Open Fusion API</h1> <p class="subtitle is-6 brand-subtitle svelte-imjmcm"><span class="tag is-dark is-rounded svelte-imjmcm"><span class="icon is-small svelte-imjmcm"><i class="fa-solid fa-server svelte-imjmcm"></i></span> <span class="svelte-imjmcm">MCP Server</span></span></p></div> <div class="divider-line svelte-imjmcm"></div> `);
           if (isOverlay) {
@@ -12547,11 +12551,9 @@ function Apikeys($$renderer, $$props) {
             fnDefaulValues();
             snapshot(selectedRow);
             jwtCopied = false;
-            console.log("TABLE > NEW ", selectedRow);
             showEditor = true;
           },
           ondeleterow: async (r) => {
-            console.log("TABLE > DELETE ", r);
             if (r.rows.length > 0 && confirm("Are you sure you want to delete this task?")) {
               await deleteTasks(r.rows);
             }
@@ -14229,7 +14231,6 @@ function OpenFusionAPI($$renderer, $$props) {
       $$renderer2.push("<!--[-1-->");
       Login($$renderer2, {
         onlogin: (login) => {
-          console.log("LOGIN", login);
           if (login && login.login) {
             page = "main";
             startJwtWatcher();
