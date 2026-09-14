@@ -136,3 +136,6 @@ dist
 
 # test artifacts and local test workspace
 test/
+
+# playwright CLI session artifacts
+.playwright-cli/

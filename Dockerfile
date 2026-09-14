@@ -13,6 +13,7 @@ ARG RUNTIME_NODE_OPTIONS=--max-old-space-size=4096
 ENV HOST=:: \
     PORT=3000 \
     BUILD_DB=true \
+    PUBLIC_API_SERVER_HOST="" \
     NODE_OPTIONS=${RUNTIME_NODE_OPTIONS} \
     PUPPETEER_SKIP_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
@@ -89,6 +90,7 @@ ARG RUNTIME_NODE_OPTIONS=--max-old-space-size=4096
 ENV HOST=:: \
     PORT=3000 \
     BUILD_DB=true \
+    PUBLIC_API_SERVER_HOST="" \
     NODE_OPTIONS=${RUNTIME_NODE_OPTIONS} \
     PUPPETEER_SKIP_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
@@ -126,8 +128,15 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Copiar app compilada y dependencias de producción desde builder
-COPY --from=builder /app /app
+# Copiar solo lo necesario para el runtime (sin .svelte-kit, docs, test, .env, etc.)
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/package-lock.json ./package-lock.json
+COPY --from=builder /app/process.yml ./process.yml
+COPY --from=builder /app/server ./server
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/static ./static
+COPY --from=builder /app/www ./www
+COPY --from=builder /app/node_modules ./node_modules
 
 # Instalar PM2 globalmente para runtime
 RUN npm install -g pm2 \

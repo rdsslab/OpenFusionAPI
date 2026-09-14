@@ -10,7 +10,7 @@
           nav: {
             docs: "Documentation",
             features: "Features",
-            app: "Open console",
+            app: "Enter",
             github: "GitHub",
           },
           hero: {
@@ -211,7 +211,7 @@
             text: "Explore the docs, star the repo, spin up the Docker image, or open the live console.",
             github: "OpenFusionAPI on GitHub",
             docs: "Core library docs",
-            console: "Open the console",
+            console: "Enter",
           },
           footer: {
             tagline: "Low-code, AI-friendly API platform.",
@@ -230,7 +230,7 @@
           nav: {
             docs: "Documentación",
             features: "Características",
-            app: "Abrir consola",
+            app: "Entrar",
             github: "GitHub",
           },
           hero: {
@@ -436,7 +436,7 @@
             text: "Explora la documentación, da una estrella al repo, levanta la imagen Docker o abre la consola en vivo.",
             github: "OpenFusionAPI en GitHub",
             docs: "Docs de la librería principal",
-            console: "Abrir la consola",
+            console: "Entrar",
           },
           footer: {
             tagline: "Plataforma API low-code y amigable con IA.",
@@ -485,7 +485,7 @@
           type="button">ES</button
         >
       </div>
-      <a class="btn btn-ghost" href={appUrl}>{t.nav.app}</a>
+      <a class="btn btn-ghost btn-enter" href={appUrl}>{t.nav.app}</a>
       <a
         class="btn btn-primary"
         href={githubUrl}
@@ -730,7 +730,9 @@
           target="_blank"
           rel="noopener noreferrer">{t.cta.docs}</a
         >
-        <a class="btn btn-ghost btn-lg" href={appUrl}>{t.cta.console}</a>
+        <a class="btn btn-ghost btn-lg btn-enter" href={appUrl}
+          >{t.cta.console}</a
+        >
       </div>
     </section>
   </main>
@@ -772,30 +774,30 @@
 <style>
   .landing {
     --bg: #070b14;
-    --bg-soft: #0b1020;
+    --bg-soft: #0e131c;
     --panel: rgba(255, 255, 255, 0.04);
     --border: rgba(255, 255, 255, 0.09);
     --text: #e8ecf4;
     --muted: #9aa5bd;
-    --accent-1: #6366f1;
-    --accent-2: #22d3ee;
-    --accent-3: #a855f7;
+    --accent-1: #ff6b1a;
+    --accent-2: #ff8c42;
+    --accent-3: #ff3d00;
 
     background: var(--bg);
     background-image:
       radial-gradient(
         60rem 40rem at 10% -10%,
-        rgba(99, 102, 241, 0.28),
+        rgba(255, 107, 26, 0.28),
         transparent 60%
       ),
       radial-gradient(
         50rem 36rem at 90% 8%,
-        rgba(34, 211, 238, 0.16),
+        rgba(255, 140, 66, 0.16),
         transparent 55%
       ),
       radial-gradient(
         56rem 42rem at 50% 110%,
-        rgba(168, 85, 247, 0.2),
+        rgba(255, 61, 0, 0.2),
         transparent 60%
       );
     color: var(--text);
@@ -826,7 +828,7 @@
   }
 
   ::selection {
-    background: rgba(99, 102, 241, 0.45);
+    background: rgba(255, 107, 26, 0.45);
     color: #fff;
   }
 
@@ -928,12 +930,12 @@
 
   .btn-primary {
     background: linear-gradient(135deg, var(--accent-1), var(--accent-3));
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35);
+    box-shadow: 0 8px 24px rgba(255, 107, 26, 0.35);
     color: #fff;
   }
 
   .btn-primary:hover {
-    box-shadow: 0 12px 32px rgba(99, 102, 241, 0.5);
+    box-shadow: 0 12px 32px rgba(255, 107, 26, 0.5);
   }
 
   .btn-ghost {
@@ -946,6 +948,69 @@
     background: rgba(255, 255, 255, 0.08);
   }
 
+  /* ── Animated fire border for the console "Enter" buttons ── */
+  .btn-enter {
+    position: relative;
+    isolation: isolate;
+    animation: enterGlow 2.6s ease-in-out infinite;
+  }
+
+  .btn-enter::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 2px;
+    border-radius: inherit;
+    background: linear-gradient(
+      100deg,
+      var(--accent-1),
+      #ffdf4d,
+      var(--accent-3),
+      var(--accent-1)
+    );
+    background-size: 300% 100%;
+    animation: enterBorderShift 4s linear infinite;
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  @keyframes enterBorderShift {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 100% 0;
+    }
+  }
+
+  @keyframes enterGlow {
+    0%,
+    100% {
+      box-shadow: 0 0 0 rgba(255, 107, 26, 0);
+    }
+    50% {
+      box-shadow: 0 0 18px rgba(255, 107, 26, 0.55);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn-enter::before {
+      animation: none;
+      background: var(--accent-1);
+    }
+    .btn-enter {
+      animation: none;
+      box-shadow: 0 0 10px rgba(255, 107, 26, 0.3);
+    }
+  }
+
   .hero {
     margin: 0 auto;
     max-width: 1100px;
@@ -954,10 +1019,10 @@
   }
 
   .hero-badge {
-    background: rgba(99, 102, 241, 0.14);
-    border: 1px solid rgba(99, 102, 241, 0.4);
+    background: rgba(255, 107, 26, 0.14);
+    border: 1px solid rgba(255, 107, 26, 0.4);
     border-radius: 999px;
-    color: #c7d2fe;
+    color: #ffd0a3;
     display: inline-block;
     font-size: 0.85rem;
     font-weight: 600;
@@ -1113,10 +1178,10 @@
   .compare-col.highlight {
     background: linear-gradient(
       180deg,
-      rgba(99, 102, 241, 0.12),
-      rgba(34, 211, 238, 0.06)
+      rgba(255, 107, 26, 0.12),
+      rgba(255, 140, 66, 0.06)
     );
-    border-color: rgba(99, 102, 241, 0.45);
+    border-color: rgba(255, 107, 26, 0.45);
   }
 
   .compare-title {
@@ -1183,7 +1248,7 @@
   }
 
   .card:hover {
-    border-color: rgba(99, 102, 241, 0.5);
+    border-color: rgba(255, 107, 26, 0.5);
     transform: translateY(-3px);
   }
 
@@ -1215,10 +1280,10 @@
   }
 
   .handler-chip code {
-    background: rgba(34, 211, 238, 0.12);
-    border: 1px solid rgba(34, 211, 238, 0.35);
+    background: rgba(255, 140, 66, 0.12);
+    border: 1px solid rgba(255, 140, 66, 0.35);
     border-radius: 8px;
-    color: #a5f3fc;
+    color: #ffd0a3;
     font-family:
       "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
     font-size: 0.8rem;
@@ -1268,10 +1333,10 @@
     align-items: center;
     background: linear-gradient(
       135deg,
-      rgba(168, 85, 247, 0.14),
-      rgba(99, 102, 241, 0.1)
+      rgba(255, 61, 0, 0.14),
+      rgba(255, 107, 26, 0.1)
     );
-    border: 1px solid rgba(168, 85, 247, 0.4);
+    border: 1px solid rgba(255, 61, 0, 0.4);
     border-radius: 16px;
     display: grid;
     gap: 1.5rem;
@@ -1292,7 +1357,7 @@
   }
 
   .agent-flow {
-    border-left: 1px solid rgba(168, 85, 247, 0.4);
+    border-left: 1px solid rgba(255, 61, 0, 0.4);
     display: grid;
     gap: 0.45rem;
     padding-left: 1.2rem;
@@ -1322,10 +1387,10 @@
   .eco-card.highlight {
     background: linear-gradient(
       180deg,
-      rgba(99, 102, 241, 0.16),
-      rgba(34, 211, 238, 0.08)
+      rgba(255, 107, 26, 0.16),
+      rgba(255, 140, 66, 0.08)
     );
-    border-color: rgba(99, 102, 241, 0.5);
+    border-color: rgba(255, 107, 26, 0.5);
   }
 
   .eco-role {
@@ -1405,7 +1470,7 @@
 
   .quick-col pre code {
     background: transparent;
-    color: #a5f3fc;
+    color: #ffd0a3;
     font-size: 0.82rem;
     padding: 0;
   }
@@ -1414,7 +1479,7 @@
     background:
       radial-gradient(
         40rem 20rem at 50% 120%,
-        rgba(99, 102, 241, 0.35),
+        rgba(255, 107, 26, 0.35),
         transparent 70%
       ),
       var(--bg-soft);
@@ -1499,7 +1564,7 @@
   }
 
   :global(::-webkit-scrollbar-thumb:hover) {
-    background: rgba(99, 102, 241, 0.5);
+    background: rgba(255, 107, 26, 0.5);
   }
 
   :global(html) {
