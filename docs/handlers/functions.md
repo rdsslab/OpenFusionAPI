@@ -1,152 +1,88 @@
-# FUNCTION Handler – Internal Backend Functions
+# FUNCTION Handler – Internal System Functions
 
-The **FUNCTION handler** invokes pre-registered JavaScript functions that live in the server's file system. Unlike the JS handler (which accepts inline code), this handler routes requests to named functions defined in your backend `src/fn` folder.
+The **FUNCTION handler** is designed to invoke pre-registered internal server functions. Unlike the JS handler which accepts raw code, this handler routes requests to specific named functions defined within the application environment.
 
-This is the right choice when your logic:
-- Is too complex or long for the inline JS editor
-- Requires `npm` modules not available in the VM sandbox
-- Must be version-controlled independently as a `.js` file
-- Is shared across multiple endpoints
-
----
-
-## How it works
-
-1. **Lookup** — the system looks up the function name in the internal registry (`fnLocal`). It checks the specific app environment first, then the public scope.
-2. **Execution** — the function runs with a standardized context object containing the request, response helpers, and server data.
-3. **Timeout** — execution is capped at a **5-minute timeout** (AbortController).
-4. **Validation** — the return value is validated against a predefined schema to ensure a consistent response structure.
+> [!IMPORTANT]
+> This handler calls functions already created and registered on the server. It can only execute functions that are currently available.
+> To find which functions are available in the current environment, you must use the MCP tools or call the system endpoint that returns the list of available functions.
+> If you need to create a new function, it can only be done by the system administrator who has direct filesystem and access permissions to the server.
 
 ---
 
-## Endpoint configuration
+<details>
+<summary>🧠 How It Works</summary>
 
-Set the **Handler** to `FUNCTION`.
+When an endpoint is configured with the **FUNCTION** handler:
 
-In the **Code** field, enter the name of the registered function:
+1.  **Lookup**: The system looks up the function name (defined in the `Code` or configuration) within the internal function registry (`fnLocal`).
+    - It first checks the specific **App** environment.
+    - If not found, it checks the **Public** scope.
+2.  **Execution**: The function is executed with a standardized context object containing the request, response helpers, and server data.
+3.  **Timeout**: Execution is protected by a **5-minute timeout** (AbortController).
+4.  **Validation**: The output of the function is strictly validated against a predefined JSON schema (`schema_return_customFunction`) to ensure a consistent response structure.
+
+</details>
+
+---
+
+<details>
+<summary>⚙️ Endpoint Configuration</summary>
+
+**Handler Type**: `FUNCTION`
+
+**Code Config**:
+The "Code" field should contain the **name** of the registered function to call.
 
 ```text
 myCustomCalculationFn
 ```
 
+</details>
+
 ---
 
-## Creating a backend function
+<details>
+<summary>💻 Implementation Interface</summary>
 
-Place your `.js` file inside the path configured by the `PATH_APP_FUNCTIONS` environment variable (default: `src/fn`). The file must export an async function with this signature:
+Functions registered to be used by this handler must act on a specific object signature:
 
 ```javascript
-export async function myCustomCalculationFn({
-	request,      // Raw HTTP request object
-	user_data,    // Merged query string + body
-	reply,        // Fastify reply object
-	server_data,  // Internal server context
-	signal        // AbortSignal for timeout handling
+// Internal function signature
+async function myCustomFunction({
+  request, // Raw HTTP Request
+  user_data, // Merged Query & Body
+  reply, // Fastify Reply object
+  server_data, // Internal Server Context
+  signal, // AbortSignal (for timeout handling)
 }) {
-	// Your logic here
-
-	return {
-		code: 200,
-		data: { result: "success" }
-	};
+  // Logic here...
+  return {
+    code: 200,
+    data: { result: "success" },
+  };
 }
 ```
 
+</details>
+
 ---
 
-## Response format
+<details>
+<summary>📥 Response Format</summary>
 
-The function **must** return an object with this structure:
+The function **must** return an object matching this structure to pass validation:
 
 ```json
 {
-	"code": 200,
-	"data": { }
+  "code": 200,   // HTTP Status Code
+  "data": ...    // The actual response payload (Object, Array, String)
 }
 ```
 
-| Field | Description |
-|---|---|
-| `code` | HTTP status code to return (e.g. `200`, `400`, `500`) |
-| `data` | The actual response payload — object, array, or string |
+If the return value does not match the schema, the handler returns HTTP `500` with validation errors.
 
-If the return value does not match this schema, the handler returns HTTP `500` with validation errors.
+</details>
 
 ---
 
-## Example
-
-**File:** `src/fn/public/prd/calculateTax.js`
-
-```javascript
-export async function calculateTax({ user_data }) {
-	const { amount, rate } = user_data;
-
-	if (!amount || !rate) {
-		return { code: 400, data: { error: "amount and rate are required" } };
-	}
-
-	const tax = parseFloat(amount) * parseFloat(rate) / 100;
-
-	return {
-		code: 200,
-		data: {
-			amount: parseFloat(amount),
-			rate: parseFloat(rate),
-			tax: tax,
-			total: parseFloat(amount) + tax,
-		}
-	};
-}
-```
-
-**Endpoint Code field:**
-```text
-calculateTax
-```
-
-**HTTP call (GET):**
-```bash
-curl "https://your-server/api/myapp/dev/main/tax/0.01?amount=1000&rate=16"
-```
-
-**Response:**
-```json
-{
-	"amount": 1000,
-	"rate": 16,
-	"tax": 160,
-	"total": 1160
-}
-```
-
----
-
-## File path conventions
-
-Functions are organized under `PATH_APP_FUNCTIONS` by scope and environment:
-
-```
-src/fn/
-	public/
-		dev/     ← Development environment functions
-		qa/      ← Quality environment functions
-		prd/     ← Production environment functions
-	system/
-		dev/
-		qa/
-		prd/
-```
-
----
-
-## Capability summary
-
-| Feature | Supported |
-|---|---:|
-| Access to full Node.js modules | ✅ |
-| Access to request, query, body | ✅ |
-| Timeout protection (5 min) | ✅ |
-| Response schema validation | ✅ |
-| Shared across multiple endpoints | ✅ |
-| Version-controlled as files | ✅ |
+© 2025 – OpenFusionAPI · Created and maintained by **edwinspire**

@@ -1,105 +1,125 @@
 # FETCH Handler – HTTP Proxy & Forwarder
 
-The **FETCH handler** enables OpenFusionAPI to act as a robust HTTP proxy, forwarding requests to external services while managing headers, caching, and response transformation.
-
+The **FETCH handler** enables OpenFusionAPI to act as a robust HTTP proxy, forwarding requests to external services while managing headers, caching, and response transformation.  
 Internally it uses `@rdsslab/uFetch` to perform standardized HTTP requests.
 
----
+Agent note:
 
-## How it works
-
-1. **Request forwarding** — the incoming HTTP method (GET, POST, PUT, etc.), query parameters, and body are forwarded to the target URL.
-2. **Header sanitization** — incoming headers are forwarded except hop-by-hop headers (`content-length`, `host`, `connection`, `x-forwarded-for`).
-3. **Variable injection** — Application Variables can be used in the target URL: `https://api.example.com/{{ENV}}/resource`.
-4. **Response handling** — content type is auto-detected (JSON, text, XML, binary) and processed accordingly.
-5. **Response forwarding** — upstream headers (`content-type`, `etag`, `cache-control`, etc.) are passed back to the client.
+- `@rdsslab/uFetch` may evolve frequently. Before updating FETCH behavior, examples, or helper snippets, confirm the current official documentation or the installed package contract.
+- If you use `uFetch.batch`, the current contract is a single object argument; positional batch calls are legacy and should move to `batch_old(...)`.
+- Endpoint timeout is propagated to `uFetch` on each request.
+- Timeout unit at endpoint level is **seconds**; it is converted to **milliseconds** before calling `uFetch`.
+- If endpoint timeout is invalid (non-numeric), FETCH returns HTTP `400`.
 
 ---
 
-## Endpoint configuration
+<details>
+<summary>🧠 How It Works</summary>
 
-The **Code** field contains just the target URL:
+When an endpoint is configured with the **FETCH** handler:
+
+1.  **Request forwarding**: The incoming HTTP method (GET, POST, PUT, etc.), query parameters, and body are forwarded to the target URL.
+2.  **Header Sanitization**: Incoming headers are forwarded, except for hop-by-hop headers like `content-length`, `host`, `connection`, and `x-forwarded-for` to prevent conflicts.
+3.  **Response Handling**: The handler automatically detects the upstream content type (JSON, Text, XML, or Binary/Image) and processes it accordingly.
+4.  **Response Forwarding**: Key upstream headers (`content-type`, `etag`, `cache-control`, etc.) are passed back to the client.
+
+</details>
+
+---
+
+<details>
+<summary>⚙️ Endpoint Configuration</summary>
+
+The configuration in the "Code" editor for this handler is simply the **Target URL**.
+
+**Example**:
 
 ```text
 https://jsonplaceholder.typicode.com/posts
 ```
 
-With an Application Variable:
-```text
-https://api.partner.com/{{ENV}}/orders
-```
+</details>
 
 ---
 
-## Examples
+<details>
+<summary>🌐 Supported Operations & Behavior</summary>
 
-### Proxy a public API without parameters
+- **Methods**: Supports all standard HTTP methods (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`, etc.).
+- **Binary Support**: Capable of proxying images, PDFs, ZIPs, and other binary formats.
+- **Caching**:
+  - Responses are cached based on the endpoint's configured cache time.
+  - **Limit**: Binary responses larger than **50MB** are excluded from the cache to preserve memory.
+- **Error Handling**:
+  - If the target URL is invalid, returns HTTP `500`.
+  - If the HTTP method is not supported by the internal client, returns HTTP `405`.
+  - Upstream errors are passed through with their original status codes.
+- **Timeout Behavior**:
+- Endpoint `timeout` is authoritative and always propagated to `uFetch`.
+- Endpoint timeout values are configured in **seconds** and converted to milliseconds internally (`timeout_ms = timeout_seconds * 1000`).
+- For timeout failures, FETCH responds with HTTP `504` and includes the original timeout error detail in the payload.
+- If timeout is `0` or lower, behavior is delegated to `uFetch` semantics.
 
-Use the GitHub API to return a user profile. Set the Code field to:
-
-```text
-https://api.github.com/users/rdsslab
-```
-
-Method: `GET` | Access: `Public`
-
-[Video tutorial](https://youtu.be/zcUoMxmmx-M)
+</details>
 
 ---
 
-### Proxy a REST API with query parameters
+<details>
+<summary>📤 Example Requests</summary>
 
-The parameters sent to the OpenFusionAPI endpoint are forwarded automatically to the upstream service.
+**Proxying a JSON API**
 
-Code field:
-```text
-https://fakestoreapi.com/carts
-```
-
-Method: `GET` | Receives: `userId` as query param
+If your endpoint is `/api/proxy/users` and points to `https://jsonplaceholder.typicode.com/users`:
 
 ```bash
-curl "https://your-server/api/myapp/dev/main/carts/0.01?userId=3"
+curl -X GET https://your-openfusion-server/api/proxy/users
 ```
 
-[Video tutorial](https://youtu.be/d_aR-s62S5I)
+**Response**:
+
+```json
+[
+  {
+    "id": 1,
+    "name": "Leanne Graham",
+    "username": "Bret",
+    "email": "Sincere@april.biz"
+  },
+  ...
+]
+```
+
+</details>
 
 ---
 
-### Proxy a POST request
+<details>
+<summary>📊 Capability Summary</summary>
 
-Code field:
-```text
-https://jsonplaceholder.typicode.com/posts
-```
+| Feature                       |                                                                Supported |
+| ----------------------------- | -----------------------------------------------------------------------: |
+| HTTP/HTTPS Proxying           |                                                                       ✅ |
+| Dynamic Method Forwarding     |                                                                       ✅ |
+| Header Forwarding             |                                                           ✅ (Selective) |
+| Binary Content (Images/PDF)   |                                                                       ✅ |
+| Variable Substitution in URL  |                                                                       ❌ |
+| Caching                       |                                                 ✅ (Max 50MB for binary) |
+| Authentication                |                                         ❌ (Must be handled via headers) |
+| Handler-level Timeout Setting | ✅ (Endpoint timeout in seconds -> propagated to uFetch in milliseconds) |
 
-Method: `POST`
-
-```bash
-curl -X POST https://your-server/api/myapp/dev/main/posts/0.01 \
-    -H "Content-Type: application/json" \
-    -d '{"title": "foo", "body": "bar", "userId": 1}'
-```
-
----
-
-## Capability summary
-
-| Feature | Supported |
-|---|---:|
-| HTTP/HTTPS proxying | ✅ |
-| All HTTP methods (GET, POST, PUT, DELETE, PATCH) | ✅ |
-| Header forwarding (selective) | ✅ |
-| Binary content (images, PDF, ZIP) | ✅ |
-| Variable substitution in URL | ✅ |
-| Response caching | ✅ (binary responses > 50 MB excluded) |
-| Built-in authentication | ❌ (pass via headers) |
+</details>
 
 ---
 
-## Typical use cases
+<details>
+<summary>💡 Typical Use Cases</summary>
 
-- **API gateway** — unify multiple microservices under a single domain
-- **Asset proxy** — serve external images or files while hiding the source origin
-- **Legacy wrapper** — add CORS headers or caching to external APIs
-- **Environment routing** — point dev/qa/prd to different upstream URLs using App Variables
+- **API Gateway**: Unify multiple microservices under a single domain.
+- **Asset Proxy**: Serve external images or files while hiding the source origin.
+- **Legacy Wrapper**: Add CORS support or caching to legacy APIs.
+
+</details>
+
+---
+
+© 2025 – OpenFusionAPI · Created and maintained by **edwinspire**

@@ -44,10 +44,6 @@
     "file": "chunks/server.js",
     "name": "server"
   },
-  "_start_page.svelte_svelte_type_style_lang.js": {
-    "file": "_app/immutable/assets/start_page.Dj5PWzfW.css",
-    "src": "_start_page.svelte_svelte_type_style_lang.js"
-  },
   "_utils.js": {
     "file": "chunks/utils.js",
     "name": "utils",
@@ -141,15 +137,7 @@
       "_index.js"
     ],
     "css": [
-      "_app/immutable/assets/start_page.Dj5PWzfW.css"
-    ],
-    "assets": [
-      "_app/immutable/assets/android-chrome-512x512.Dq1KWJkx.png",
-      "_app/immutable/assets/flame.pI4vnDs3.png",
-      "_app/immutable/assets/fa-brands-400.Bs6tcqqs.woff2",
-      "_app/immutable/assets/fa-regular-400.DRN8N0d1.woff2",
-      "_app/immutable/assets/fa-solid-900.IAB4Droh.woff2",
-      "_app/immutable/assets/fa-v4compatibility.CErXDOsT.woff2"
+      "_app/immutable/assets/_page.CaI7XWAA.css"
     ]
   },
   "src/routes/openfusionapi/+page.svelte": {
@@ -162,7 +150,7 @@
       "_index2.js"
     ],
     "css": [
-      "_app/immutable/assets/start_page.Dj5PWzfW.css"
+      "_app/immutable/assets/_page.Dj5PWzfW.css"
     ],
     "assets": [
       "_app/immutable/assets/fa-brands-400.Bs6tcqqs.woff2",
