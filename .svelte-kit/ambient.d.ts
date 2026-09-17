@@ -85,8 +85,12 @@ declare module '$env/static/private' {
 	export const MSYSTEM_CHOST: string;
 	export const ESET_OPTIONS: string;
 	export const EXEPATH: string;
+	export const npm_config_noproxy: string;
+	export const NPM_CLI_JS: string;
+	export const NPM_PREFIX_JS: string;
+	export const FPS_BROWSER_APP_PROFILE_STRING: string;
+	export const FPS_BROWSER_USER_PROFILE_STRING: string;
 	export const GOPATH: string;
-	export const npm_package_version: string;
 	export const MINGW_PREFIX: string;
 	export const HOMEDRIVE: string;
 	export const HOMEPATH: string;
@@ -108,8 +112,6 @@ declare module '$env/static/private' {
 	export const MSYSTEM_PREFIX: string;
 	export const NODE: string;
 	export const NODE_EXE: string;
-	export const npm_config_noproxy: string;
-	export const NPM_CLI_JS: string;
 	export const VSCODE_GIT_IPC_HANDLE: string;
 	export const npm_command: string;
 	export const npm_config_cache: string;
@@ -117,7 +119,7 @@ declare module '$env/static/private' {
 	export const npm_config_prefix: string;
 	export const npm_lifecycle_script: string;
 	export const npm_package_name: string;
-	export const NPM_PREFIX_JS: string;
+	export const npm_package_version: string;
 	export const NUMBER_OF_PROCESSORS: string;
 	export const OneDrive: string;
 	export const OneDriveCommercial: string;
@@ -299,8 +301,12 @@ declare module '$env/dynamic/private' {
 		MSYSTEM_CHOST: string;
 		ESET_OPTIONS: string;
 		EXEPATH: string;
+		npm_config_noproxy: string;
+		NPM_CLI_JS: string;
+		NPM_PREFIX_JS: string;
+		FPS_BROWSER_APP_PROFILE_STRING: string;
+		FPS_BROWSER_USER_PROFILE_STRING: string;
 		GOPATH: string;
-		npm_package_version: string;
 		MINGW_PREFIX: string;
 		HOMEDRIVE: string;
 		HOMEPATH: string;
@@ -322,8 +328,6 @@ declare module '$env/dynamic/private' {
 		MSYSTEM_PREFIX: string;
 		NODE: string;
 		NODE_EXE: string;
-		npm_config_noproxy: string;
-		NPM_CLI_JS: string;
 		VSCODE_GIT_IPC_HANDLE: string;
 		npm_command: string;
 		npm_config_cache: string;
@@ -331,7 +335,7 @@ declare module '$env/dynamic/private' {
 		npm_config_prefix: string;
 		npm_lifecycle_script: string;
 		npm_package_name: string;
-		NPM_PREFIX_JS: string;
+		npm_package_version: string;
 		NUMBER_OF_PROCESSORS: string;
 		OneDrive: string;
 		OneDriveCommercial: string;
