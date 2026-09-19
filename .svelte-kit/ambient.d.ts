@@ -38,16 +38,17 @@
  * The above values will be the same _even if_ different values for `ENVIRONMENT` or `PUBLIC_BASE_URL` are set at runtime, as they are statically replaced in your code with their build time values.
  */
 declare module '$env/static/private' {
-	export const PORT: string;
 	export const BUILD_DB: string;
 	export const DATABASE_URI_API: string;
-	export const JWT_KEY: string;
 	export const EXPOSE_DEV_API: string;
-	export const EXPOSE_QA_API: string;
 	export const EXPOSE_PROD_API: string;
-	export const PATH_APP_FUNCTIONS: string;
+	export const EXPOSE_QA_API: string;
 	export const EXPRESSJS_SERVER_TIMEOUT: string;
+	export const JWT_KEY: string;
 	export const MAX_FILE_SIZE_UPLOAD: string;
+	export const PATH_APP_FUNCTIONS: string;
+	export const PORT: string;
+	export const AGENT: string;
 	export const EFC_13460_1592913036: string;
 	export const npm_config_global_prefix: string;
 	export const VSCODE_GIT_ASKPASS_EXTRA_ARGS: string;
@@ -60,15 +61,15 @@ declare module '$env/static/private' {
 	export const NODE_ENV: string;
 	export const ALLUSERSPROFILE: string;
 	export const APPDATA: string;
-	export const MSYSTEM_CARCH: string;
-	export const LOGONSERVER: string;
-	export const COMMONPROGRAMFILES: string;
 	export const CLAUDE_CODE_SSE_PORT: string;
 	export const COLOR: string;
 	export const EDITOR: string;
 	export const npm_config_local_prefix: string;
 	export const CommonProgramW6432: string;
 	export const COLORTERM: string;
+	export const MSYSTEM_CARCH: string;
+	export const LOGONSERVER: string;
+	export const COMMONPROGRAMFILES: string;
 	export const GIT_ASKPASS: string;
 	export const npm_config_userconfig: string;
 	export const PROMPT: string;
@@ -86,8 +87,6 @@ declare module '$env/static/private' {
 	export const ESET_OPTIONS: string;
 	export const EXEPATH: string;
 	export const npm_config_noproxy: string;
-	export const NPM_CLI_JS: string;
-	export const NPM_PREFIX_JS: string;
 	export const FPS_BROWSER_APP_PROFILE_STRING: string;
 	export const FPS_BROWSER_USER_PROFILE_STRING: string;
 	export const GOPATH: string;
@@ -111,11 +110,9 @@ declare module '$env/static/private' {
 	export const MSYSTEM: string;
 	export const MSYSTEM_PREFIX: string;
 	export const NODE: string;
-	export const NODE_EXE: string;
 	export const VSCODE_GIT_IPC_HANDLE: string;
 	export const npm_command: string;
 	export const npm_config_cache: string;
-	export const NPM_PREFIX_NPM_CLI_JS: string;
 	export const npm_config_prefix: string;
 	export const npm_lifecycle_script: string;
 	export const npm_package_name: string;
@@ -123,6 +120,9 @@ declare module '$env/static/private' {
 	export const NUMBER_OF_PROCESSORS: string;
 	export const OneDrive: string;
 	export const OneDriveCommercial: string;
+	export const PLINK_PROTOCOL: string;
+	export const OPENCODE: string;
+	export const OPENCODE_PID: string;
 	export const ORIGINAL_PATH: string;
 	export const ORIGINAL_TEMP: string;
 	export const ORIGINAL_TMP: string;
@@ -132,7 +132,6 @@ declare module '$env/static/private' {
 	export const SSH_ASKPASS: string;
 	export const PKG_CONFIG_PATH: string;
 	export const PKG_CONFIG_SYSTEM_INCLUDE_PATH: string;
-	export const PLINK_PROTOCOL: string;
 	export const __COMPAT_LAYER: string;
 	export const PROCESSOR_ARCHITECTURE: string;
 	export const PROCESSOR_IDENTIFIER: string;
@@ -254,16 +253,17 @@ declare module '$env/static/public' {
  */
 declare module '$env/dynamic/private' {
 	export const env: {
-		PORT: string;
 		BUILD_DB: string;
 		DATABASE_URI_API: string;
-		JWT_KEY: string;
 		EXPOSE_DEV_API: string;
-		EXPOSE_QA_API: string;
 		EXPOSE_PROD_API: string;
-		PATH_APP_FUNCTIONS: string;
+		EXPOSE_QA_API: string;
 		EXPRESSJS_SERVER_TIMEOUT: string;
+		JWT_KEY: string;
 		MAX_FILE_SIZE_UPLOAD: string;
+		PATH_APP_FUNCTIONS: string;
+		PORT: string;
+		AGENT: string;
 		EFC_13460_1592913036: string;
 		npm_config_global_prefix: string;
 		VSCODE_GIT_ASKPASS_EXTRA_ARGS: string;
@@ -276,15 +276,15 @@ declare module '$env/dynamic/private' {
 		NODE_ENV: string;
 		ALLUSERSPROFILE: string;
 		APPDATA: string;
-		MSYSTEM_CARCH: string;
-		LOGONSERVER: string;
-		COMMONPROGRAMFILES: string;
 		CLAUDE_CODE_SSE_PORT: string;
 		COLOR: string;
 		EDITOR: string;
 		npm_config_local_prefix: string;
 		CommonProgramW6432: string;
 		COLORTERM: string;
+		MSYSTEM_CARCH: string;
+		LOGONSERVER: string;
+		COMMONPROGRAMFILES: string;
 		GIT_ASKPASS: string;
 		npm_config_userconfig: string;
 		PROMPT: string;
@@ -302,8 +302,6 @@ declare module '$env/dynamic/private' {
 		ESET_OPTIONS: string;
 		EXEPATH: string;
 		npm_config_noproxy: string;
-		NPM_CLI_JS: string;
-		NPM_PREFIX_JS: string;
 		FPS_BROWSER_APP_PROFILE_STRING: string;
 		FPS_BROWSER_USER_PROFILE_STRING: string;
 		GOPATH: string;
@@ -327,11 +325,9 @@ declare module '$env/dynamic/private' {
 		MSYSTEM: string;
 		MSYSTEM_PREFIX: string;
 		NODE: string;
-		NODE_EXE: string;
 		VSCODE_GIT_IPC_HANDLE: string;
 		npm_command: string;
 		npm_config_cache: string;
-		NPM_PREFIX_NPM_CLI_JS: string;
 		npm_config_prefix: string;
 		npm_lifecycle_script: string;
 		npm_package_name: string;
@@ -339,6 +335,9 @@ declare module '$env/dynamic/private' {
 		NUMBER_OF_PROCESSORS: string;
 		OneDrive: string;
 		OneDriveCommercial: string;
+		PLINK_PROTOCOL: string;
+		OPENCODE: string;
+		OPENCODE_PID: string;
 		ORIGINAL_PATH: string;
 		ORIGINAL_TEMP: string;
 		ORIGINAL_TMP: string;
@@ -348,7 +347,6 @@ declare module '$env/dynamic/private' {
 		SSH_ASKPASS: string;
 		PKG_CONFIG_PATH: string;
 		PKG_CONFIG_SYSTEM_INCLUDE_PATH: string;
-		PLINK_PROTOCOL: string;
 		__COMPAT_LAYER: string;
 		PROCESSOR_ARCHITECTURE: string;
 		PROCESSOR_IDENTIFIER: string;

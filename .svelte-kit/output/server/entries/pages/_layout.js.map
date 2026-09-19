@@ -1,1 +1,1 @@
-{"version":3,"file":"_layout.js","sources":["../../../../../src/routes/+layout.js"],"sourcesContent":["export const prerender = true;\r\nexport const trailingSlash = 'always';\r\n\r\n"],"names":[],"mappings":"AAAY,MAAC,YAAY;AACb,MAAC,gBAAgB;"}
+{"version":3,"file":"_layout.js","names":[],"sources":["../../../../../src/routes/+layout.js"],"sourcesContent":["export const prerender = true;\r\nexport const trailingSlash = 'always';\r\n\r\n"],"mappings":";AAAA,IAAa,YAAY;AACzB,IAAa,gBAAgB"}
