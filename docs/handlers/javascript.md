@@ -108,44 +108,44 @@ Quick decision (at a glance):
 Batch example for internal endpoint fan-out (40 calls in 5 parallel workers):
 
 ```javascript
-const soapFetch = uFetchAutoEnv.create("/api/demo/ofapi/soap/example01/auto");
+const soapFetch = uFetchAutoEnv.create('/api/demo/ofapi/soap/example01/auto');
 
 const items = Array.from({ length: 40 }, (_, i) => ({ dNum: i + 1 }));
 
 const batchResults = await soapFetch.batch({
-  method: "GET",
-  items,
-  config: {
-    concurrency: 5,
-  },
+	method: 'GET',
+	items,
+	config: {
+		concurrency: 5
+	}
 });
 
 const responses = await Promise.all(
-  batchResults.map(async (entry, index) => {
-    if (entry.isError) {
-      return {
-        index,
-        input: items[index],
-        isError: true,
-        httpCode: entry.httpCode,
-        error: entry.error?.message || String(entry.error),
-      };
-    }
+	batchResults.map(async (entry, index) => {
+		if (entry.isError) {
+			return {
+				index,
+				input: items[index],
+				isError: true,
+				httpCode: entry.httpCode,
+				error: entry.error?.message || String(entry.error)
+			};
+		}
 
-    return {
-      index,
-      input: items[index],
-      isError: false,
-      httpCode: entry.httpCode,
-      data: entry.data,
-    };
-  }),
+		return {
+			index,
+			input: items[index],
+			isError: false,
+			httpCode: entry.httpCode,
+			data: entry.data
+		};
+	})
 );
 
 $_RETURN_DATA_ = {
-  total: items.length,
-  concurrency: 5,
-  responses,
+	total: items.length,
+	concurrency: 5,
+	responses
 };
 ```
 
@@ -162,7 +162,7 @@ $_RETURN_DATA_ = {
 // Read query params, call another endpoint, return merged result
 const { user_name, account_id } = request.query;
 
-const uF = uFetchAutoEnv.auto("/api/myapp/db/user/auto", true);
+const uF = uFetchAutoEnv.auto('/api/myapp/db/user/auto', true);
 const resp = await uF.get({ data: { user_name, account_id } });
 $_RETURN_DATA_ = await resp.json();
 ```
@@ -173,7 +173,7 @@ $_RETURN_DATA_ = await resp.json();
 // Read POST body fields
 const { name, status } = request.body;
 
-const uF = uFetchAutoEnv.auto("/api/myapp/db/entity/auto", true);
+const uF = uFetchAutoEnv.auto('/api/myapp/db/entity/auto', true);
 const resp = await uF.post({ data: { bind: { name, status } } });
 $_RETURN_DATA_ = await resp.json();
 ```
@@ -182,28 +182,27 @@ $_RETURN_DATA_ = await resp.json();
 
 ```javascript
 const result = await askIAWithMCP({
-  ai: {
-    modelProvider: "ollama",
-    model: "qwen2.5-coder:1.5b",
-    baseUrl: "http://localhost:11434",
-    temperature: 0.1,
-    timeout: 1800000,
-    responseTimeout: 120000,
-  },
-  mcpServers: [
-    {
-      name: "openfusion_system_remote_prd",
-      url: "https://example.com/api/system/mcp/server/prd",
-    },
-  ],
-  prompts: [
-    {
-      role: "user",
-      content:
-        "Lista las aplicaciones disponibles usando las herramientas MCP si hace falta.",
-    },
-  ],
-  includeDiagnostics: true,
+	ai: {
+		modelProvider: 'ollama',
+		model: 'qwen2.5-coder:1.5b',
+		baseUrl: 'http://localhost:11434',
+		temperature: 0.1,
+		timeout: 1800000,
+		responseTimeout: 120000
+	},
+	mcpServers: [
+		{
+			name: 'openfusion_system_remote_prd',
+			url: 'https://example.com/api/system/mcp/server/prd'
+		}
+	],
+	prompts: [
+		{
+			role: 'user',
+			content: 'Lista las aplicaciones disponibles usando las herramientas MCP si hace falta.'
+		}
+	],
+	includeDiagnostics: true
 });
 
 $_RETURN_DATA_ = result;
@@ -236,28 +235,28 @@ Recommended `request.body` convention for AI endpoints:
 
 ```json
 {
-  "ai": {
-    "modelProvider": "ollama",
-    "model": "qwen2.5-coder:1.5b",
-    "baseUrl": "http://localhost:11434",
-    "temperature": 0.1,
-    "timeout": 1800000,
-    "responseTimeout": 120000
-  },
-  "mcpServers": [
-    {
-      "name": "openfusion_system_remote_prd",
-      "url": "https://example.com/api/system/mcp/server/prd"
-    }
-  ],
-  "prompts": [
-    {
-      "role": "user",
-      "content": "Explica que aplicaciones hay disponibles."
-    }
-  ],
-  "includeDiagnostics": false,
-  "maxToolRounds": 6
+	"ai": {
+		"modelProvider": "ollama",
+		"model": "qwen2.5-coder:1.5b",
+		"baseUrl": "http://localhost:11434",
+		"temperature": 0.1,
+		"timeout": 1800000,
+		"responseTimeout": 120000
+	},
+	"mcpServers": [
+		{
+			"name": "openfusion_system_remote_prd",
+			"url": "https://example.com/api/system/mcp/server/prd"
+		}
+	],
+	"prompts": [
+		{
+			"role": "user",
+			"content": "Explica que aplicaciones hay disponibles."
+		}
+	],
+	"includeDiagnostics": false,
+	"maxToolRounds": 6
 }
 ```
 
@@ -267,25 +266,22 @@ Reusable JS endpoint snippet:
 const body = request.body || {};
 
 const ai = {
-  modelProvider: body.ai?.modelProvider ?? "ollama",
-  model: body.ai?.model ?? "qwen2.5-coder:1.5b",
-  baseUrl: body.ai?.baseUrl ?? "http://localhost:11434",
-  temperature: body.ai?.temperature ?? 0.1,
-  timeout: body.ai?.timeout ?? 1800000,
-  responseTimeout:
-    body.ai?.responseTimeout ??
-    body.ai?.responseTimeoutMs ??
-    body.ai?.runTimeout ??
-    120000,
-  apiKey: body.ai?.apiKey,
+	modelProvider: body.ai?.modelProvider ?? 'ollama',
+	model: body.ai?.model ?? 'qwen2.5-coder:1.5b',
+	baseUrl: body.ai?.baseUrl ?? 'http://localhost:11434',
+	temperature: body.ai?.temperature ?? 0.1,
+	timeout: body.ai?.timeout ?? 1800000,
+	responseTimeout:
+		body.ai?.responseTimeout ?? body.ai?.responseTimeoutMs ?? body.ai?.runTimeout ?? 120000,
+	apiKey: body.ai?.apiKey
 };
 
 const result = await askIAWithMCP({
-  ai,
-  mcpServers: Array.isArray(body.mcpServers) ? body.mcpServers : [],
-  prompts: body.prompts ?? body.prompt ?? body.messages,
-  includeDiagnostics: body.includeDiagnostics ?? false,
-  maxToolRounds: body.maxToolRounds ?? 6,
+	ai,
+	mcpServers: Array.isArray(body.mcpServers) ? body.mcpServers : [],
+	prompts: body.prompts ?? body.prompt ?? body.messages,
+	includeDiagnostics: body.includeDiagnostics ?? false,
+	maxToolRounds: body.maxToolRounds ?? 6
 });
 
 $_RETURN_DATA_ = result;
@@ -298,33 +294,32 @@ const body = request.body || {};
 const prompts = body.prompts ?? body.prompt ?? body.messages;
 
 if (!prompts) {
-  // `data.log` queda solo en el log; `data.public` es lo único que ve quien llama.
-  $_EXCEPTION_({
-    message: "The request body must include prompts, prompt, or messages.",
-    statusCode: 400,
-    data: { log: { body }, public: { missing: "prompts | prompt | messages" } },
-  });
+	// `data.log` queda solo en el log; `data.public` es lo único que ve quien llama.
+	$_EXCEPTION_({
+		message: 'The request body must include prompts, prompt, or messages.',
+		statusCode: 400,
+		data: { log: { body }, public: { missing: 'prompts | prompt | messages' } }
+	});
 }
 
-const ai = $_APP_VARS_["$_VAR_AI_DEFAULTS"];
-const mcpServers = $_APP_VARS_["$_VAR_MCP_SERVERS_DEFAULT"] ?? [];
+const ai = $_APP_VARS_['$_VAR_AI_DEFAULTS'];
+const mcpServers = $_APP_VARS_['$_VAR_MCP_SERVERS_DEFAULT'] ?? [];
 
-if (!ai || typeof ai !== "object") {
-  // Las variables de aplicación llevan credenciales: jamás en `public`.
-  $_EXCEPTION_({
-    message:
-      "Application variable $_VAR_AI_DEFAULTS is required and must be an object.",
-    statusCode: 500,
-    data: { log: { appVars: $_APP_VARS_ } },
-  });
+if (!ai || typeof ai !== 'object') {
+	// Las variables de aplicación llevan credenciales: jamás en `public`.
+	$_EXCEPTION_({
+		message: 'Application variable $_VAR_AI_DEFAULTS is required and must be an object.',
+		statusCode: 500,
+		data: { log: { appVars: $_APP_VARS_ } }
+	});
 }
 
 const result = await askIAWithMCP({
-  ai,
-  mcpServers,
-  prompts,
-  includeDiagnostics: body.includeDiagnostics ?? true,
-  maxToolRounds: body.maxToolRounds ?? 6,
+	ai,
+	mcpServers,
+	prompts,
+	includeDiagnostics: body.includeDiagnostics ?? true,
+	maxToolRounds: body.maxToolRounds ?? 6
 });
 
 $_RETURN_DATA_ = result;
@@ -340,7 +335,7 @@ Discovery-only snippet for MCP servers:
 
 ```javascript
 const tools = await listMcpTools({
-  mcpServers: request.body?.mcpServers ?? [],
+	mcpServers: request.body?.mcpServers ?? []
 });
 
 $_RETURN_DATA_ = tools;
@@ -380,18 +375,18 @@ const items = request.body.items || [];
 let total = 0;
 
 for (const item of items) {
-  total += item.price * item.quantity;
+	total += item.price * item.quantity;
 }
 
 // Add a custom header
 let headers = new Map();
-headers.set("X-Calculated-Total", total.toString());
+headers.set('X-Calculated-Total', total.toString());
 
 $_CUSTOM_HEADERS_ = headers;
 $_RETURN_DATA_ = {
-  count: items.length,
-  totalValue: total,
-  currency: "USD",
+	count: items.length,
+	totalValue: total,
+	currency: 'USD'
 };
 ```
 
@@ -403,20 +398,20 @@ $_RETURN_DATA_ = {
 const sheets = await request_xlsx_body_to_json(request);
 
 if (Array.isArray(sheets) && sheets.length > 0) {
-  const rows = sheets[0]?.sheets[0]?.data;
+	const rows = sheets[0]?.sheets[0]?.data;
 
-  // Multipart fields are accessed via request.body
-  const groupIdType = request.body?.groupIdType?.value;
-  const groupId = request.body?.groupId?.value;
+	// Multipart fields are accessed via request.body
+	const groupIdType = request.body?.groupIdType?.value;
+	const groupId = request.body?.groupId?.value;
 
-  // Process rows and call downstream endpoint
-  const uF = uFetchAutoEnv.auto("/api/myapp/data/import/auto", true);
-  const resp = await uF.post({
-    data: { groupIdType, groupId, rows },
-  });
-  $_RETURN_DATA_ = await resp.json();
+	// Process rows and call downstream endpoint
+	const uF = uFetchAutoEnv.auto('/api/myapp/data/import/auto', true);
+	const resp = await uF.post({
+		data: { groupIdType, groupId, rows }
+	});
+	$_RETURN_DATA_ = await resp.json();
 } else {
-  $_RETURN_DATA_ = { error: "No rows were found in the uploaded workbook." };
+	$_RETURN_DATA_ = { error: 'No rows were found in the uploaded workbook.' };
 }
 ```
 
@@ -424,19 +419,16 @@ if (Array.isArray(sheets) && sheets.length > 0) {
 
 ```javascript
 // Generate an XLSX buffer and send it as a download
-const rows = [{ column_1: "value_1", column_2: 100 }];
+const rows = [{ column_1: 'value_1', column_2: 100 }];
 const worksheet = xlsx_style.utils.json_to_sheet(rows);
 const workbook = xlsx_style.utils.book_new();
-xlsx_style.utils.book_append_sheet(workbook, worksheet, "Data");
+xlsx_style.utils.book_append_sheet(workbook, worksheet, 'Data');
 
-const buffer = xlsx_style.write(workbook, { type: "buffer", bookType: "xlsx" });
+const buffer = xlsx_style.write(workbook, { type: 'buffer', bookType: 'xlsx' });
 
 $_CUSTOM_HEADERS_ = new Map([
-  [
-    "Content-Type",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  ],
-  ["Content-Disposition", 'attachment; filename="report.xlsx"'],
+	['Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+	['Content-Disposition', 'attachment; filename="report.xlsx"']
 ]);
 $_RETURN_DATA_ = buffer;
 ```
@@ -448,10 +440,10 @@ The App Var `$_VAR_EMAIL_TRANSPORT` holds the `nodemailer` transporter config. A
 ```javascript
 const transporter = nodemailer.createTransport($_VAR_EMAIL_TRANSPORT);
 const info = await transporter.sendMail({
-  from: request.body.from,
-  to: request.body.to,
-  subject: request.body.subject,
-  html: request.body.html,
+	from: request.body.from,
+	to: request.body.to,
+	subject: request.body.subject,
+	html: request.body.html
 });
 $_RETURN_DATA_ = { messageId: info.messageId, accepted: info.accepted };
 ```
@@ -462,27 +454,21 @@ The `ldap` variable exposes the Promise-based `ldapts` client. Read the director
 
 ```javascript
 const client = new ldap.Client({
-  url: $_APP_VARS_["$_VAR_LDAP_URL"], // e.g. 'ldaps://dc.example.com:636'
+	url: $_APP_VARS_['$_VAR_LDAP_URL'] // e.g. 'ldaps://dc.example.com:636'
 });
 
 try {
-  await client.bind(
-    $_APP_VARS_["$_VAR_LDAP_BIND_DN"],
-    $_APP_VARS_["$_VAR_LDAP_BIND_PASSWORD"],
-  );
+	await client.bind($_APP_VARS_['$_VAR_LDAP_BIND_DN'], $_APP_VARS_['$_VAR_LDAP_BIND_PASSWORD']);
 
-  const { searchEntries } = await client.search(
-    $_APP_VARS_["$_VAR_LDAP_BASE_DN"],
-    {
-      scope: "sub",
-      filter: "(objectClass=person)",
-      attributes: ["cn", "mail", "distinguishedName"],
-      sizeLimit: 50,
-    },
-  );
-  $_RETURN_DATA_ = searchEntries;
+	const { searchEntries } = await client.search($_APP_VARS_['$_VAR_LDAP_BASE_DN'], {
+		scope: 'sub',
+		filter: '(objectClass=person)',
+		attributes: ['cn', 'mail', 'distinguishedName'],
+		sizeLimit: 50
+	});
+	$_RETURN_DATA_ = searchEntries;
 } finally {
-  await client.unbind();
+	await client.unbind();
 }
 ```
 
@@ -491,15 +477,15 @@ For an authentication check, find the user DN first and then `bind()` with that 
 **Orchestration — call multiple internal endpoints and merge results**
 
 ```javascript
-const urlAccountSummary = "/api/myapp/db/account_summary/auto";
-const urlTeamMembers = "/api/myapp/db/team_members/auto";
+const urlAccountSummary = '/api/myapp/db/account_summary/auto';
+const urlTeamMembers = '/api/myapp/db/team_members/auto';
 
 const uF1 = uFetchAutoEnv.auto(urlAccountSummary, true);
 const uF2 = uFetchAutoEnv.auto(urlTeamMembers, true);
 
 const [resp1, resp2] = await Promise.all([
-  uF1.get({ data: request.query }),
-  uF2.get({ data: request.query }),
+	uF1.get({ data: request.query }),
+	uF2.get({ data: request.query })
 ]);
 
 const accountSummary = await resp1.json();

@@ -39,6 +39,6 @@ declare module "$app/types" {
 		};
 		Pathname(): "/" | "/openfusionapi/";
 		ResolvedPathname(): `${"" | `/${string}`}${ReturnType<AppTypes['Pathname']>}`;
-		Asset(): "/android-chrome-192x192.png" | "/android-chrome-512x512.png" | "/apple-touch-icon.png" | "/favicon-16x16.png" | "/favicon-32x32.png" | "/favicon.ico" | "/favicon.png" | "/icono01.png" | "/landing/screenshot.png" | string & {};
+		Asset(): "/admin-ui/apiclients.png" | "/admin-ui/apikeys.png" | "/admin-ui/basic.png" | "/admin-ui/bots.png" | "/admin-ui/dashboard.png" | "/admin-ui/endpoints.png" | "/admin-ui/logs.png" | "/admin-ui/system-users.png" | "/admin-ui/tasks.png" | "/admin-ui/variables.png" | "/android-chrome-192x192.png" | "/android-chrome-512x512.png" | "/apple-touch-icon.png" | "/favicon-16x16.png" | "/favicon-32x32.png" | "/favicon.ico" | "/favicon.png" | "/icono01.png" | "/landing/screenshot.png" | string & {};
 	}
 }

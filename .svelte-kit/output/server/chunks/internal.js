@@ -6,7 +6,11 @@ var initial = {
 	base,
 	assets
 };
-initial.base;
+/**
+* `base` could be overridden during rendering to be relative;
+* this one's the original non-relative base path
+*/
+var initial_base = initial.base;
 /**
 * @param {{ base: string, assets: string }} paths
 */
@@ -28,6 +32,6 @@ function set_prerendering() {
 	prerendering = true;
 }
 //#endregion
-export { assets as a, reset as c, app_dir as i, set_assets as l, set_building as n, base as o, set_prerendering as r, override as s, prerendering as t };
+export { assets as a, override as c, app_dir as i, reset as l, set_building as n, base as o, set_prerendering as r, initial_base as s, prerendering as t, set_assets as u };
 
 //# sourceMappingURL=internal.js.map

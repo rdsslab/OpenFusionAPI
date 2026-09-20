@@ -150,22 +150,22 @@ Every property you define in `json_schema.in` becomes a **named parameter** the 
 
 ```json
 {
-  "title": "AccountFilter",
-  "type": "object",
-  "required": ["account_id", "account_type"],
-  "additionalProperties": false,
-  "properties": {
-    "account_id": {
-      "type": "string",
-      "minLength": 1,
-      "description": "Unique account identifier."
-    },
-    "account_type": {
-      "type": "string",
-      "enum": ["COMPANY", "PERSON", "PARTNER"],
-      "description": "Identifier category for the account."
-    }
-  }
+	"title": "AccountFilter",
+	"type": "object",
+	"required": ["account_id", "account_type"],
+	"additionalProperties": false,
+	"properties": {
+		"account_id": {
+			"type": "string",
+			"minLength": 1,
+			"description": "Unique account identifier."
+		},
+		"account_type": {
+			"type": "string",
+			"enum": ["COMPANY", "PERSON", "PARTNER"],
+			"description": "Identifier category for the account."
+		}
+	}
 }
 ```
 

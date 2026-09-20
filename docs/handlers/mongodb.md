@@ -27,13 +27,13 @@ La configuración del handler se puede estructurar de varias formas en el objeto
 
 ```json
 {
-  "config": {
-    "uri": "mongodb+srv://user:password@cluster.mongodb.net/my_database?appName=Cluster0",
-    "options": {
-      "ssl": true
-    }
-  },
-  "code": " ... javascript logic ... "
+	"config": {
+		"uri": "mongodb+srv://user:password@cluster.mongodb.net/my_database?appName=Cluster0",
+		"options": {
+			"ssl": true
+		}
+	},
+	"code": " ... javascript logic ... "
 }
 ```
 
@@ -43,17 +43,17 @@ O directamente como una cadena si solo se requiere la URI de conexión.
 
 ```json
 {
-  "config": {
-    "host": "localhost",
-    "port": 27017,
-    "dbName": "my_database",
-    "user": "admin",
-    "pass": "secret",
-    "options": {
-      "useNewUrlParser": true
-    }
-  },
-  "code": " ... javascript logic ... "
+	"config": {
+		"host": "localhost",
+		"port": 27017,
+		"dbName": "my_database",
+		"user": "admin",
+		"pass": "secret",
+		"options": {
+			"useNewUrlParser": true
+		}
+	},
+	"code": " ... javascript logic ... "
 }
 ```
 
@@ -72,13 +72,10 @@ The `code` property in the JSON config is treated as the body of an async functi
 // Access existing models or define temporary ones (carefully)
 // Note: Mongoose models are usually pre-defined in the app context.
 
-const result = await mongoose.connection.db
-  .collection("users")
-  .find({})
-  .toArray();
+const result = await mongoose.connection.db.collection('users').find({}).toArray();
 
 return {
-  data: result,
+	data: result
 };
 ```
 

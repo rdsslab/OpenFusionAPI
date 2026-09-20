@@ -37,17 +37,17 @@ SELECT * FROM users WHERE id = :id
 
 ```json
 {
-  "config": {
-    "database": "my_db",
-    "username": "db_user",
-    "password": "db_password",
-    "options": {
-      "host": "localhost",
-      "port": 5432,
-      "dialect": "postgres"
-    }
-  },
-  "query_type": "SELECT"
+	"config": {
+		"database": "my_db",
+		"username": "db_user",
+		"password": "db_password",
+		"options": {
+			"host": "localhost",
+			"port": 5432,
+			"dialect": "postgres"
+		}
+	},
+	"query_type": "SELECT"
 }
 ```
 
@@ -126,10 +126,10 @@ In the SQL, access with `$account_name` and `$account_id`.
 
 ```json
 {
-  "replacements": {
-    "account_name": "acme",
-    "account_id": 1001
-  }
+	"replacements": {
+		"account_name": "acme",
+		"account_id": 1001
+	}
 }
 ```
 
@@ -177,14 +177,14 @@ You can override or provide connection details at runtime by sending a `connecti
 
 ```json
 {
-  "connection": {
-    "database": "tenant_123",
-    "username": "custom_user",
-    "password": "custom_password"
-  },
-  "bind": {
-    "id": 50
-  }
+	"connection": {
+		"database": "tenant_123",
+		"username": "custom_user",
+		"password": "custom_password"
+	},
+	"bind": {
+		"id": 50
+	}
 }
 ```
 
@@ -203,17 +203,17 @@ Endpoint `custom_data`:
 
 ```json
 {
-  "config": {
-    "database": "crm",
-    "username": "readonly",
-    "password": "secret",
-    "options": {
-      "host": "db.internal",
-      "port": 5432,
-      "dialect": "postgres"
-    }
-  },
-  "query_type": "SELECT"
+	"config": {
+		"database": "crm",
+		"username": "readonly",
+		"password": "secret",
+		"options": {
+			"host": "db.internal",
+			"port": 5432,
+			"dialect": "postgres"
+		}
+	},
+	"query_type": "SELECT"
 }
 ```
 
@@ -225,8 +225,8 @@ curl -X GET "https://your-server.com/api/sql/customers?country=USA"
 
 ```json
 [
-  { "id": 1, "name": "Acme Corp", "country": "USA" },
-  { "id": 2, "name": "Globex", "country": "USA" }
+	{ "id": 1, "name": "Acme Corp", "country": "USA" },
+	{ "id": 2, "name": "Globex", "country": "USA" }
 ]
 ```
 
@@ -252,10 +252,10 @@ WHERE status = :status
 
 ```json
 {
-  "replacements": {
-    "status": "OPEN",
-    "country": "US"
-  }
+	"replacements": {
+		"status": "OPEN",
+		"country": "US"
+	}
 }
 ```
 
@@ -363,12 +363,12 @@ END CATCH
 
 ```json
 {
-  "bind": {
-    "id": null,
-    "name": "Sample Entity",
-    "status": "A",
-    "updated_by": "system_admin"
-  }
+	"bind": {
+		"id": null,
+		"name": "Sample Entity",
+		"status": "A",
+		"updated_by": "system_admin"
+	}
 }
 ```
 

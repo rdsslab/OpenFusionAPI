@@ -45,8 +45,8 @@ The AppVar value must be a **JSON configuration object**, not a bare WSDL URL st
 
 ```json
 {
-  "wsdl": "https://example.com/service?wsdl",
-  "functionName": "SubmitOrder"
+	"wsdl": "https://example.com/service?wsdl",
+	"functionName": "SubmitOrder"
 }
 ```
 
@@ -60,12 +60,12 @@ For testing or simple integrations you can provide the config inline:
 
 ```json
 {
-  "wsdl": "https://www.dataaccess.com/webservicesserver/NumberConversion.wso?WSDL",
-  "options": {
-    "wsdl_options": {
-      "timeout": 5000
-    }
-  }
+	"wsdl": "https://www.dataaccess.com/webservicesserver/NumberConversion.wso?WSDL",
+	"options": {
+		"wsdl_options": {
+			"timeout": 5000
+		}
+	}
 }
 ```
 
@@ -75,8 +75,8 @@ By default the SOAP client sends envelopes to the `soap:address location` declar
 
 ```json
 {
-  "wsdl": "http://192.168.147.21/ServicioIntegradorQAS/servicioconsumo.asmx?WSDL",
-  "endpoint": "http://192.168.147.21/ServicioIntegradorQAS/servicioconsumo.asmx"
+	"wsdl": "http://192.168.147.21/ServicioIntegradorQAS/servicioconsumo.asmx?WSDL",
+	"endpoint": "http://192.168.147.21/ServicioIntegradorQAS/servicioconsumo.asmx"
 }
 ```
 
@@ -90,10 +90,10 @@ Send `functionName` and `RequestArgs` in the HTTP request body. `functionName` s
 
 ```json
 {
-  "functionName": "NumberToWords",
-  "RequestArgs": {
-    "ubiNum": 500
-  }
+	"functionName": "NumberToWords",
+	"RequestArgs": {
+		"ubiNum": 500
+	}
 }
 ```
 
@@ -114,14 +114,14 @@ Generic example of a mismatch that can confuse agents:
 
 ```json
 {
-  "ExampleService": {
-    "ExamplePort": {
-      "SubmitOrder": {
-        "input": "orderRequest",
-        "output": "orderResponse"
-      }
-    }
-  }
+	"ExampleService": {
+		"ExamplePort": {
+			"SubmitOrder": {
+				"input": "orderRequest",
+				"output": "orderResponse"
+			}
+		}
+	}
 }
 ```
 
@@ -147,8 +147,8 @@ This is passed to the HTTP client used by `node-soap` to fetch and parse the WSD
 
 ```json
 {
-  "wsdl": "https://example.com/service?wsdl",
-  "options": { "wsdl_options": { "timeout": 15000 } }
+	"wsdl": "https://example.com/service?wsdl",
+	"options": { "wsdl_options": { "timeout": 15000 } }
 }
 ```
 
@@ -171,10 +171,10 @@ The handler supports common SOAP security standards via configuration:
 
 ```json
 {
-  "BasicAuthSecurity": {
-    "User": "myuser",
-    "Password": "mypassword"
-  }
+	"BasicAuthSecurity": {
+		"User": "myuser",
+		"Password": "mypassword"
+	}
 }
 ```
 
@@ -201,7 +201,7 @@ Generic signs that the URL is **not** a real WSDL URL:
 
 ```json
 {
-  "BearerSecurity": "your_oauth_token_here"
+	"BearerSecurity": "your_oauth_token_here"
 }
 ```
 
@@ -216,7 +216,7 @@ To inspect a SOAP service and obtain a full description of its services, ports, 
 
 ```json
 {
-  "describe()": true
+	"describe()": true
 }
 ```
 
@@ -224,15 +224,15 @@ This returns the client description directly as a JSON response similar to the f
 
 ```json
 {
-  "MyService": {
-    "MyPort": {
-      "MyFunction": {
-        "input": {
-          "name": "string"
-        }
-      }
-    }
-  }
+	"MyService": {
+		"MyPort": {
+			"MyFunction": {
+				"input": {
+					"name": "string"
+				}
+			}
+		}
+	}
 }
 ```
 
@@ -281,9 +281,9 @@ Generic example:
 
 ```json
 {
-  "resource": "/soap/contracts/order-service/wsdl",
-  "method": "GET",
-  "handler": "TEXT"
+	"resource": "/soap/contracts/order-service/wsdl",
+	"method": "GET",
+	"handler": "TEXT"
 }
 ```
 
@@ -291,12 +291,12 @@ Generic example:
 
 ```json
 {
-  "wsdl": "https://your-server.example/api/demo/soap/contracts/order-service/wsdl/prd",
-  "functionName": "SubmitOrder",
-  "BasicAuthSecurity": {
-    "User": "service_user",
-    "Password": "service_password"
-  }
+	"wsdl": "https://your-server.example/api/demo/soap/contracts/order-service/wsdl/prd",
+	"functionName": "SubmitOrder",
+	"BasicAuthSecurity": {
+		"User": "service_user",
+		"Password": "service_password"
+	}
 }
 ```
 
@@ -321,34 +321,34 @@ This shows a production-ready SOAP endpoint pattern. The endpoint is also expose
 
 ```json
 {
-  "type": "object",
-  "required": ["functionName", "RequestArgs"],
-  "properties": {
-    "functionName": {
-      "type": "string",
-      "description": "SOAP method name to invoke"
-    },
-    "RequestArgs": {
-      "type": "object",
-      "required": ["groupId", "groupIdType", "billingCycleDay"],
-      "properties": {
-        "groupId": {
-          "type": "string",
-          "description": "Customer group identifier"
-        },
-        "groupIdType": {
-          "type": "string",
-          "description": "Customer group identifier type"
-        },
-        "billingCycleDay": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 31,
-          "description": "New billing cycle day"
-        }
-      }
-    }
-  }
+	"type": "object",
+	"required": ["functionName", "RequestArgs"],
+	"properties": {
+		"functionName": {
+			"type": "string",
+			"description": "SOAP method name to invoke"
+		},
+		"RequestArgs": {
+			"type": "object",
+			"required": ["groupId", "groupIdType", "billingCycleDay"],
+			"properties": {
+				"groupId": {
+					"type": "string",
+					"description": "Customer group identifier"
+				},
+				"groupIdType": {
+					"type": "string",
+					"description": "Customer group identifier type"
+				},
+				"billingCycleDay": {
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 31,
+					"description": "New billing cycle day"
+				}
+			}
+		}
+	}
 }
 ```
 

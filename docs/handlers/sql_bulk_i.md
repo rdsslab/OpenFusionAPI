@@ -34,17 +34,17 @@ The configuration must be a valid **JSON object**.
 
 ```json
 {
-  "table_name": "inventory.logs",
-  "ignoreDuplicates": true,
-  "config": {
-    "database": "warehouse_db",
-    "username": "writer_svc",
-    "password": "secure_password",
-    "options": {
-      "host": "192.168.1.50",
-      "dialect": "postgres"
-    }
-  }
+	"table_name": "inventory.logs",
+	"ignoreDuplicates": true,
+	"config": {
+		"database": "warehouse_db",
+		"username": "writer_svc",
+		"password": "secure_password",
+		"options": {
+			"host": "192.168.1.50",
+			"dialect": "postgres"
+		}
+	}
 }
 ```
 
@@ -61,11 +61,11 @@ The data to insert must be sent in the request (usually `POST` body) as an array
 
 ```json
 {
-  "data": [
-    { "id": 1, "item": "Widget A", "qty": 100 },
-    { "id": 2, "item": "Widget B", "qty": 50 },
-    { "id": 3, "item": "Widget C", "qty": 200 }
-  ]
+	"data": [
+		{ "id": 1, "item": "Widget A", "qty": 100 },
+		{ "id": 2, "item": "Widget B", "qty": 50 },
+		{ "id": 3, "item": "Widget C", "qty": 200 }
+	]
 }
 ```
 

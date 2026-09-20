@@ -215,12 +215,12 @@ The `params` payload shape:
 
 ```json
 {
-  "data": {
-    "id": 42
-  },
-  "headers": {
-    "x-source": "scheduler"
-  }
+	"data": {
+		"id": 42
+	},
+	"headers": {
+		"x-source": "scheduler"
+	}
 }
 ```
 

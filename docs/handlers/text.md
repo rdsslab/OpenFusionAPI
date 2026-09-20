@@ -30,10 +30,10 @@ Current configuration:
 
 ```json
 {
-  "code": "id,name,role\n1,Admin,SuperOFAPI\n2,User,Guest",
-  "custom_data": {
-    "mimeType": "text/csv"
-  }
+	"code": "id,name,role\n1,Admin,SuperOFAPI\n2,User,Guest",
+	"custom_data": {
+		"mimeType": "text/csv"
+	}
 }
 ```
 
@@ -41,10 +41,10 @@ Current configuration:
 
 ```json
 {
-  "code": "<h1>Maintenance Mode</h1><p>We will be back shortly.</p>",
-  "custom_data": {
-    "mimeType": "text/html"
-  }
+	"code": "<h1>Maintenance Mode</h1><p>We will be back shortly.</p>",
+	"custom_data": {
+		"mimeType": "text/html"
+	}
 }
 ```
 

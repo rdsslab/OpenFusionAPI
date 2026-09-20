@@ -49,17 +49,17 @@ Functions registered to be used by this handler must act on a specific object si
 ```javascript
 // Internal function signature
 async function myCustomFunction({
-  request, // Raw HTTP Request
-  user_data, // Merged Query & Body
-  reply, // Fastify Reply object
-  server_data, // Internal Server Context
-  signal, // AbortSignal (for timeout handling)
+	request, // Raw HTTP Request
+	user_data, // Merged Query & Body
+	reply, // Fastify Reply object
+	server_data, // Internal Server Context
+	signal // AbortSignal (for timeout handling)
 }) {
-  // Logic here...
-  return {
-    code: 200,
-    data: { result: "success" },
-  };
+	// Logic here...
+	return {
+		code: 200,
+		data: { result: 'success' }
+	};
 }
 ```
 

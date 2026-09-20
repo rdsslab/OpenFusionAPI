@@ -51,10 +51,10 @@ SELECT * FROM YOUR_TABLE WHERE FIELD_01 = $value_01 AND FIELD_02 IN (:list_your_
 
 ```json
 {
-  "params": {
-    "value_01": 1234,
-    "list_your_values": ["0002000157", "0002000158"]
-  }
+	"params": {
+		"value_01": 1234,
+		"list_your_values": ["0002000157", "0002000158"]
+	}
 }
 ```
 
@@ -99,11 +99,11 @@ Connection options follow the `@sap/hana-client` configuration model. Typical mi
 
 ```json
 {
-  "host": "hana-server.company.local",
-  "port": "30015",
-  "user": "SYSTEM",
-  "password": "manager",
-  "pooling": true
+	"host": "hana-server.company.local",
+	"port": "30015",
+	"user": "SYSTEM",
+	"password": "manager",
+	"pooling": true
 }
 ```
 

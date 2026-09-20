@@ -1,6 +1,6 @@
 {
 	"name": "openfusionapi",
-	"version": "13.0.0",
+	"version": "14.0.0",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "node --max-old-space-size=6144 ./node_modules/vite/bin/vite.js build",
@@ -24,6 +24,7 @@
 		"eslint": "^10.11.0",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.23.0",
+		"globals": "^16.5.0",
 		"prettier": "^3.9.8",
 		"prettier-plugin-svelte": "^4.1.1",
 		"svelte": "^5.57.1",

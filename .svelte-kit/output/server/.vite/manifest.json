@@ -44,6 +44,19 @@
       "_server.js"
     ]
   },
+  "_paths.js": {
+    "file": "chunks/paths.js",
+    "name": "paths",
+    "imports": [
+      "_internal.js",
+      "_internal2.js",
+      "_routing.js"
+    ]
+  },
+  "_routing.js": {
+    "file": "chunks/routing.js",
+    "name": "routing"
+  },
   "_server.js": {
     "file": "chunks/server.js",
     "name": "server"
@@ -102,11 +115,11 @@
     "imports": [
       "_index-server.js",
       "_shared.js",
-      "_internal.js",
-      "_internal2.js",
-      "_exports.js",
+      "_routing.js",
       "_server.js",
-      "_index-server2.js"
+      "_index-server2.js",
+      "_exports.js",
+      "_paths.js"
     ]
   },
   "node_modules/@sveltejs/kit/src/runtime/components/svelte-5/layout.svelte": {
@@ -128,8 +141,9 @@
       "_internal.js",
       "_utils.js",
       "_internal2.js",
-      "_exports.js",
+      "_routing.js",
       "_index-server2.js",
+      "_exports.js",
       "_env.js"
     ]
   },
@@ -145,10 +159,12 @@
     "src": "src/routes/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_server.js"
+      "_index-server.js",
+      "_server.js",
+      "_paths.js"
     ],
     "css": [
-      "_app/immutable/assets/_page.DSJ3x47I.css"
+      "_app/immutable/assets/_page.B0kWIhdc.css"
     ]
   },
   "src/routes/openfusionapi/+page.svelte": {
