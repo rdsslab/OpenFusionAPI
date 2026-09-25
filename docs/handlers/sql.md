@@ -95,7 +95,7 @@ THROW 53001, 'The account_name parameter is required.', 1;
 SELECT *
 FROM dbo.accounts
 WHERE account_name = NULLIF(LTRIM(RTRIM($account_name)), '')
-    AND account_id = TRY_CONVERT(INT, NULLIF(LTRIM(RTRIM($account_id)), ''));
+AND account_id = TRY_CONVERT(INT, NULLIF(LTRIM(RTRIM($account_id)), ''));
 
 ````
 **Request (GET)**: `?account_name=acme&account_id=1001`
