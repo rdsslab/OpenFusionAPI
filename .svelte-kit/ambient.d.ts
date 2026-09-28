@@ -61,7 +61,6 @@ declare module '$env/static/private' {
 	export const npm_lifecycle_script: string;
 	export const TERM_PROGRAM: string;
 	export const LS_COLORS: string;
-	export const XDG_SESSION_DESKTOP: string;
 	export const npm_config_userconfig: string;
 	export const COLORTERM: string;
 	export const npm_config_user_agent: string;
@@ -120,7 +119,6 @@ declare module '$env/static/private' {
 	export const LC_PAPER: string;
 	export const LC_TELEPHONE: string;
 	export const XDG_SESSION_CLASS: string;
-	export const OPENCODE_TERMINAL: string;
 	export const XDG_SESSION_ID: string;
 	export const npm_config_cache: string;
 	export const FC_FONTATIONS: string;
@@ -136,6 +134,7 @@ declare module '$env/static/private' {
 	export const VSCODE_GIT_ASKPASS_EXTRA_ARGS: string;
 	export const NVM_BIN: string;
 	export const XMODIFIERS: string;
+	export const XDG_SESSION_DESKTOP: string;
 }
 
 /**
@@ -245,7 +244,6 @@ declare module '$env/dynamic/private' {
 		npm_lifecycle_script: string;
 		TERM_PROGRAM: string;
 		LS_COLORS: string;
-		XDG_SESSION_DESKTOP: string;
 		npm_config_userconfig: string;
 		COLORTERM: string;
 		npm_config_user_agent: string;
@@ -304,7 +302,6 @@ declare module '$env/dynamic/private' {
 		LC_PAPER: string;
 		LC_TELEPHONE: string;
 		XDG_SESSION_CLASS: string;
-		OPENCODE_TERMINAL: string;
 		XDG_SESSION_ID: string;
 		npm_config_cache: string;
 		FC_FONTATIONS: string;
@@ -320,6 +317,7 @@ declare module '$env/dynamic/private' {
 		VSCODE_GIT_ASKPASS_EXTRA_ARGS: string;
 		NVM_BIN: string;
 		XMODIFIERS: string;
+		XDG_SESSION_DESKTOP: string;
 		[key: `PUBLIC_${string}`]: undefined;
 		[key: `${string}`]: string | undefined;
 	}
