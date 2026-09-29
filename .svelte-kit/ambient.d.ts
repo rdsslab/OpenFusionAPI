@@ -38,6 +38,8 @@
  * The above values will be the same _even if_ different values for `ENVIRONMENT` or `PUBLIC_BASE_URL` are set at runtime, as they are statically replaced in your code with their build time values.
  */
 declare module '$env/static/private' {
+	export const BUILD_DB: string;
+	export const JWT_KEY: string;
 	export const SVELTEKIT_FORK: string;
 	export const NODE_ENV: string;
 	export const EDITOR: string;
@@ -59,6 +61,7 @@ declare module '$env/static/private' {
 	export const npm_lifecycle_script: string;
 	export const TERM_PROGRAM: string;
 	export const LS_COLORS: string;
+	export const XDG_SESSION_DESKTOP: string;
 	export const XRDP_PULSE_SINK_SOCKET: string;
 	export const USER: string;
 	export const XRDP_SOCKET_PATH: string;
@@ -67,6 +70,7 @@ declare module '$env/static/private' {
 	export const npm_config_userconfig: string;
 	export const COLORTERM: string;
 	export const npm_config_user_agent: string;
+	export const OLDPWD: string;
 	export const LC_ADDRESS: string;
 	export const CLUTTER_IM_MODULE: string;
 	export const SSH_AUTH_SOCK: string;
@@ -83,10 +87,9 @@ declare module '$env/static/private' {
 	export const npm_config_prefix: string;
 	export const NVM_INC: string;
 	export const PATH: string;
-	export const VSCODE_GIT_IPC_HANDLE: string;
-	export const GIO_LAUNCHED_DESKTOP_FILE_PID: string;
-	export const LC_PAPER: string;
-	export const LC_TELEPHONE: string;
+	export const TERM_PROGRAM_VERSION: string;
+	export const XDG_CONFIG_DIRS: string;
+	export const TERM: string;
 	export const QT_SCALE_FACTOR: string;
 	export const LC_MEASUREMENT: string;
 	export const npm_package_name: string;
@@ -108,9 +111,10 @@ declare module '$env/static/private' {
 	export const SHLVL: string;
 	export const DBUS_SESSION_BUS_ADDRESS: string;
 	export const npm_package_json: string;
-	export const TERM_PROGRAM_VERSION: string;
-	export const XDG_CONFIG_DIRS: string;
-	export const TERM: string;
+	export const VSCODE_GIT_IPC_HANDLE: string;
+	export const GIO_LAUNCHED_DESKTOP_FILE_PID: string;
+	export const LC_PAPER: string;
+	export const LC_TELEPHONE: string;
 	export const npm_command: string;
 	export const GPG_AGENT_INFO: string;
 	export const LOGNAME: string;
@@ -132,7 +136,6 @@ declare module '$env/static/private' {
 	export const VSCODE_GIT_ASKPASS_EXTRA_ARGS: string;
 	export const NVM_BIN: string;
 	export const XMODIFIERS: string;
-	export const XDG_SESSION_DESKTOP: string;
 }
 
 /**
@@ -169,7 +172,7 @@ declare module '$env/static/private' {
  * The above values will be the same _even if_ different values for `ENVIRONMENT` or `PUBLIC_BASE_URL` are set at runtime, as they are statically replaced in your code with their build time values.
  */
 declare module '$env/static/public' {
-	
+	export const PUBLIC_API_SERVER_HOST: string;
 }
 
 /**
@@ -219,6 +222,8 @@ declare module '$env/static/public' {
  */
 declare module '$env/dynamic/private' {
 	export const env: {
+		BUILD_DB: string;
+		JWT_KEY: string;
 		SVELTEKIT_FORK: string;
 		NODE_ENV: string;
 		EDITOR: string;
@@ -240,6 +245,7 @@ declare module '$env/dynamic/private' {
 		npm_lifecycle_script: string;
 		TERM_PROGRAM: string;
 		LS_COLORS: string;
+		XDG_SESSION_DESKTOP: string;
 		XRDP_PULSE_SINK_SOCKET: string;
 		USER: string;
 		XRDP_SOCKET_PATH: string;
@@ -248,6 +254,7 @@ declare module '$env/dynamic/private' {
 		npm_config_userconfig: string;
 		COLORTERM: string;
 		npm_config_user_agent: string;
+		OLDPWD: string;
 		LC_ADDRESS: string;
 		CLUTTER_IM_MODULE: string;
 		SSH_AUTH_SOCK: string;
@@ -264,10 +271,9 @@ declare module '$env/dynamic/private' {
 		npm_config_prefix: string;
 		NVM_INC: string;
 		PATH: string;
-		VSCODE_GIT_IPC_HANDLE: string;
-		GIO_LAUNCHED_DESKTOP_FILE_PID: string;
-		LC_PAPER: string;
-		LC_TELEPHONE: string;
+		TERM_PROGRAM_VERSION: string;
+		XDG_CONFIG_DIRS: string;
+		TERM: string;
 		QT_SCALE_FACTOR: string;
 		LC_MEASUREMENT: string;
 		npm_package_name: string;
@@ -289,9 +295,10 @@ declare module '$env/dynamic/private' {
 		SHLVL: string;
 		DBUS_SESSION_BUS_ADDRESS: string;
 		npm_package_json: string;
-		TERM_PROGRAM_VERSION: string;
-		XDG_CONFIG_DIRS: string;
-		TERM: string;
+		VSCODE_GIT_IPC_HANDLE: string;
+		GIO_LAUNCHED_DESKTOP_FILE_PID: string;
+		LC_PAPER: string;
+		LC_TELEPHONE: string;
 		npm_command: string;
 		GPG_AGENT_INFO: string;
 		LOGNAME: string;
@@ -313,7 +320,6 @@ declare module '$env/dynamic/private' {
 		VSCODE_GIT_ASKPASS_EXTRA_ARGS: string;
 		NVM_BIN: string;
 		XMODIFIERS: string;
-		XDG_SESSION_DESKTOP: string;
 		[key: `PUBLIC_${string}`]: undefined;
 		[key: `${string}`]: string | undefined;
 	}
@@ -369,6 +375,7 @@ declare module '$env/dynamic/private' {
  */
 declare module '$env/dynamic/public' {
 	export const env: {
+		PUBLIC_API_SERVER_HOST: string;
 		[key: `PUBLIC_${string}`]: string | undefined;
 	}
 }
