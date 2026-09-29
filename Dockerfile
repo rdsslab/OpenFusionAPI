@@ -65,9 +65,13 @@ COPY package.json package-lock.json ./
 # Instalar dependencias del proyecto para build (incluye devDependencies)
 RUN npm install --include=dev && npm rebuild sqlite3 --build-from-source
 
-# Invalidar la caché de Docker para forzar la actualización de las dependencias locales en cada build
+# Invalidar la caché de Docker para forzar la actualización de las dependencias git en cada build.
+# `npm update` a secas, NO con los nombres de paquete: las deps transitivas de los git deps
+# (p.ej. @rdsslab/svelte-components, que cuelga de libopenfusionapigui) solo se actualizan si
+# entran en el grafo. Nombrar solo las dos libs deja las transitive clavadas en el SHA del
+# lockfile, que es como se coló el fix de EditorCode (1.3.22) sin que se notara.
 ARG CACHEBUST=1
-RUN npm update @rdsslab/libopenfusionapi @rdsslab/libopenfusionapigui
+RUN npm update
 
 # Copiar el resto del código fuente
 COPY . .
