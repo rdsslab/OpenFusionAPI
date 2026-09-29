@@ -1,5 +1,5 @@
 import { r as onDestroy, t as createEventDispatcher } from "../../../chunks/index-server.js";
-import { D as escape_html, E as clsx, Pt as fallback, T as attr, a as derived, d as stringify, f as unsubscribe_stores, ft as snapshot, i as bind_props, l as spread_props, m as html, n as attr_style, o as ensure_array_like, r as attributes, s as head, t as attr_class, u as store_get } from "../../../chunks/server.js";
+import { D as escape_html, E as clsx, It as run, Pt as fallback, T as attr, a as derived, d as stringify, f as unsubscribe_stores, ft as snapshot, i as bind_props, l as spread_props, m as html, n as attr_style, o as ensure_array_like, r as attributes, s as head, t as attr_class, u as store_get } from "../../../chunks/server.js";
 import { r as writable, t as get } from "../../../chunks/index-server2.js";
 import uFetch from "@rdsslab/uFetch";
 import { DateTime } from "luxon";
@@ -129,9 +129,6 @@ var getHandlerParams = (handler) => {
 };
 var equalObjs = (value, new_value) => {
 	return (typeof new_value == "object" ? JSON.stringify(new_value) : new_value) == (typeof value == "object" ? JSON.stringify(value) : value);
-};
-var jsonToHtmlString = (obj) => {
-	return JSON.stringify(obj, null, 2).split("\n").map((line) => line.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;").replace(/ /g, "&nbsp;")).join("<br>");
 };
 function createEndpoint(method, app, resource, environment) {
 	return `${method == "WS" ? "/ws/" : "/api/"}${app}${resource}/${environment}`;
@@ -2163,10 +2160,19 @@ function EditorCode($$renderer, $$props) {
 		let showHiddenButton = fallback($$props["showHiddenButton"], true);
 		let showResetButton = fallback($$props["showResetButton"], false);
 		let showCode = fallback($$props["showCode"], true);
+		/**
+		* `data-testid` para distinguir varios EditorCode en la misma pagina.
+		*
+		* No hay forma de distinguir uno suelto por su contenido: los valores son
+		* justamente lo que se esta probando, asi que un selector basado en el texto
+		* cambiaria en el momento en que la prueba necesita comprobar que cambio.
+		*/
+		let containerTestId = fallback($$props["containerTestId"], null);
 		let onchange = fallback($$props["onchange"], null);
 		let editorView = null;
 		let lastCode = "";
 		let formatError = false;
+		let renderedFromValue = null;
 		let debounceTimer = null;
 		const DEBOUNCE_MS = 350;
 		let mediaQuery = null;
@@ -2199,7 +2205,8 @@ function EditorCode($$renderer, $$props) {
 			sql: sql(),
 			xml: xml(),
 			string: [],
-			number: []
+			number: [],
+			boolean: []
 		};
 		const listLangs = [
 			{
@@ -2249,6 +2256,12 @@ function EditorCode($$renderer, $$props) {
 				value: "number",
 				prettier: "",
 				plugins: []
+			},
+			{
+				label: "Boolean",
+				value: "boolean",
+				prettier: "",
+				plugins: []
 			}
 		];
 		function getPrettierParserFor(langValue) {
@@ -2256,6 +2269,8 @@ function EditorCode($$renderer, $$props) {
 			return found ? found.prettier : "";
 		}
 		function updateFromEditor(text) {
+			if (renderedFromValue !== null && text === renderedFromValue) return;
+			renderedFromValue = null;
 			if (lang === "json") try {
 				code = JSON.parse(text);
 				formatError = false;
@@ -2270,7 +2285,29 @@ function EditorCode($$renderer, $$props) {
 				console.error(error);
 				formatError = true;
 			}
-			else {
+			else if (lang === "boolean") {
+				const normalized = text.trim().toLowerCase();
+				if ([
+					"true",
+					"1",
+					"yes",
+					"on"
+				].includes(normalized)) {
+					code = true;
+					formatError = false;
+				} else if ([
+					"false",
+					"0",
+					"no",
+					"off"
+				].includes(normalized)) {
+					code = false;
+					formatError = false;
+				} else {
+					code = text;
+					formatError = true;
+				}
+			} else {
 				code = text;
 				formatError = false;
 			}
@@ -2377,7 +2414,7 @@ function EditorCode($$renderer, $$props) {
 			left: [left],
 			right: [right, r01]
 		});
-		$$renderer.push(`<!----> <div${attr_class(clsx(showCode ? "" : "is-hidden"))}><div></div></div>`);
+		$$renderer.push(`<!----> <div${attr_class(clsx(showCode ? "" : "is-hidden"))}${attr("data-testid", containerTestId)}><div></div></div>`);
 		bind_props($$props, {
 			code,
 			left,
@@ -2389,6 +2426,7 @@ function EditorCode($$renderer, $$props) {
 			showHiddenButton,
 			showResetButton,
 			showCode,
+			containerTestId,
 			onchange,
 			setCode,
 			getCode,
@@ -2934,6 +2972,28 @@ function JSONView($$renderer, $$props) {
 	});
 }
 //#endregion
+//#region node_modules/@rdsslab/svelte-components/dist/RESTTester/request.js
+var REST_EXPORT_FORMATS = [
+	{
+		id: "http",
+		label: "HTTP (.http)",
+		extension: ".http",
+		mime: "text/plain;charset=utf-8"
+	},
+	{
+		id: "curl",
+		label: "curl Linux/macOS (.sh)",
+		extension: ".sh",
+		mime: "text/x-shellscript;charset=utf-8"
+	},
+	{
+		id: "powershell",
+		label: "PowerShell Windows (.ps1)",
+		extension: ".ps1",
+		mime: "text/plain;charset=utf-8"
+	}
+];
+//#endregion
 //#region node_modules/@rdsslab/svelte-components/dist/RESTTester/index.svelte
 var METHODS = [
 	{
@@ -2989,7 +3049,7 @@ var RESPONSES_AS = [
 ];
 function RESTTester($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
-		let { url = "", method = "GET", limitSizeResponseView = 2e4, methodDisabled = false, data = {
+		let { url = "", method = "GET", limitSizeResponseView = 2e4, methodDisabled = false, showExport = true, data = {
 			query: [{
 				enabled: true,
 				key: "",
@@ -3021,6 +3081,7 @@ function RESTTester($$renderer, $$props) {
 			data: "",
 			sizeKBResponse: -1
 		};
+		let export_menu_open = false;
 		let timerInterval;
 		const methods = METHODS;
 		const responses_as = RESPONSES_AS;
@@ -3282,9 +3343,29 @@ function RESTTester($$renderer, $$props) {
 				}
 				$$renderer.push(`<!--]-->`);
 			});
-			$$renderer.push(`</span></p></div></span> <span class="level-item"><button${attr_class(`button is-small is-success is-outlined`)}><span class="icon is-small">`);
+			$$renderer.push(`</span></p></div></span> `);
+			if (showExport) {
+				$$renderer.push("<!--[0-->");
+				$$renderer.push("<!--[-1-->");
+				$$renderer.push(`<!--]--> <span class="level-item"><div${attr_class("dropdown is-right svelte-1srha5r", void 0, { "is-active": export_menu_open })}><div class="dropdown-trigger"><button${attr_class("button is-small is-info is-light", void 0, { "is-outlined": true })} aria-haspopup="true"${attr("aria-expanded", export_menu_open)} data-testid="export-toggle"><span class="icon is-small"><i class="fa-solid fa-file-export"></i></span> <span>Export</span> <span class="icon is-small"><i class="fa-solid fa-chevron-down"></i></span></button></div> <div class="dropdown-menu"><div class="dropdown-content"><p class="dropdown-item is-size-7 has-text-weight-semibold">Con variables de entorno</p> <!--[-->`);
+				const each_array_2 = ensure_array_like(REST_EXPORT_FORMATS);
+				for (let $$index_2 = 0, $$length = each_array_2.length; $$index_2 < $$length; $$index_2++) {
+					let format = each_array_2[$$index_2];
+					$$renderer.push(`<button type="button" class="dropdown-item is-text-left"${attr("data-testid", `export-${stringify(format.id)}-safe`)}>${escape_html(format.label)}</button>`);
+				}
+				$$renderer.push(`<!--]--> <hr class="dropdown-divider"/> <p class="dropdown-item is-size-7 has-text-weight-semibold">Con credenciales (texto plano)</p> <!--[-->`);
+				const each_array_3 = ensure_array_like(REST_EXPORT_FORMATS);
+				for (let $$index_3 = 0, $$length = each_array_3.length; $$index_3 < $$length; $$index_3++) {
+					let format = each_array_3[$$index_3];
+					$$renderer.push(`<button type="button" class="dropdown-item is-text-left"${attr("data-testid", `export-${stringify(format.id)}-literal`)}>${escape_html(format.label)}</button>`);
+				}
+				$$renderer.push(`<!--]--></div></div></div></span>`);
+			} else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--> <span class="level-item"><button${attr_class(`button is-small is-success is-outlined`)} data-testid="resttester-execute"><span class="icon is-small">`);
 			$$renderer.push(`<!--[-1--><i class="fa-solid fa-play"></i>`);
 			$$renderer.push(`<!--]--></span> <span>${escape_html("Execute")}</span></button></span></div></nav></div></div> `);
+			$$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--> `);
 			if (data) {
 				$$renderer.push("<!--[0-->");
 				Tab($$renderer, {
@@ -3320,6 +3401,7 @@ function RESTTester($$renderer, $$props) {
 			method,
 			limitSizeResponseView,
 			methodDisabled,
+			showExport,
 			data
 		});
 	});
@@ -3995,7 +4077,7 @@ var ChartWidgets = {
 };
 //#endregion
 //#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/version.js
-var version = "9.4.4";
+var version = "9.5.0";
 //#endregion
 //#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/login/index.svelte
 function Login($$renderer, $$props) {
@@ -5489,8 +5571,8 @@ function Dashboard($$renderer, $$props) {
 				$$renderer.push("<!--[!-->");
 				$$renderer.push("<!--]-->");
 			}
-			$$renderer.push(` <p class="help has-text-centered">Endpoints with the most errors (status code >= 400) per hour in the last ${escape_html(selectedHours)} hours, for
-			the selected app and environment</p></div> <div class="column is-full"><p class="title is-6">Request Log by Status Code (${escape_html(selectedStatusClasses.length ? selectedStatusClasses.join(", ") : "no status selected")}, last ${escape_html(selectedHours)}h)</p> `);
+			$$renderer.push(` <p class="help has-text-centered">Endpoints with the most errors (status code >= 400) per hour in the last ${escape_html(selectedHours)} hours,
+			for the selected app and environment</p></div> <div class="column is-full"><p class="title is-6">Request Log by Status Code (${escape_html(selectedStatusClasses.length ? selectedStatusClasses.join(", ") : "no status selected")}, last ${escape_html(selectedHours)}h)</p> `);
 			Table($$renderer, {
 				RawDataTable: data_error_requests,
 				columns: {
@@ -6915,519 +6997,6 @@ function Sql($$renderer, $$props) {
 		} while (!$$settled);
 		$$renderer.subsume($$inner_renderer);
 		bind_props($$props, { endpoint });
-	});
-}
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/columns/cellPromptType.svelte
-function CellPromptType($$renderer, $$props) {
-	$$renderer.component(($$renderer) => {
-		"use strict";
-		let { value = void 0, row = void 0 } = $$props;
-		let ListTypes = [
-			{
-				value: "AI Message",
-				id: "ai"
-			},
-			{
-				value: "Human Message",
-				id: "human"
-			},
-			{
-				value: "System Message",
-				id: "system"
-			},
-			{
-				value: "Placeholder",
-				id: "placeholder"
-			},
-			{
-				value: "User Message",
-				id: "user"
-			}
-		];
-		let $$settled = true;
-		let $$inner_renderer;
-		function $$render_inner($$renderer) {
-			$$renderer.push(`<td>`);
-			BasicSelect($$renderer, {
-				isExpanded: true,
-				options: ListTypes,
-				onselect: (e) => {
-					console.log("Cambia", e, value);
-				},
-				get option() {
-					return value;
-				},
-				set option($$value) {
-					value = $$value;
-					$$settled = false;
-				}
-			});
-			$$renderer.push(`<!----></td>`);
-		}
-		do {
-			$$settled = true;
-			$$inner_renderer = $$renderer.copy();
-			$$render_inner($$inner_renderer);
-		} while (!$$settled);
-		$$renderer.subsume($$inner_renderer);
-		bind_props($$props, {
-			value,
-			row
-		});
-	});
-}
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/columns/cellPrompt.svelte
-function CellPrompt($$renderer, $$props) {
-	$$renderer.component(($$renderer) => {
-		"use strict";
-		let { value = void 0, row = void 0, onchangecell = () => {} } = $$props;
-		$$renderer.push(`<td><textarea class="textarea is-small" placeholder="Prompt" rows="2">`);
-		const $$body = escape_html(value);
-		if ($$body) $$renderer.push(`${$$body}`);
-		$$renderer.push(`</textarea></td>`);
-		bind_props($$props, {
-			value,
-			row
-		});
-	});
-}
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/ChatTester/chat.svelte
-function Chat($$renderer, $$props) {
-	$$renderer.component(($$renderer) => {
-		let { class_content = "is-small", onmessage = () => {}, currentChat = {
-			id: 1,
-			name: "Ana Pérez",
-			preview: "Hola, ¿cómo estás?",
-			time: "12:30",
-			avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-			active: true
-		}, messages = [
-			{
-				type: "ia",
-				sender: "Ana Pérez",
-				prompt: "Hola, ¿cómo estás?",
-				time: "12:30"
-			},
-			{
-				type: "user",
-				prompt: "¡Hola! Todo bien, ¿y tú?",
-				time: "12:31",
-				status: "read"
-			},
-			{
-				type: "ia",
-				sender: "Ana Pérez",
-				prompt: "Muy bien, gracias. ¿Qué tal el trabajo?",
-				time: "12:32"
-			},
-			{
-				type: "user",
-				prompt: "Bien, bastante ocupado últimamente. ¿Y tú?",
-				time: "12:33",
-				status: "read"
-			},
-			{
-				type: "ia",
-				sender: "Ana Pérez",
-				prompt: "Igual, pero me encanta lo que hago. ¿Tienes planes para el fin de semana?",
-				time: "12:34"
-			}
-		] } = $$props;
-		let messageInput = "";
-		let messages_list = derived(() => messages);
-		$$renderer.push(`<div class="content svelte-1vy23e0"><div class="svelte-1vy23e0"><!--[-->`);
-		const each_array = ensure_array_like(messages_list());
-		for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
-			let message = each_array[$$index];
-			if (message.type === "ia") $$renderer.push(`<!--[0--><div class="is-flex is-justify-content-flex-start padding_msg svelte-1vy23e0"><span${attr_class(`box w_message_in content ${stringify(class_content)}`, "svelte-1vy23e0")}>${escape_html(message.prompt)}</span></div>`);
-			else if (message.type === "user") $$renderer.push(`<!--[1--><div class="is-flex is-justify-content-flex-end padding_msg svelte-1vy23e0"><span${attr_class(`box w_message_out content ${stringify(class_content)}`, "svelte-1vy23e0")}>${escape_html(message.prompt)}</span></div>`);
-			else $$renderer.push("<!--[-1-->");
-			$$renderer.push(`<!--]-->`);
-		}
-		$$renderer.push(`<!--]--></div> <div class="content sep svelte-1vy23e0"><div class="field has-addons svelte-1vy23e0"><div${attr_class(`control ${stringify(class_content)} is-expanded`, "svelte-1vy23e0")}><input class="input svelte-1vy23e0"${attr("value", messageInput)}/></div> <div class="control svelte-1vy23e0"><button class="button svelte-1vy23e0"><span${attr_class(`icon ${stringify(class_content)} has-text-success`, "svelte-1vy23e0")}><i class="fas fa-paper-plane svelte-1vy23e0"></i></span></button></div></div></div></div>`);
-		bind_props($$props, {
-			class_content,
-			currentChat,
-			messages
-		});
-	});
-}
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/ChatTester/ia_chat_tester.svelte
-function Ia_chat_tester($$renderer, $$props) {
-	$$renderer.component(($$renderer) => {
-		let { url = "", init_prompts = [] } = $$props;
-		let messages = [];
-		/**
-		[
-		{ type: 'ia', sender: 'Ana Pérez', prompt: 'Hola, ¿cómo estás?', time: '12:30' },
-		{ type: 'user', prompt: '¡Hola! Todo bien, ¿y tú?', time: '12:31', status: 'read' },
-		{
-		type: 'ia',
-		sender: 'Ana Pérez',
-		prompt: 'Muy bien, gracias. ¿Qué tal el trabajo?',
-		time: '12:32'
-		},
-		{
-		type: 'user',
-		prompt: 'Bien, bastante ocupado últimamente. ¿Y tú?',
-		time: '12:33',
-		status: 'read'
-		},
-		{
-		type: 'ia',
-		sender: 'Ana Pérez',
-		prompt: 'Igual, pero me encanta lo que hago. ¿Tienes planes para el fin de semana? fssfsdffs',
-		time: '12:34'
-		}
-		]
-		
-		*/
-		async function fnSendMessage(e) {
-			console.log(e, snapshot(init_prompts));
-			const prompt = e.message;
-			messages.push({
-				type: "user",
-				prompt
-			});
-			messages = [...messages];
-			let response = await new uFetch().post({
-				url,
-				data: { prompt: {
-					history: snapshot(messages),
-					user: prompt,
-					init_prompts
-				} }
-			});
-			if (response.status == 200) {
-				let data = await response.json();
-				console.log("Respuesta chat", data);
-				messages.push({
-					type: "ia",
-					prompt: data.output
-				});
-			} else if (response.status == 404) messages.push({
-				type: "ia",
-				prompt: "Server not exists"
-			});
-			else if (response.status == 500) messages.push({
-				type: "ia",
-				prompt: response.statusText
-			});
-			else console.log(response);
-			messages = [...messages];
-		}
-		let $$settled = true;
-		let $$inner_renderer;
-		function $$render_inner($$renderer) {
-			$$renderer.push(`<div>`);
-			Basic$1($$renderer, {
-				label: "Agent URL",
-				placeholder: "Enter chat URL",
-				get value() {
-					return url;
-				},
-				set value($$value) {
-					url = $$value;
-					$$settled = false;
-				}
-			});
-			$$renderer.push(`<!----> `);
-			Chat($$renderer, {
-				onmessage: fnSendMessage,
-				get messages() {
-					return messages;
-				},
-				set messages($$value) {
-					messages = $$value;
-					$$settled = false;
-				}
-			});
-			$$renderer.push(`<!----></div>`);
-		}
-		do {
-			$$settled = true;
-			$$inner_renderer = $$renderer.copy();
-			$$render_inner($$inner_renderer);
-		} while (!$$settled);
-		$$renderer.subsume($$inner_renderer);
-		bind_props($$props, {
-			url,
-			init_prompts
-		});
-	});
-}
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/agentia.svelte
-function Agentia($$renderer, $$props) {
-	$$renderer.component(($$renderer) => {
-		let { idapp = void 0, endpoint = {
-			endpoint: "",
-			method: "",
-			environment: ""
-		}, onchange = () => {} } = $$props;
-		let columns = {
-			enabled: {
-				label: "Enabled",
-				decorator: {
-					component: Boolean$1,
-					props: { custom: {
-						ontrue: { label: "Enabled" },
-						onfalse: { label: "Unabled" },
-						editInline: true
-					} }
-				}
-			},
-			type: {
-				label: "Type",
-				decorator: { component: CellPromptType }
-			},
-			prompt: {
-				decorator: { component: CellPrompt },
-				label: "Prompt"
-			}
-		};
-		let cnx_param_var = "";
-		const example_config_model = {
-			modelProvider: "ollama",
-			model: "qwen3:0.6b",
-			temperature: .1,
-			baseUrl: "http://localhost:11434",
-			timeout: 18e5
-		};
-		let example_agent_options = {
-			verbose: false,
-			returnIntermediateSteps: false,
-			maxIterations: 5
-		};
-		let mcpsevers_example = {
-			server_name_1: {
-				type: "http",
-				url: "http://server_mcp.com:3030/api/mcp/server/prd"
-			},
-			server_name_2: {
-				type: "streamable",
-				url: "http://other_server.com/api/tools"
-			},
-			server_03: {
-				type: "http",
-				url: "http://localhost:3000/api/mcp",
-				headers: { Apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ8.eyJjbGllbnRlIjoiZW1wczVzYSIsInNlcnZpY2lvIjoiRGV1ZG9yZXNQYXJ0aRRhcyIsImlhdCI6MTUxNjIzOTAyMn0.Lo0Kg9gOmYvjQXVi9rA_NdzQqQ7w1yFJn7tmPZeN1VI" }
-			},
-			weather: {
-				url: "http://localhost:8000/mcp/",
-				transport: "streamable_http"
-			}
-		};
-		/**
-		SELECT = 'SELECT',
-		INSERT = 'INSERT',
-		UPDATE = 'UPDATE',
-		BULKUPDATE = 'BULKUPDATE',
-		DELETE = 'DELETE',
-		UPSERT = 'UPSERT',
-		SHOWINDEXES = 'SHOWINDEXES',
-		DESCRIBE = 'DESCRIBE',
-		RAW = 'RAW',
-		SHOWCONSTRAINTS = 'SHOWCONSTRAINTS',
-		*/
-		let tabList = [
-			{
-				label: "Model",
-				isActive: true,
-				classIcon: " fa-solid fa-robot ",
-				component: tab_model
-			},
-			{
-				label: "MCP servers",
-				component: tab_mcp_servers
-			},
-			{
-				label: "Prompts",
-				component: tab_prompts
-			},
-			{
-				label: "Chat Tester",
-				component: tab_chat_tester
-			}
-		];
-		let agent_options = {};
-		let model = "";
-		let provider = "";
-		let mcpServers = {};
-		let prompts = [];
-		let timeoutChange;
-		function fnOnChange() {
-			onchange(getData());
-		}
-		function getData() {
-			return {
-				code: getCode(),
-				data_test: snapshot(endpoint.data_test)
-			};
-		}
-		function getCode() {
-			let conf = {};
-			let outcode = {};
-			conf = cnx_param_var;
-			try {
-				outcode.config = conf;
-				outcode.agent_options = agent_options;
-				outcode.model = model;
-				outcode.provider = provider;
-				outcode.mcpServers = mcpServers;
-				outcode.init_prompts = prompts;
-				return JSON.stringify(outcode);
-			} catch (error) {
-				return code;
-			}
-		}
-		function resetPromts() {
-			prompts = [...prompts];
-		}
-		onDestroy(() => {
-			clearTimeout(timeoutChange);
-		});
-		function tab_model($$renderer) {
-			$$renderer.push(`<div><div class="content">Open Fusion API uses Langchain in the background to provide AI tools.</div> <div>`);
-			App_vars_selector($$renderer, {
-				onselect: (selected) => {
-					fnOnChange();
-				},
-				get value() {
-					return model;
-				},
-				set value($$value) {
-					model = $$value;
-					$$settled = false;
-				},
-				get environment() {
-					return endpoint.environment;
-				},
-				set environment($$value) {
-					endpoint.environment = $$value;
-					$$settled = false;
-				}
-			});
-			$$renderer.push(`<!----> <div class="content"><details><summary>Example</summary> <code>${html(jsonToHtmlString(example_config_model))}</code></details></div></div> <div><br/> <div class="content">Agent options:</div></div> `);
-			EditorCode($$renderer, {
-				isReadOnly: false,
-				lang: "json",
-				showFormat: true,
-				onchange: (c) => {
-					fnOnChange();
-				},
-				get code() {
-					return agent_options;
-				},
-				set code($$value) {
-					agent_options = $$value;
-					$$settled = false;
-				}
-			});
-			$$renderer.push(`<!----> <div class="content"><details><summary>Example</summary> <code>${html(jsonToHtmlString(example_agent_options))}</code></details></div> <br/> <div class="content">For more information about the model configuration, visit the <a href="https://js.langchain.com/docs/how_to/chat_models_universal_init/">Langchain documentation</a>.</div></div>`);
-		}
-		function tab_prompts($$renderer) {
-			{
-				function lt01($$renderer) {
-					$$renderer.push(`<!---->List of initial Prompt to be executed at agent startup.`);
-				}
-				Table($$renderer, {
-					showNewButton: "true",
-					showDeleteButton: "true",
-					columns,
-					left_items: [lt01],
-					ondeleterow: (data) => {
-						if (confirm("Do you want to delete the prompt selected?")) {
-							prompts = prompts.filter((item) => {
-								return !data.rows.some((element) => element.internal_hash_row == item.internal_hash_row);
-							});
-							resetPromts();
-						}
-					},
-					onnewrow: () => {
-						prompts.push({
-							enabled: true,
-							type: "system",
-							prompt: ""
-						});
-						resetPromts();
-					},
-					get RawDataTable() {
-						return prompts;
-					},
-					set RawDataTable($$value) {
-						prompts = $$value;
-						$$settled = false;
-					},
-					lt01,
-					$$slots: { lt01: true }
-				});
-			}
-		}
-		function tab_mcp_servers($$renderer) {
-			$$renderer.push(`<div><div class="content">List of MCP servers to use:</div></div> <br/> `);
-			App_vars_selector($$renderer, {
-				onselect: (selected) => {
-					fnOnChange();
-				},
-				get value() {
-					return mcpServers;
-				},
-				set value($$value) {
-					mcpServers = $$value;
-					$$settled = false;
-				},
-				get environment() {
-					return endpoint.environment;
-				},
-				set environment($$value) {
-					endpoint.environment = $$value;
-					$$settled = false;
-				}
-			});
-			$$renderer.push(`<!----> <div class="content"><details><summary>Example</summary> <code>${html(jsonToHtmlString(mcpsevers_example))}</code></details></div> <div><div class="content is-small">To connect to MCP servers you can consult the <a href="https://github.com/langchain-ai/langchain-mcp-adapters?tab=readme-ov-file#client-1">documentation</a>.</div></div>`);
-		}
-		function tab_chat_tester($$renderer) {
-			$$renderer.push(`<div>`);
-			Ia_chat_tester($$renderer, {
-				url: endpoint.endpoint,
-				get init_prompts() {
-					return prompts;
-				},
-				set init_prompts($$value) {
-					prompts = $$value;
-					$$settled = false;
-				}
-			});
-			$$renderer.push(`<!----></div>`);
-		}
-		let $$settled = true;
-		let $$inner_renderer;
-		function $$render_inner($$renderer) {
-			Tab($$renderer, {
-				get tabs() {
-					return tabList;
-				},
-				set tabs($$value) {
-					tabList = $$value;
-					$$settled = false;
-				}
-			});
-		}
-		do {
-			$$settled = true;
-			$$inner_renderer = $$renderer.copy();
-			$$render_inner($$inner_renderer);
-		} while (!$$settled);
-		$$renderer.subsume($$inner_renderer);
-		bind_props($$props, {
-			idapp,
-			endpoint
-		});
 	});
 }
 //#endregion
@@ -9940,19 +9509,7 @@ function Editor($$renderer, $$props) {
 							$$settled = false;
 						}
 					});
-				} else if (endpoint?.handler == "AGENT_IA") {
-					$$renderer.push("<!--[10-->");
-					Agentia($$renderer, {
-						onchange: onChangeValueHandler,
-						get endpoint() {
-							return endpoint;
-						},
-						set endpoint($$value) {
-							endpoint = $$value;
-							$$settled = false;
-						}
-					});
-				} else if (endpoint?.handler == "NOAPPLY" || endpoint?.handler == "No Handler" || endpoint?.handler == "NA") $$renderer.push(`<!--[11--><div>No Handler</div>`);
+				} else if (endpoint?.handler == "NOAPPLY" || endpoint?.handler == "No Handler" || endpoint?.handler == "NA") $$renderer.push(`<!--[10--><div>No Handler</div>`);
 				else $$renderer.push(`<!--[-1--><div>No Handler</div>`);
 				$$renderer.push(`<!--]--></div>`);
 			} else $$renderer.push("<!--[-1-->");
@@ -10034,8 +9591,8 @@ function Editor($$renderer, $$props) {
 						$$settled = false;
 					}
 				});
-				$$renderer.push(`<!----> <div class="block"><div class="content is-small"><div class="icon-text"><span class="icon has-text-info"><i class="fas fa-info-circle"></i></span> <span>Info</span></div> <p>Set a list of allowed origins <code>["https://app.example.com"]</code> or an object like <code>{"origin": ["https://app.example.com"], "credentials": true}</code> to restrict cross-origin browser access. Empty <code>{}</code> uses the deployment-wide default policy. Requests from
-						an Origin outside the allowlist are denied and receive no <code>Access-Control-Allow-Origin</code> header.</p></div></div></div>`);
+				$$renderer.push(`<!----> <div class="block"><div class="content is-small"><div class="icon-text"><span class="icon has-text-info"><i class="fas fa-info-circle"></i></span> <span>Info</span></div> <p>Set a list of allowed origins <code>["https://app.example.com"]</code> or an object like <code>{"origin": ["https://app.example.com"], "credentials": true}</code> to restrict cross-origin browser access. Empty <code>{}</code> uses the deployment-wide default policy. Requests from an
+						Origin outside the allowlist are denied and receive no <code>Access-Control-Allow-Origin</code> header.</p></div></div></div>`);
 			} else $$renderer.push("<!--[-1-->");
 			$$renderer.push(`<!--]-->`);
 		}
@@ -11302,7 +10859,7 @@ function Bot_logs($$renderer, $$props) {
 			user_agent: { label: "Source" },
 			metadata: { hidden: true }
 		};
-		let inputHours = hours;
+		let inputHours = run(() => hours);
 		async function fetchLogs() {
 			if (idbot) try {
 				let jresp = await (await uF.get({ data: {
@@ -11704,8 +11261,8 @@ function Bots($$renderer, $$props) {
 		}
 		function tab_backups($$renderer) {
 			if (activeTab === TAB_BACKUPS && selectedRow.idbot) {
-				$$renderer.push(`<!--[0--><p class="help mb-3">Every save and every deletion stores a version. Restoring one loads it into this form;
-			nothing changes until you press <strong>Save &amp; Deploy</strong>.</p> `);
+				$$renderer.push(`<!--[0--><p class="help mb-3">Every save and every deletion stores a version. Restoring one loads it into this form; nothing
+			changes until you press <strong>Save &amp; Deploy</strong>.</p> `);
 				Bot_bkp($$renderer, {
 					onselect: (backup) => {
 						if (backup && backup.idbot == selectedRow.idbot) {
@@ -11813,8 +11370,7 @@ function Bots($$renderer, $$props) {
 							if (healthStatus().needsAction) $$renderer.push(`<!--[0--><span class="tag is-danger">Needs attention</span>`);
 							else $$renderer.push(`<!--[-1--><span class="tag is-light">No action needed</span>`);
 							$$renderer.push(`<!--]--></div></div></div> <p class="help mb-3">${escape_html(healthStatus().description)}</p> `);
-							if (health.disabled_by === "system") $$renderer.push(`<!--[0--><div class="notification is-warning is-light py-2 px-3 mb-3"><span class="icon-text"><span class="icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span> <span>The system disabled this bot${escape_html(health.disabled_reason ? ` (${health.disabled_reason})` : "")}. Fix the token or the code and save: it has already been switched back
-									to <strong>Enabled</strong> for you.</span></span></div>`);
+							if (health.disabled_by === "system") $$renderer.push(`<!--[0--><div class="notification is-warning is-light py-2 px-3 mb-3"><span class="icon-text"><span class="icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span> <span>The system disabled this bot${escape_html(health.disabled_reason ? ` (${health.disabled_reason})` : "")}. Fix the token or the code and save: it has already been switched back to <strong>Enabled</strong> for you.</span></span></div>`);
 							else if (health.disabled_by === "user") $$renderer.push(`<!--[1--><p class="help mb-3">This bot was disabled manually. It will not start again until you enable it.</p>`);
 							else $$renderer.push("<!--[-1-->");
 							$$renderer.push(`<!--]--> <div class="columns is-multiline is-mobile mb-0"><div class="column is-one-quarter"><p class="heading">Consecutive failures</p> <p>${escape_html(health.failure_count ?? 0)}</p></div> <div class="column is-one-quarter"><p class="heading">Last error type</p> <p>${escape_html(health.last_error_type || "—")}</p></div> <div class="column is-one-quarter"><p class="heading">Last failure</p> <p>${escape_html(formatMoment(health.last_failure_at))}</p></div> <div class="column is-one-quarter"><p class="heading">Next retry</p> <p>${escape_html(formatMoment(health.next_retry_at))}</p></div> <div class="column is-one-quarter"><p class="heading">Last started</p> <p>${escape_html(formatMoment(health.last_started_at))}</p></div> <div class="column is-one-quarter"><p class="heading">Last healthy</p> <p>${escape_html(formatMoment(health.last_healthy_at))}</p></div> <div class="column is-one-quarter"><p class="heading">Disabled by</p> <p>${escape_html(health.disabled_by || "—")}</p></div> <div class="column is-one-quarter"><p class="heading">Provider</p> <p>${escape_html(health.provider || "—")}</p></div></div> `);
@@ -12448,9 +12004,9 @@ function Logs($$renderer, $$props) {
 					$$settled = false;
 				}
 			});
-			$$renderer.push(`<!----></div> <div class="control"><button class="button is-small"${attr("disabled", loading, true)}><span class="icon is-small"><i class="fa-solid fa-rotate"></i></span> <span>Refresh</span></button></div></div> <p class="help">Requests ending on 401/429 (or any status selected above) are marked by the API with <code>message.type = "possible_attack"</code>; the shield badge shows up when the full payload is
-		loaded. Click a row for the request/response detail, or the trace icon to follow a trace end to
-		end.</p></div>  `);
+			$$renderer.push(`<!----></div> <div class="control"><button class="button is-small"${attr("disabled", loading, true)}><span class="icon is-small"><i class="fa-solid fa-rotate"></i></span> <span>Refresh</span></button></div></div> <p class="help">Requests ending on 401/429 (or any status selected above) are marked by the API with <code>message.type = "possible_attack"</code>; the shield badge shows up when the full payload
+		is loaded. Click a row for the request/response detail, or the trace icon to follow a trace end
+		to end.</p></div>  `);
 			Table($$renderer, {
 				columns,
 				left_items: [tableStatus],
@@ -13833,7 +13389,9 @@ function System_users($$renderer, $$props) {
 								$$settled = false;
 							}
 						});
-						$$renderer.push(`<!----> <p class="help">Is the Telegram chat_id stored in custom_data.telegram_chat_id — in a private chat this equals the user's Telegram user_id, and it is what the /linkapp bot validates to recognize the user.</p></div></div> <div class="columns"><div class="column is-one-half">`);
+						$$renderer.push(`<!----> <p class="help">Is the Telegram chat_id stored in custom_data.telegram_chat_id — in a private chat this
+						equals the user's Telegram user_id, and it is what the /linkapp bot validates to
+						recognize the user.</p></div></div> <div class="columns"><div class="column is-one-half">`);
 						Basic$1($$renderer, {
 							type: "date",
 							label: "Start Date:",
@@ -13885,7 +13443,8 @@ function System_users($$renderer, $$props) {
 						if (selectedRow.password && selectedRow.repeatPassword && selectedRow.password !== selectedRow.repeatPassword) $$renderer.push(`<!--[0--><div class="notification is-warning is-light py-2 px-3 mb-3"><span class="icon-text"><span class="icon"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>Passwords do not match.</span></span></div>`);
 						else $$renderer.push("<!--[-1-->");
 						$$renderer.push(`<!--]--> `);
-						if (isEditing) $$renderer.push(`<!--[0--><p class="help">Leave empty to keep the current password. If filled, it becomes the definitive password (no forced change on next login).</p>`);
+						if (isEditing) $$renderer.push(`<!--[0--><p class="help">Leave empty to keep the current password. If filled, it becomes the definitive password
+					(no forced change on next login).</p>`);
 						else $$renderer.push("<!--[-1-->");
 						$$renderer.push(`<!--]--> `);
 						if (isEditing) {
