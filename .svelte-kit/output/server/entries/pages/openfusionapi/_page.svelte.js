@@ -3072,6 +3072,7 @@ var HTTP_METHODS = [
 	"PUT",
 	"DELETE",
 	"PATCH",
+	"QUERY",
 	"HEAD",
 	"OPTIONS",
 	"TRACE",
@@ -4208,7 +4209,7 @@ function detectImportFormat(text, fileName = "") {
 	if (/\bcurl\s+-{1,2}[A-Za-z]/.test(source)) return "curl";
 	if (/^\s*\$[A-Za-z_][A-Za-z0-9_:]*\s*=/m.test(source) || /\bInvoke-(RestMethod|WebRequest)\b/.test(source) || /\[System\.Net\.Http\./.test(source) || /\[(Convert|NET\.WebClient|System\.Net\.WebRequest)/.test(source)) return "powershell";
 	if (/(^|[^.\w])fetch\s*\(/.test(source) || /\baxios(\.\w+)?\s*\(/.test(source)) return "fetch";
-	if (/^\s*(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS|TRACE|CONNECT)\s+\S+/m.test(source)) return "http";
+	if (/^\s*(GET|POST|PUT|DELETE|PATCH|QUERY|HEAD|OPTIONS|TRACE|CONNECT)\s+\S+/m.test(source)) return "http";
 	if (extension === ".http" || extension === ".rest") return "http";
 	if (extension === ".ps1" || extension === ".psm1") return "powershell";
 	if ([
@@ -5507,6 +5508,10 @@ var METHODS = [
 	{
 		method: "PUT",
 		label: "PUT"
+	},
+	{
+		method: "QUERY",
+		label: "QUERY"
 	},
 	{
 		method: "TRACE",
