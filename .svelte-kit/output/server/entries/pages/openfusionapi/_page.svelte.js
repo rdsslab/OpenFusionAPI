@@ -39,6 +39,7 @@ var url_paths = {
 	deleteIntervalTasksByIdTask: "/api/system/interval_tasks/delete/prd",
 	getIntervalTaskRuns: "/api/system/interval_tasks/runs/prd",
 	runNowIntervalTask: "/api/system/interval_tasks/run_now/prd",
+	stopIntervalTaskRun: "/api/system/interval_tasks/stop/prd",
 	resetIntervalTaskAttempts: "/api/system/interval_tasks/reset_attempts/prd",
 	getfunctions: "/api/system/api/function_names/prd",
 	serverAPIVersion: "/api/system/server/version/prd",
@@ -426,6 +427,10 @@ function logJwtExpiration(token) {
 }
 //#endregion
 //#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/permissions.js
+/**
+* Client-side permission evaluation for internal users.
+* Mirrors the backend permissions.js logic.
+*/
 /**
 * Core permission check.
 * @param {object|null} userCtrl - User.ctrl value
@@ -3009,6 +3014,349 @@ var BODY_TYPES = {
 	URLENCODED: 4,
 	BINARY: 5
 };
+/** Métodos que nunca deben llevar body (fetch lo prohíbe en el navegador). */
+var METHODS_WITHOUT_BODY$1 = /* @__PURE__ */ new Set([
+	"GET",
+	"HEAD",
+	"OPTIONS",
+	"CONNECT",
+	"TRACE"
+]);
+var MIME_JSON$1 = "application/json";
+var MIME_URLENCODED$1 = "application/x-www-form-urlencoded;charset=UTF-8";
+var MIME_MULTIPART$1 = "multipart/form-data";
+/**
+* @typedef {Object} RestField
+* @property {string} key
+* @property {string} value
+* @property {{name: string, size: number, type: string} | null} file
+*/
+/**
+* @typedef {Object} RestRequest
+* @property {string} method
+* @property {string} url  URL final, incluyendo el query string
+* @property {string} base  Base con la que se resolvió la URL (vacía si no hizo falta)
+* @property {boolean} resolved  true si la URL del campo era relativa y se absolutizó
+* @property {{key: string, value: string}[]} query
+* @property {{key: string, value: string}[]} headers  Headers efectivos (sin Authorization)
+* @property {{type: 'none'|'basic'|'bearer', username: string, password: string, token: string, configured: boolean}} auth
+* @property {{type: string, text: string|null, runtime: any, mime: string|null, fields: RestField[], hasFiles: boolean}} body
+* @property {string[]} warnings
+* @property {string[]} notices
+*/
+function toRows(source) {
+	return Array.isArray(source) ? source : [];
+}
+/** Sólo filas habilitadas y con clave (misma semántica que el envío actual). */
+function readEnabledRows(source) {
+	return toRows(source).filter((row) => row && row.enabled && typeof row.key === "string" && row.key !== "").map((row) => ({
+		key: row.key,
+		value: row.value == null ? "" : String(row.value)
+	}));
+}
+/** ¿El valor parece un FileList / array-like de archivos? (SSR safe, sin usar `File`). */
+function isFileListLike(value) {
+	return !!value && typeof value === "object" && typeof value.length === "number";
+}
+/** Un archivo sólo es enviable si es un Blob/File real (nunca en SSR o Node). */
+function isBlobLike(value) {
+	return !!value && typeof Blob !== "undefined" && value instanceof Blob;
+}
+function readFileInfo(value) {
+	const candidate = isFileListLike(value) ? value[0] : value;
+	if (candidate && typeof candidate === "object" && typeof candidate.name === "string" && typeof candidate.size === "number") return {
+		name: candidate.name,
+		size: candidate.size,
+		type: candidate.type || "application/octet-stream"
+	};
+	return null;
+}
+function readFormFields(source) {
+	return toRows(source).filter((row) => row && row.enabled && typeof row.key === "string" && row.key !== "").map((row) => {
+		const file = isFileListLike(row.value) ? readFileInfo(row.value) : null;
+		return {
+			key: row.key,
+			value: isFileListLike(row.value) ? "" : row.value == null ? "" : String(row.value),
+			enabled: true,
+			file,
+			rawValue: row.value
+		};
+	});
+}
+/** Combina headers respetando la semántica de `Headers` (case-insensitive, duplicados unidos). */
+function normalizeHeaderRows(source) {
+	const order = [];
+	const map = /* @__PURE__ */ new Map();
+	for (const row of readEnabledRows(source)) {
+		if (row.key.toLowerCase() === "content-length") continue;
+		const name = row.key.toLowerCase();
+		if (map.has(name)) map.set(name, `${map.get(name)}, ${row.value}`);
+		else {
+			order.push(row.key);
+			map.set(name, row.value);
+		}
+	}
+	return order.map((key) => ({
+		key,
+		value: map.get(key.toLowerCase())
+	}));
+}
+function findHeader(headers, name) {
+	const target = name.toLowerCase();
+	return headers.find((header) => header.key.toLowerCase() === target);
+}
+function removeHeader(headers, name) {
+	const target = name.toLowerCase();
+	return headers.filter((header) => header.key.toLowerCase() !== target);
+}
+/**
+* ¿La URL ya trae su propio host/esquema? Un `//host/x` cuenta como absoluta porque
+* `new URL` la resolvería igual, pero sin base no se puede materializar.
+*
+* @param {string} url
+* @returns {boolean}
+*/
+function isAbsoluteUrl(url) {
+	const value = String(url ?? "").trim();
+	if (value === "") return false;
+	if (value.startsWith("//")) return false;
+	return /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(value);
+}
+/**
+* Resuelve la URL del campo contra una base. El navegador resuelve las rutas relativas
+* contra el documento (`fetch('/api/x')`), pero un `.sh` / `.http` / `.ps1` se ejecuta
+* sin ninguna base, así que hay que escribir el host en el archivo.
+*
+* @param {string} url
+* @param {string} [base]  Origen o `document.baseURI`; vacío = no se puede resolver.
+* @returns {{url: string, base: string, resolved: boolean}}
+*/
+function resolveUrlAgainstBase(url, base = "") {
+	const value = String(url ?? "").trim();
+	const baseValue = String(base ?? "").trim();
+	if (value === "" || isAbsoluteUrl(value)) return {
+		url: value,
+		base: baseValue,
+		resolved: false
+	};
+	if (baseValue === "") return {
+		url: value,
+		base: "",
+		resolved: false
+	};
+	try {
+		return {
+			url: new URL(value, baseValue).toString(),
+			base: baseValue,
+			resolved: true
+		};
+	} catch {
+		return {
+			url: value,
+			base: "",
+			resolved: false
+		};
+	}
+}
+function buildFinalUrl(url, params) {
+	let finalUrl = url || "";
+	if (params.length === 0) return finalUrl;
+	const search = new URLSearchParams();
+	for (const param of params) search.append(param.key, param.value);
+	const queryString = search.toString();
+	if (!queryString) return finalUrl;
+	const hashIndex = finalUrl.indexOf("#");
+	const hash = hashIndex !== -1 ? finalUrl.substring(hashIndex) : "";
+	const urlWithoutHash = hashIndex !== -1 ? finalUrl.substring(0, hashIndex) : finalUrl;
+	return `${urlWithoutHash}${urlWithoutHash.includes("?") ? "&" : "?"}${queryString}${hash}`;
+}
+function readAuth(source) {
+	const auth = source?.auth || {};
+	const selection = Number(auth.selection);
+	if (selection === AUTH_TYPES.BASIC) {
+		const username = auth.basic?.username == null ? "" : String(auth.basic.username);
+		const password = auth.basic?.password == null ? "" : String(auth.basic.password);
+		return {
+			type: "basic",
+			username,
+			password,
+			token: "",
+			configured: username !== "" && password !== ""
+		};
+	}
+	if (selection === AUTH_TYPES.BEARER) {
+		const token = auth.bearer?.token == null ? "" : String(auth.bearer.token);
+		return {
+			type: "bearer",
+			username: "",
+			password: "",
+			token,
+			configured: token !== ""
+		};
+	}
+	return {
+		type: "none",
+		username: "",
+		password: "",
+		token: "",
+		configured: false
+	};
+}
+function buildRuntimeFormData(fields) {
+	if (typeof FormData === "undefined") return void 0;
+	const formData = new FormData();
+	for (const field of fields) {
+		const raw = field.rawValue;
+		if (isFileListLike(raw)) for (let index = 0; index < raw.length; index++) {
+			const item = raw[index];
+			if (item == null) continue;
+			if (isBlobLike(item)) formData.append(field.key, item, item.name);
+			else formData.append(field.key, String(item.name ?? item));
+		}
+		else if (isBlobLike(raw)) formData.append(field.key, raw, field.file?.name ?? raw.name);
+		else formData.append(field.key, field.value);
+	}
+	return formData;
+}
+/**
+* Construye el modelo de solicitud a partir del estado actual de RESTTester.
+*
+* @param {{url?: string, method?: string, data?: Record<string, any>, baseUrl?: string}} options
+* @param {string} [options.baseUrl]  Base para absolutizar una URL relativa. Si no se
+*   pasa, la URL se queda como está (y se avisa) porque no hay forma de saber el host.
+* @returns {RestRequest}
+*/
+function normalizeRequest({ url = "", method = "GET", data = {}, baseUrl = "" } = {}) {
+	const warnings = [];
+	const notices = [];
+	const normalizedMethod = String(method || "GET").toUpperCase();
+	const query = readEnabledRows(data?.query);
+	const { url: absoluteUrl, base, resolved } = resolveUrlAgainstBase(url, baseUrl);
+	if (String(url || "").trim() !== "" && !isAbsoluteUrl(url) && !resolved) warnings.push("La URL es relativa y no hay base para resolverla: el archivo usa una ruta relativa, que no funcionará fuera de este sitio.");
+	const finalUrl = buildFinalUrl(absoluteUrl, query);
+	const auth = readAuth(data);
+	let headers = normalizeHeaderRows(data?.headers);
+	if (auth.configured) headers = removeHeader(headers, "authorization");
+	const acceptsBody = !METHODS_WITHOUT_BODY$1.has(normalizedMethod);
+	const selection = Number(data?.body?.selection ?? BODY_TYPES.JSON);
+	let body = {
+		type: "none",
+		text: null,
+		runtime: void 0,
+		mime: null,
+		fields: [],
+		hasFiles: false
+	};
+	if (acceptsBody) {
+		if (selection === BODY_TYPES.JSON) {
+			const code = data?.body?.json?.code;
+			if (typeof code === "string") {
+				if (code.trim() === "") body = {
+					...body,
+					type: "json-empty"
+				};
+				else try {
+					const parsed = JSON.parse(code);
+					body = {
+						type: "json",
+						text: JSON.stringify(parsed, null, 2),
+						runtime: parsed,
+						mime: MIME_JSON$1,
+						fields: [],
+						hasFiles: false
+					};
+				} catch (error) {
+					warnings.push("El body JSON no es válido: se enviará como texto sin transformar.");
+					body = {
+						type: "raw",
+						text: code,
+						runtime: code,
+						mime: null,
+						fields: [],
+						hasFiles: false
+					};
+				}
+			} else if (code != null && typeof code === "object") body = {
+				type: "json",
+				text: JSON.stringify(code, null, 2),
+				runtime: code,
+				mime: MIME_JSON$1,
+				fields: [],
+				hasFiles: false
+			};
+			else body = {
+				...body,
+				type: "json-empty"
+			};
+		} else if (selection === BODY_TYPES.XML) {
+			const code = data?.body?.xml?.code ?? "";
+			body = {
+				type: "xml",
+				text: String(code),
+				runtime: String(code),
+				mime: null,
+				fields: [],
+				hasFiles: false
+			};
+		} else if (selection === BODY_TYPES.TEXT) {
+			const value = data?.body?.text?.value ?? "";
+			body = {
+				type: "text",
+				text: String(value),
+				runtime: String(value),
+				mime: null,
+				fields: [],
+				hasFiles: false
+			};
+		} else if (selection === BODY_TYPES.FORM) {
+			const fields = readFormFields(data?.body?.form);
+			body = {
+				type: "form",
+				text: null,
+				runtime: buildRuntimeFormData(fields),
+				mime: MIME_MULTIPART$1,
+				fields,
+				hasFiles: fields.some((field) => field.file)
+			};
+			if (body.hasFiles) notices.push("Los campos de archivo se referencian por nombre; coloca esos archivos junto al script exportado.");
+		} else if (selection === BODY_TYPES.URLENCODED) {
+			const params = readEnabledRows(data?.body?.urlencoded);
+			const search = new URLSearchParams();
+			for (const param of params) search.append(param.key, param.value);
+			const encoded = search.toString();
+			body = {
+				type: "urlencoded",
+				text: encoded,
+				runtime: new URLSearchParams(encoded),
+				mime: MIME_URLENCODED$1,
+				fields: params.map((param) => ({
+					...param,
+					enabled: true,
+					file: null,
+					rawValue: param.value
+				})),
+				hasFiles: false
+			};
+		}
+	} else if (selection === BODY_TYPES.JSON && data?.body?.json?.code != null) warnings.push(`El método ${normalizedMethod} no admite body; el body configurado se omite.`);
+	body.hasBody = body.type === "json" || body.type === "form" || body.type === "urlencoded" ? true : body.type === "raw" || body.type === "xml" || body.type === "text" ? String(body.text ?? "") !== "" : false;
+	if (body.type === "json" && !findHeader(headers, "content-type")) headers = [...headers, {
+		key: "Content-Type",
+		value: MIME_JSON$1
+	}];
+	return {
+		method: normalizedMethod,
+		url: finalUrl,
+		base,
+		resolved,
+		query,
+		headers,
+		auth,
+		body,
+		warnings,
+		notices
+	};
+}
 var REST_EXPORT_FORMATS = [
 	{
 		id: "http",
@@ -5534,7 +5882,7 @@ var RESPONSES_AS = [
 ];
 function RESTTester($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
-		let { url = "", method = "GET", limitSizeResponseView = 2e4, methodDisabled = false, showExport = true, showImport = true, data = {
+		let { url = "", method = "GET", limitSizeResponseView = 2e4, methodDisabled = false, showExport = true, showImport = true, baseUrl = "", data = {
 			query: [{
 				enabled: true,
 				key: "",
@@ -5652,6 +6000,39 @@ function RESTTester($$renderer, $$props) {
 			if (!method) method = "GET";
 			if (!url) url = "";
 		}
+		/**
+		* Base con la que se absolutizan las rutas relativas. `document.baseURI` replica lo
+		* que hace `fetch` en el navegador, así que el archivo generado y la petición real
+		* apuntan al mismo sitio. En SSR / Node no hay documento y no se puede resolver.
+		*/
+		function effectiveBase() {
+			if (baseUrl) return baseUrl;
+			if (typeof document !== "undefined") return document.baseURI;
+			return "";
+		}
+		/**
+		* Modelo normalizado de la solicitud actual. Es la única fuente de verdad que
+		* comparten el envío (uFetch) y los exportadores (.http / .sh / .ps1).
+		*/
+		function currentRequestModel() {
+			return normalizeRequest({
+				url,
+				method,
+				data,
+				baseUrl: effectiveBase()
+			});
+		}
+		/**
+		* Vista previa de lo que se va a escribir en el archivo cuando la URL del campo es
+		* relativa. Se deriva del modelo para actualizarse al escribir en el campo URL.
+		*/
+		let export_url_preview = derived(() => {
+			const model = currentRequestModel();
+			return model.resolved ? {
+				url: model.url,
+				base: model.base
+			} : null;
+		});
 		/**
 		* Importa un archivo de solicitud (.http, curl, PowerShell, fetch) y lo vuelca
 		* en el estado del componente. El texto lo lee el navegador y los parsers son
@@ -5801,7 +6182,10 @@ function RESTTester($$renderer, $$props) {
 			$$renderer.push(`<div class="columns is-variable is-4">`);
 			if (showExport) {
 				$$renderer.push(`<!--[0--><div class="column is-half"><h6 class="title is-6">Export</h6> <p class="io_text svelte-1srha5r">Download this request as an HTTP client file (<code class="svelte-1srha5r">.http</code>), a curl/bash script (<code class="svelte-1srha5r">.sh</code>) or a PowerShell script (<code class="svelte-1srha5r">.ps1</code>). Choose whether the secrets stay as
-					environment variables or are written in plain text.</p> <p class="io_group_title svelte-1srha5r">With environment variables</p> <div class="buttons"><!--[-->`);
+					environment variables or are written in plain text.</p> `);
+				if (export_url_preview()) $$renderer.push(`<!--[0--><p class="io_preview svelte-1srha5r" data-testid="export-url-preview">The URL is relative, so it will be exported as <code class="svelte-1srha5r">${escape_html(export_url_preview().url)}</code> resolved against <code class="svelte-1srha5r">${escape_html(export_url_preview().base)}</code></p>`);
+				else $$renderer.push("<!--[-1-->");
+				$$renderer.push(`<!--]--> <p class="io_group_title svelte-1srha5r">With environment variables</p> <div class="buttons"><!--[-->`);
 				const each_array = ensure_array_like(REST_EXPORT_FORMATS);
 				for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
 					let format = each_array[$$index];
@@ -5970,6 +6354,7 @@ function RESTTester($$renderer, $$props) {
 			methodDisabled,
 			showExport,
 			showImport,
+			baseUrl,
 			data
 		});
 	});
@@ -6645,7 +7030,7 @@ var ChartWidgets = {
 };
 //#endregion
 //#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/version.js
-var version = "9.5.0";
+var version = "9.5.3";
 //#endregion
 //#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/login/index.svelte
 function Login($$renderer, $$props) {
@@ -7277,6 +7662,12 @@ var IntervalTaskStatus = {
 		background: "warning",
 		icon: " fa-solid fa-hourglass-end ",
 		description: "The run exceeded its time limit and was aborted."
+	},
+	5: {
+		label: "Aborted",
+		background: "dark",
+		icon: " fa-solid fa-ban ",
+		description: "The run was stopped by an operator. It does not count as a failure and the task stays scheduled."
 	}
 };
 var IntervalTaskStatusFallback = {
@@ -7299,7 +7690,7 @@ function getIntervalTaskRuntimeStatus(value) {
 function getIntervalTaskLastResultStatus(value, response) {
 	const numericStatus = Number(value);
 	if (numericStatus === 2 && response && typeof response === "object" && !Array.isArray(response) && response.success === false) return IntervalTaskStatus[3];
-	return numericStatus >= 2 && numericStatus <= 4 ? IntervalTaskStatus[numericStatus] : null;
+	return numericStatus >= 2 && numericStatus <= 5 ? IntervalTaskStatus[numericStatus] : null;
 }
 var defaultValuesBot = (bot) => {
 	return {
@@ -8637,7 +9028,7 @@ function Variables($$renderer, $$props) {
 function Application_variables($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
-		let { idapp = 0, onsavedeploy = () => {} } = $$props;
+		let { idapp = 0 } = $$props;
 		const permEnv = getDefaultEnvironment();
 		const currentUser = derived(() => store_get($$store_subs ??= {}, "$userStore", userStore)?.user);
 		const canEdit = derived(() => currentUserHasPermission(currentUser(), permEnv, "appvars", "edit"));
@@ -8945,16 +9336,10 @@ function CellCountStatusCode($$renderer, $$props) {
 function CellEnv($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = void 0, row = void 0 } = $$props;
-		let timeoutIsRunning;
 		let env_params = derived(() => {
 			return Environment && Array.isArray(Environment) ? Environment.find((item) => {
 				return row.environment == item.id;
 			}) : [];
-		});
-		let unsubscribe;
-		onDestroy(() => {
-			clearTimeout(timeoutIsRunning);
-			unsubscribe();
 		});
 		$$renderer.push(`<td>`);
 		if (env_params()) $$renderer.push(`<!--[0--><span class="icon-text"><span${attr_class(`icon ${stringify(env_params().color)}`)}><i${attr_class(clsx(env_params().icon))}></i></span></span>`);
@@ -9465,7 +9850,7 @@ function Sql($$renderer, $$props) {
 		}
 		function tab_query($$renderer) {
 			$$renderer.push(`<div><div><div class="content is-small">The parameters must have a name like <span style="font-style: oblique; font-weight: bold;">$nameparameter</span> to bind, or <span style="font-style: oblique; font-weight: bold;">:nameparameter</span> to
-				replacements. The values ​​you send in the request. For more information you can consult the <a href="https://sequelize.org/docs/v6/core-concepts/raw-queries/#bind-parameter">sequelize</a> documentation.</div></div></div> `);
+				replacements. The values you send in the request. For more information you can consult the <a href="https://sequelize.org/docs/v6/core-concepts/raw-queries/#bind-parameter">sequelize</a> documentation.</div></div></div> `);
 			EditorCode($$renderer, {
 				isReadOnly: false,
 				lang: "sql",
@@ -9763,7 +10148,7 @@ function SqlHana($$renderer, $$props) {
 		}
 		function tab_query($$renderer) {
 			$$renderer.push(`<div><div><div><div class="content is-small"><span style="font-style: oblique; font-weight: bold;">$nameparameter</span> to bind, or <span style="font-style: oblique; font-weight: bold;">:nameparameter</span> to use
-					array bind. The values ​​you send in the request. For more information go to the "Pass parameters"
+					array bind. The values you send in the request. For more information go to the "Pass parameters"
 					tab.</div></div></div> `);
 			EditorCode($$renderer, {
 				isReadOnly: false,
@@ -9785,8 +10170,8 @@ function SqlHana($$renderer, $$props) {
 		function tab_pass_params($$renderer) {
 			$$renderer.push(`<div><div class="content is-small"><p>This "handler" uses <a href="https://help.sap.com/docs/HANA_SERVICE_CF/1efad1691c1f496b8b580064a6536c2d/a5c332936d9f47d8b820a4ecc427352c.html">@sap/hana-client internally</a>. However, the way the parameters are passed is a little different in order to facilitate
 				its use.</p> <div class="block"><h4>Parameter name</h4> <div class="block">If in the query you use the parameter with the prefix <strong>"$"</strong> (<code>$param_name</code>), it is expected that this variable corresponds to a value that will be injected into
-					the query. <br/> <div class="block">For example the following query: <br/> <code>SELECT * FROM YOUR_TABLE WHERE FIELD_01 = $value_01;</code> <br/> Internally the query becomes:: <br/> <code>SELECT * FROM YOUR_TABLE WHERE FIELD_01 = ?;</code></div></div> <div class="block">If in the query you use the parameter with the prefix <strong>":"</strong> (<code>:param_name</code>), this variable is expected to contain an array of values ​​that will be injected into
-					the query. <br/> <div class="block">For example the following query: <br/> <code>SELECT * FROM YOUR_TABLE WHERE FIELD_01 = $value_01 AND FIELD_02 IN (:list_your_values);</code> <br/> The parameters you must send should look like the following example: <br/> `);
+					the query. <br/> <div class="block">For example the following query: <br/> <code>SELECT * FROM YOUR_TABLE WHERE FIELD_01 = $value_01;</code> <br/> Internally the query becomes:: <br/> <code>SELECT * FROM YOUR_TABLE WHERE FIELD_01 = ?;</code></div></div> <div class="block">If in the query you use the parameter with the prefix <strong>":"</strong> (<code>:param_name</code>), this variable is expected to contain an array of values that will be injected into the
+					query. <br/> <div class="block">For example the following query: <br/> <code>SELECT * FROM YOUR_TABLE WHERE FIELD_01 = $value_01 AND FIELD_02 IN (:list_your_values);</code> <br/> The parameters you must send should look like the following example: <br/> `);
 			JSONView($$renderer, {
 				get jsonObject() {
 					return sample_bind_post;
@@ -10280,8 +10665,8 @@ function Mongodb($$renderer, $$props) {
 			};
 		}
 		function tab_code($$renderer) {
-			$$renderer.push(`<div><div><div class="content is-small">For more information you can consult the <a href="https://mongoosejs.com/">MONGOOSE</a> and <a href="https://www.mongodb.com/products/updates/version-release">MongoDB</a> documentation.</div> <div class="content is-small">The mongose ​​instance with the connection is called <code>mongooseInstance</code> and you can
-				use it within the code.</div></div></div> `);
+			$$renderer.push(`<div><div><div class="content is-small">For more information you can consult the <a href="https://mongoosejs.com/">MONGOOSE</a> and <a href="https://www.mongodb.com/products/updates/version-release">MongoDB</a> documentation.</div> <div class="content is-small">The mongose instance with the connection is called <code>mongooseInstance</code> and you can use
+				it within the code.</div></div></div> `);
 			EditorCode($$renderer, {
 				isReadOnly: false,
 				lang: "js",
@@ -10877,7 +11262,7 @@ function Authorizations($$renderer, $$props) {
 //#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/loglevel_select.svelte
 function Loglevel_select($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
-		let { level = 0, ondata = (d) => {} } = $$props;
+		let { level = 0 } = $$props;
 		let options = [
 			{
 				id: 0,
@@ -10940,7 +11325,7 @@ function Logs$1($$renderer, $$props) {
 			status_redirect: 1,
 			status_client_error: 2,
 			status_server_error: 3
-		}, ondata = (d) => {} } = $$props;
+		} } = $$props;
 		let dataLogs = [];
 		let datatraceLogs = [];
 		let trace_id = "";
@@ -11733,11 +12118,11 @@ function Editor($$renderer, $$props) {
 				else if (typeof valor === "function") cadena = valor.toString();
 				else if (typeof valor === "object") try {
 					cadena = JSON.stringify(valor, null, 2);
-				} catch (jsonError) {
+				} catch {
 					cadena = Object.prototype.toString.call(valor);
 				}
 				else cadena = String(valor);
-			} catch (error) {
+			} catch {
 				cadena = "[Error al convertir valor]";
 			}
 			return cadena.substring(0, maxLength);
@@ -12414,7 +12799,6 @@ function Endpoints($$renderer, $$props) {
 						});
 					},
 					oneditrow: (data) => {
-						data.idendpoint;
 						showEndpointEdit = true;
 						EndpointEditorWidget.setData({
 							app,
@@ -12668,7 +13052,7 @@ function tab_guide($$renderer) {
 function Interval_tasks($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
-		let { idapp = void 0, onchange = () => {} } = $$props;
+		let { idapp = void 0 } = $$props;
 		const uF = new uFetch();
 		new Notifications$1();
 		const permEnv = getDefaultEnvironment();
@@ -12678,6 +13062,7 @@ function Interval_tasks($$renderer, $$props) {
 		const canDelete = derived(() => currentUserHasPermission(currentUser(), permEnv, "interval_tasks", "delete"));
 		let showEditor = false;
 		let runNowPending = false;
+		let stopNowPending = false;
 		let historyTask = {};
 		let selectedRow = defaultValuesIntervalTask({});
 		let optionsEndpoints = [];
@@ -12838,6 +13223,7 @@ function Interval_tasks($$renderer, $$props) {
 		let runtime = derived(() => selectedRow.idtask ? DataTableTasks.find((t) => String(t.idtask) === String(selectedRow.idtask)) || null : null);
 		let runtimeStatus = derived(() => runtime() ? getIntervalTaskRuntimeStatus(runtime().status) : null);
 		let lastResultStatus = derived(() => runtime() ? getIntervalTaskLastResultStatus(runtime().status, runtime().last_response) : null);
+		let historyTaskRuntime = derived(() => historyTask?.idtask ? DataTableTasks.find((t) => String(t.idtask) === String(historyTask.idtask)) || null : null);
 		let nextIn = derived(() => {
 			if (!runtime()?.next_run) return "";
 			const seconds = Math.round((new Date(runtime().next_run).getTime() - Date.now()) / 1e3);
@@ -12853,7 +13239,7 @@ function Interval_tasks($$renderer, $$props) {
 			if (typeof value === "string") return value;
 			try {
 				return JSON.stringify(value, null, 2);
-			} catch (error) {
+			} catch {
 				return String(value);
 			}
 		});
@@ -12884,7 +13270,7 @@ function Interval_tasks($$renderer, $$props) {
 		function normalizeParams(row) {
 			if (typeof row.params === "string") try {
 				row.params = JSON.parse(row.params || "{}");
-			} catch (error) {
+			} catch {
 				row.params = {};
 			}
 			else if (!row.params || typeof row.params !== "object") row.params = {};
@@ -13176,7 +13562,7 @@ function Interval_tasks($$renderer, $$props) {
 		function $$render_inner($$renderer) {
 			{
 				function taskActions($$renderer) {
-					$$renderer.push(`<div class="field has-addons"><p class="control"><button class="button is-small"${attr("disabled", !historyTask?.idtask, true)} title="Despierta el planificador y ejecuta la tarea inmediatamente"><span class="icon is-small"><i class="fa-solid fa-bolt"></i></span> <span>Run now</span></button></p> <p class="control"><button class="button is-small"${attr("disabled", !historyTask?.idtask, true)} title="Reinicia el contador de fallos y reactiva la tarea si el backoff la deshabilitó"><span class="icon is-small"><i class="fa-solid fa-rotate-left"></i></span> <span>Reset attempts</span></button></p></div>`);
+					$$renderer.push(`<div class="field has-addons"><p class="control"><button class="button is-small"${attr("disabled", !historyTask?.idtask, true)} title="Despierta el planificador y ejecuta la tarea inmediatamente"><span class="icon is-small"><i class="fa-solid fa-bolt"></i></span> <span>Run now</span></button></p> <p class="control"><button class="button is-small is-danger"${attr("disabled", !historyTask?.idtask || Number(historyTaskRuntime()?.status) !== 1, true)}${attr("title", !historyTask?.idtask ? "Select a single task to act on it" : Number(historyTaskRuntime()?.status) === 1 ? "Aborta la ejecución en vuelo; la tarea no se deshabilita y conserva su programación" : "No hay ninguna ejecución en vuelo que detener")}><span class="icon is-small"><i class="fa-solid fa-stop"></i></span> <span>Stop now</span></button></p> <p class="control"><button class="button is-small"${attr("disabled", !historyTask?.idtask, true)} title="Reinicia el contador de fallos y reactiva la tarea si el backoff la deshabilitó"><span class="icon is-small"><i class="fa-solid fa-rotate-left"></i></span> <span>Reset attempts</span></button></p></div>`);
 				}
 				Table($$renderer, {
 					showEditRow: true,
@@ -13241,7 +13627,7 @@ function Interval_tasks($$renderer, $$props) {
 						{
 							function r01($$renderer) {
 								$$renderer.push(`<div class="field has-addons">`);
-								if (selectedRow.idtask) $$renderer.push(`<!--[0--><p class="control"><button${attr_class("button is-small is-warning", void 0, { "is-loading": runNowPending })}${attr("disabled", !runtime()?.task_enabled || Number(runtime()?.status) === 1 && !runtime()?.allow_concurrent, true)}${attr("title", !runtime()?.task_enabled ? "Enable and save the task before running it" : Number(runtime()?.status) === 1 && !runtime()?.allow_concurrent ? "The task is already running and does not allow concurrency" : "Runs the last saved configuration immediately")}><span class="icon is-small"><i class="fa-solid fa-bolt"></i></span> <span>Run now</span></button></p>`);
+								if (selectedRow.idtask) $$renderer.push(`<!--[0--><p class="control"><button${attr_class("button is-small is-warning", void 0, { "is-loading": runNowPending })}${attr("disabled", !runtime()?.task_enabled || Number(runtime()?.status) === 1 && !runtime()?.allow_concurrent, true)}${attr("title", !runtime()?.task_enabled ? "Enable and save the task before running it" : Number(runtime()?.status) === 1 && !runtime()?.allow_concurrent ? "The task is already running and does not allow concurrency" : "Runs the last saved configuration immediately")}><span class="icon is-small"><i class="fa-solid fa-bolt"></i></span> <span>Run now</span></button></p> <p class="control"><button${attr_class("button is-small is-danger", void 0, { "is-loading": stopNowPending })}${attr("disabled", Number(runtime()?.status) !== 1, true)}${attr("title", Number(runtime()?.status) === 1 ? "Aborts the execution in flight; the task is not disabled and keeps its schedule" : "There is no execution in flight to stop")}><span class="icon is-small"><i class="fa-solid fa-stop"></i></span> <span>Stop now</span></button></p>`);
 								else $$renderer.push("<!--[-1-->");
 								$$renderer.push(`<!--]--> <p class="control"><button class="button is-small is-link"><span class="icon is-small"><i class="fa-solid fa-rocket"></i></span> <span>Save &amp; Deploy</span></button></p> <p class="control"><button class="button is-small"><span class="icon is-small"><i class="fa-solid fa-xmark"></i></span> <span>Cancel</span></button></p></div>`);
 							}
@@ -13473,7 +13859,7 @@ function Bot_logs($$renderer, $$props) {
 function Bots($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
-		let { idapp = void 0, onchange = () => {} } = $$props;
+		let { idapp = void 0 } = $$props;
 		let notify = new Notifications$1();
 		const uF = new uFetch();
 		const permEnv = getDefaultEnvironment();
@@ -13544,7 +13930,7 @@ function Bots($$renderer, $$props) {
 		function normalizeParams(row) {
 			if (typeof row.params === "string") try {
 				row.params = JSON.parse(row.params || "{}");
-			} catch (error) {
+			} catch {
 				row.params = {};
 			}
 			else if (!row.params || typeof row.params !== "object") row.params = {};
@@ -14669,7 +15055,7 @@ function CellToken($$renderer, $$props) {
 function Apikeys($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
-		let { idapp = void 0, onchange = () => {} } = $$props;
+		let { idapp = void 0 } = $$props;
 		const uF = new uFetch();
 		const permEnv = getDefaultEnvironment();
 		const currentUser = derived(() => store_get($$store_subs ??= {}, "$userStore", userStore)?.user);
@@ -14764,10 +15150,10 @@ function Apikeys($$renderer, $$props) {
 				return t.idtask;
 			});
 			console.log("deleteTasks >>>>>>>>>>>>>", idtasks, url_paths.deleteIntervalTasksByIdTask);
-			await (await uF.DELETE({
+			await uF.DELETE({
 				url: url_paths.deleteIntervalTasksByIdTask,
 				data: idtasks
-			})).json();
+			});
 			await loadAPIKeys();
 		}
 		function fnDefaulValues() {
