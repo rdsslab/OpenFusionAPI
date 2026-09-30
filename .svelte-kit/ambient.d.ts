@@ -60,7 +60,6 @@ declare module '$env/static/private' {
 	export const LC_NAME: string;
 	export const npm_lifecycle_script: string;
 	export const TERM_PROGRAM: string;
-	export const LS_COLORS: string;
 	export const XRDP_PULSE_SINK_SOCKET: string;
 	export const USER: string;
 	export const XRDP_SOCKET_PATH: string;
@@ -116,7 +115,6 @@ declare module '$env/static/private' {
 	export const npm_command: string;
 	export const GPG_AGENT_INFO: string;
 	export const LOGNAME: string;
-	export const OPENCODE_TERMINAL: string;
 	export const XDG_SESSION_ID: string;
 	export const npm_config_cache: string;
 	export const FC_FONTATIONS: string;
@@ -135,6 +133,7 @@ declare module '$env/static/private' {
 	export const NVM_BIN: string;
 	export const XMODIFIERS: string;
 	export const XDG_SESSION_DESKTOP: string;
+	export const LS_COLORS: string;
 }
 
 /**
@@ -243,7 +242,6 @@ declare module '$env/dynamic/private' {
 		LC_NAME: string;
 		npm_lifecycle_script: string;
 		TERM_PROGRAM: string;
-		LS_COLORS: string;
 		XRDP_PULSE_SINK_SOCKET: string;
 		USER: string;
 		XRDP_SOCKET_PATH: string;
@@ -299,7 +297,6 @@ declare module '$env/dynamic/private' {
 		npm_command: string;
 		GPG_AGENT_INFO: string;
 		LOGNAME: string;
-		OPENCODE_TERMINAL: string;
 		XDG_SESSION_ID: string;
 		npm_config_cache: string;
 		FC_FONTATIONS: string;
@@ -318,6 +315,7 @@ declare module '$env/dynamic/private' {
 		NVM_BIN: string;
 		XMODIFIERS: string;
 		XDG_SESSION_DESKTOP: string;
+		LS_COLORS: string;
 		[key: `PUBLIC_${string}`]: undefined;
 		[key: `${string}`]: string | undefined;
 	}
