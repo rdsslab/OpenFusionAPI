@@ -1556,12 +1556,12 @@ function Table($$renderer, $$props) {
 			$$renderer.push("<!--[-1-->");
 			$$renderer.push(`<!--]--> <table class="table is-bordered is-striped is-narrow is-hoverable is-fullwidth">`);
 			if (DataTable && DataTable.length > 0) {
-				$$renderer.push(`<!--[0--><thead><tr class="has-background-link-dark"><th class="has-text-centered has-text-white resizable">#</th>`);
-				if (selectionType == 1) $$renderer.push(`<!--[0--><th class="has-text-centered has-text-white"><span>-</span></th>`);
-				else if (selectionType == 2) $$renderer.push(`<!--[1--><th class="has-text-centered has-text-white"><input type="checkbox"/></th>`);
+				$$renderer.push(`<!--[0--><thead class="table_head svelte-122u0gu"><tr><th class="has-text-centered svelte-122u0gu">#</th>`);
+				if (selectionType == 1) $$renderer.push(`<!--[0--><th class="has-text-centered svelte-122u0gu"><span>-</span></th>`);
+				else if (selectionType == 2) $$renderer.push(`<!--[1--><th class="has-text-centered svelte-122u0gu"><input type="checkbox"/></th>`);
 				else $$renderer.push("<!--[-1-->");
 				$$renderer.push(`<!--]-->`);
-				if (showEditRow) $$renderer.push(`<!--[0--><th class="has-text-centered has-text-white"><i class="fas fa-pen"></i></th>`);
+				if (showEditRow) $$renderer.push(`<!--[0--><th class="has-text-centered svelte-122u0gu"><i class="fas fa-pen"></i></th>`);
 				else $$renderer.push("<!--[-1-->");
 				$$renderer.push(`<!--]-->`);
 				if (internal_columns) {
@@ -1572,7 +1572,7 @@ function Table($$renderer, $$props) {
 						if (internal_columns[item]) {
 							$$renderer.push("<!--[0-->");
 							if (!internal_columns[item].hidden || internal_columns[item].hidden == null) {
-								$$renderer.push(`<!--[0--><th class="has-text-centered show_cursor_mouse has-text-white svelte-122u0gu"${attr("data-column", item)}>${escape_html(internal_columns[item].label)} `);
+								$$renderer.push(`<!--[0--><th class="has-text-centered show_cursor_mouse svelte-122u0gu"${attr("data-column", item)}>${escape_html(internal_columns[item].label)} `);
 								if (ColumnSort == item) {
 									$$renderer.push("<!--[0-->");
 									$$renderer.push(`<!--[0--><i class="fas fa-caret-down"></i>`);
@@ -1692,13 +1692,13 @@ function Table($$renderer, $$props) {
 				onPageChange: handlePageChange,
 				onPageSizeChange: handlePageSizeChange
 			});
-			$$renderer.push(`<!----></div> <div${attr_class("modal", void 0, { "is-active": ShowDialogColumn })}><div class="modal-card"><header class="modal-card-head has-background-dark"><p class="modal-card-title has-text-white"><b><span>Columns</span></b></p> <button class="delete" aria-label="close"></button></header> <section class="modal-card-body"><div class="columns"><!--[-->`);
+			$$renderer.push(`<!----></div> <div${attr_class("modal", void 0, { "is-active": ShowDialogColumn })}><div class="modal-card"><header class="modal-card-head table_modal_head svelte-122u0gu"><p class="modal-card-title"><b><span>Columns</span></b></p> <button class="delete" aria-label="close"></button></header> <section class="modal-card-body"><div class="columns"><!--[-->`);
 			const each_array_3 = ensure_array_like(Object.keys(columns));
 			for (let $$index_3 = 0, $$length = each_array_3.length; $$index_3 < $$length; $$index_3++) {
 				let col = each_array_3[$$index_3];
 				$$renderer.push(`<div class="column"><label class="checkbox"><input type="checkbox"/> ${escape_html(col)}</label></div>`);
 			}
-			$$renderer.push(`<!--]--></div></section> <footer class="modal-card-foot has-background-dark"><button class="button is-success is-small"><span>Accept</span></button> <button class="button is-small"><span>Cancel</span></button></footer></div></div>`);
+			$$renderer.push(`<!--]--></div></section> <footer class="modal-card-foot table_modal_foot svelte-122u0gu"><button class="button is-success is-small svelte-122u0gu"><span>Accept</span></button> <button class="button is-small svelte-122u0gu"><span>Cancel</span></button></footer></div></div>`);
 		}
 		do {
 			$$settled = true;
@@ -7030,7 +7030,7 @@ var ChartWidgets = {
 };
 //#endregion
 //#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/version.js
-var version = "9.5.3";
+var version = "9.5.4";
 //#endregion
 //#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/login/index.svelte
 function Login($$renderer, $$props) {
@@ -13069,6 +13069,7 @@ function Interval_tasks($$renderer, $$props) {
 		let optionsApiKeys = [];
 		let activeTab = 0;
 		const TAB_HISTORY = 2;
+		const TAB_RESPONSE = 3;
 		let tabList = [
 			{
 				name: "config",
@@ -13090,16 +13091,24 @@ function Interval_tasks($$renderer, $$props) {
 				disabled: true
 			},
 			{
+				name: "response",
+				label: "Response",
+				component: tab_response,
+				classIcon: "fa-solid fa-file-lines",
+				disabled: true
+			},
+			{
 				name: "guide",
 				label: "Guide",
 				component: tab_guide,
 				classIcon: "fa-solid fa-book"
 			}
 		];
-		/** Abre siempre en Configuration; History solo existe si la tarea ya está guardada. */
+		/** Abre siempre en Configuration; History y Response solo existen si la tarea ya está guardada. */
 		function resetTabs() {
 			activeTab = 0;
 			tabList[TAB_HISTORY].disabled = !selectedRow.idtask;
+			tabList[TAB_RESPONSE].disabled = !selectedRow.idtask;
 		}
 		const scheduleModes = [{
 			id: "interval",
@@ -13557,6 +13566,13 @@ function Interval_tasks($$renderer, $$props) {
 			} else $$renderer.push("<!--[-1-->");
 			$$renderer.push(`<!--]-->`);
 		}
+		function tab_response($$renderer) {
+			$$renderer.push(`<p class="heading">Last response</p> `);
+			if (lastResponse()) $$renderer.push(`<!--[0--><p class="help mb-2">Body returned by the last execution (${escape_html(formatMoment(runtime().last_run))}).</p> <pre class="is-size-7 last-response svelte-zqkhiy">${escape_html(lastResponse())}</pre>`);
+			else $$renderer.push(`<!--[-1--><p class="help">This task has no recorded response yet: it has never run, the last run returned an empty body,
+			or it is running right now.</p>`);
+			$$renderer.push(`<!--]-->`);
+		}
 		let $$settled = true;
 		let $$inner_renderer;
 		function $$render_inner($$renderer) {
@@ -13643,10 +13659,7 @@ function Interval_tasks($$renderer, $$props) {
 							$$renderer.push(`<!--[0--><div class="box py-3"><div class="level is-mobile mb-2"><div class="level-left"><span class="icon-text"><span class="icon"><i${attr_class(clsx(runtimeStatus().icon), "svelte-zqkhiy")}></i></span> <span class="has-text-weight-semibold">Runtime status</span></span></div> <div class="level-right"><div class="tags"><span${attr_class(`tag is-${stringify(runtimeStatus().background)}`, "svelte-zqkhiy")}>${escape_html(runtimeStatus().label)}</span> `);
 							if (lastResultStatus()) $$renderer.push(`<!--[0--><span${attr_class(`tag is-${stringify(lastResultStatus().background)}`, "svelte-zqkhiy")}>Last result: ${escape_html(lastResultStatus().label)}</span>`);
 							else $$renderer.push("<!--[-1-->");
-							$$renderer.push(`<!--]--></div></div></div> <p class="help mb-3">${escape_html(runtimeStatus().description)}</p> <div class="columns is-multiline is-mobile mb-0"><div class="column is-one-quarter"><p class="heading">Last run</p> <p>${escape_html(formatMoment(runtime().last_run))}</p></div> <div class="column is-one-quarter"><p class="heading">Next run</p> <p>${escape_html(formatMoment(runtime().next_run))}${escape_html(nextIn() ? ` (in ${nextIn()})` : "")}</p></div> <div class="column is-one-quarter"><p class="heading">Last duration</p> <p>${escape_html(runtime().last_exec_time ? `${runtime().last_exec_time} ms` : "—")}</p></div> <div class="column is-one-quarter"><p class="heading">Failed attempts</p> <p${attr_class("", void 0, { "has-text-danger": Number(runtime().max_failed_attempts ?? 0) > 0 && Number(runtime().failed_attempts ?? 0) >= Number(runtime().max_failed_attempts) })}>${escape_html(runtime().failed_attempts ?? 0)} / ${escape_html(runtime().max_failed_attempts ?? 0)}</p></div></div> `);
-							if (lastResponse()) $$renderer.push(`<!--[0--><p class="heading">Last response</p> <pre class="is-size-7 last-response svelte-zqkhiy">${escape_html(lastResponse())}</pre>`);
-							else $$renderer.push("<!--[-1-->");
-							$$renderer.push(`<!--]--></div>`);
+							$$renderer.push(`<!--]--></div></div></div> <p class="help mb-3">${escape_html(runtimeStatus().description)}</p> <div class="columns is-multiline is-mobile mb-0"><div class="column is-one-quarter"><p class="heading">Last run</p> <p>${escape_html(formatMoment(runtime().last_run))}</p></div> <div class="column is-one-quarter"><p class="heading">Next run</p> <p>${escape_html(formatMoment(runtime().next_run))}${escape_html(nextIn() ? ` (in ${nextIn()})` : "")}</p></div> <div class="column is-one-quarter"><p class="heading">Last duration</p> <p>${escape_html(runtime().last_exec_time ? `${runtime().last_exec_time} ms` : "—")}</p></div> <div class="column is-one-quarter"><p class="heading">Failed attempts</p> <p${attr_class("", void 0, { "has-text-danger": Number(runtime().max_failed_attempts ?? 0) > 0 && Number(runtime().failed_attempts ?? 0) >= Number(runtime().max_failed_attempts) })}>${escape_html(runtime().failed_attempts ?? 0)} / ${escape_html(runtime().max_failed_attempts ?? 0)}</p></div></div></div>`);
 						} else $$renderer.push("<!--[-1-->");
 						$$renderer.push(`<!--]--> <div>`);
 						Tab($$renderer, {
