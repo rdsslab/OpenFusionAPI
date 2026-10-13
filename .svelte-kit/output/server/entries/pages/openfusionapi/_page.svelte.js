@@ -849,7 +849,7 @@ function TableToolbar($$renderer, $$props) {
 		* TableToolbar - Barra de herramientas de la tabla.
 		* Agrupa botones de refresh, new, edit, delete, selección, export y búsqueda.
 		*/
-		let { requestData = void 0, loading = false, LastFetchResponse = true, timeRemainingToRefresh = 0, showExportButton = true, showDeleteButton = false, showEditButton = false, showNewButton = false, showSelectionButton = true, selectionType = 0, iconExport = "fa-solid fa-file-excel", iconDeleteRow = "fa-solid fa-trash", text_search = void 0, left_items = [], right_items = [], onRefresh = () => {}, onSearch = () => {}, onSearchInput = () => {}, onExport = (type) => {}, onDelete = () => {}, onEdit = () => {}, onNew = () => {}, onSelectionTypeChange = (type) => {} } = $$props;
+		let { requestData = void 0, loading = false, LastFetchResponse = true, timeRemainingToRefresh = 0, showExportButton = true, showDeleteButton = false, showEditButton = false, showNewButton = false, showSelectionButton = true, showColumnsButton = true, selectionType = 0, iconExport = "fa-solid fa-file-excel", iconDeleteRow = "fa-solid fa-trash", text_search = void 0, left_items = [], right_items = [], onRefresh = () => {}, onSearch = () => {}, onSearchInput = () => {}, onExport = (type) => {}, onDelete = () => {}, onEdit = () => {}, onNew = () => {}, onColumns = () => {}, onSelectionTypeChange = (type) => {} } = $$props;
 		function t_refresh($$renderer) {
 			if (requestData && requestData.url) {
 				$$renderer.push(`<!--[0--><button class="button is-small" title="Refresh time">`);
@@ -878,6 +878,11 @@ function TableToolbar($$renderer, $$props) {
 			else $$renderer.push("<!--[-1-->");
 			$$renderer.push(`<!--]-->`);
 		}
+		function t_columns($$renderer) {
+			if (showColumnsButton) $$renderer.push(`<!--[0--><button aria-label="close" class="button is-small" title="Show / hide columns" data-testid="table-columns-button"><span class="icon"><i class="fas fa-table-columns"></i></span></button>`);
+			else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]-->`);
+		}
 		function t_delete($$renderer) {
 			if (showDeleteButton) $$renderer.push(`<!--[0--><button aria-label="close" class="button is-small" title="Delete row"><span class="icon"><i${attr_class(clsx(iconDeleteRow), "svelte-1xmhp6b")}></i></span></button>`);
 			else $$renderer.push("<!--[-1-->");
@@ -902,6 +907,7 @@ function TableToolbar($$renderer, $$props) {
 				t_edit,
 				t_delete,
 				t_selection_type,
+				t_columns,
 				t_export_excel,
 				t_export_html,
 				t_search
@@ -1240,13 +1246,71 @@ function checkIsArray(data) {
 	return data && Array.isArray(data);
 }
 //#endregion
+//#region node_modules/@rdsslab/svelte-components/dist/Table/utils/columnPrefs.js
+/**
+* Persistencia en el navegador de las columnas que el usuario ocultó.
+*
+* Se guarda únicamente la lista de columnas OCULTAS por el usuario (nunca las
+* visibles): así, cuando el servidor añade una columna nueva, el merge de la
+* tabla la muestra por defecto en lugar de dejarla oculta para siempre.
+*
+* El acceso a `localStorage` va siempre protegido: en SSR (SvelteKit) no existe
+* y en modo privado o con políticas restrictivas puede lanzar al escribir.
+* Cualquier fallo se degrada a "sin preferencias guardadas" para no romper la
+* tabla.
+*/
+/** Prefijo de las claves para no colisionar con otras apps del mismo origen. */
+var STORAGE_PREFIX = "sc:table";
+/** Versión del formato; permite migrar el esquema en el futuro. */
+var STORAGE_VERSION = 1;
+/**
+* Clave de `localStorage` para una tabla concreta.
+* @param {string} tableKey - Identificador estable de la tabla.
+* @returns {string}
+*/
+function columnPreferencesKey(tableKey) {
+	return `${STORAGE_PREFIX}:${tableKey}:columns:v${STORAGE_VERSION}`;
+}
+/**
+* Indica si `localStorage` está disponible y operable.
+* @returns {boolean}
+*/
+function storageAvailable() {
+	try {
+		return typeof localStorage !== "undefined" && localStorage !== null;
+	} catch {
+		return false;
+	}
+}
+/**
+* Lee las preferencias de columnas de una tabla.
+* @param {string} tableKey - Identificador estable de la tabla.
+* @returns {Record<string, true>} Mapa `{ nombreColumna: true }` con las columnas ocultas.
+*/
+function loadColumnPreferences(tableKey) {
+	if (!tableKey || !storageAvailable()) return {};
+	try {
+		const raw = localStorage.getItem(columnPreferencesKey(tableKey));
+		if (!raw) return {};
+		const parsed = JSON.parse(raw);
+		if (!parsed || parsed.v !== STORAGE_VERSION || !Array.isArray(parsed.hidden)) return {};
+		/** @type {Record<string, true>} */
+		const hidden = {};
+		for (const name of parsed.hidden) if (typeof name === "string" && name.length > 0) hidden[name] = true;
+		return hidden;
+	} catch (error) {
+		console.warn("[Table] No se pudieron leer las preferencias de columnas:", error);
+		return {};
+	}
+}
+//#endregion
 //#region node_modules/@rdsslab/svelte-components/dist/Table/Table.svelte
 function Table($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		/**
 		* Configurable properties for the advanced data Table component.
 		* Supports auto-refresh, pagination, searching, CRUD actions, and server-side fetching.
-		* 
+		*
 		* @typedef {Object} TableProps
 		* @property {Array<Object>} [RawDataTable] - The local array of data objects to be rendered. Updated automatically if server polling is active.
 		* @property {number} [selectionType=0] - Defines table selection mode: 0 (None), 1 (Single), 2 (Multiple).
@@ -1255,6 +1319,9 @@ function Table($$renderer, $$props) {
 		* @property {boolean} [showEditButton=false] - Whether to render an 'Edit' button in the action bar.
 		* @property {boolean} [showEditRow=false] - Toggles whether inline row editing is active.
 		* @property {boolean} [showSelectionButton=true] - Visibility toggle for the row selection mode dropdown.
+		* @property {boolean} [showColumnsButton=true] - Visibility toggle for the 'Columns' dialog button (lets the user hide/show columns).
+		* @property {string} [storageKey=''] - Stable identifier used to persist the user's hidden-columns choice in localStorage. When empty, the choice lives only in memory.
+		* @property {function} [oncolumnschange] - Called with the map of columns hidden by the user every time the choice changes.
 		* @property {boolean} [showExportButton=true] - Visibility toggle for Export HTML/Excel buttons.
 		* @property {string} [iconExport='fa-solid fa-file-excel'] - FontAwesome class for the 'Export to Excel' icon.
 		* @property {string} [iconDeleteRow='fa-solid fa-trash'] - FontAwesome class for the 'Delete row' icon.
@@ -1277,7 +1344,7 @@ function Table($$renderer, $$props) {
 		* @property {function} [onchangecell] - Fired when data in an inline cell input morphs.
 		*/
 		/** @type {TableProps & Record<string, any>} */
-		let { RawDataTable = void 0, selectionType = 0, columns = {}, showNewButton = false, showEditButton = false, showEditRow = false, showSelectionButton = true, showExportButton = true, iconExport = "fa-solid fa-file-excel", iconDeleteRow = "fa-solid fa-trash", showDeleteButton = false, pageSize = [
+		let { RawDataTable = void 0, selectionType = 0, columns = {}, showNewButton = false, showEditButton = false, showEditRow = false, showSelectionButton = true, showColumnsButton = true, storageKey = "", showExportButton = true, iconExport = "fa-solid fa-file-excel", iconDeleteRow = "fa-solid fa-trash", showDeleteButton = false, pageSize = [
 			25,
 			50,
 			100,
@@ -1295,7 +1362,7 @@ function Table($$renderer, $$props) {
 			console.trace("onsearch no implemented.");
 		}, ondeleterow = (d) => {
 			ownDeleteRows(d);
-		}, onselectrows = (s) => {}, onclickcell = (s) => {}, onchangecell = (s) => {} } = $$props;
+		}, onselectrows = (s) => {}, onclickcell = (s) => {}, onchangecell = (s) => {}, oncolumnschange = (hidden) => {} } = $$props;
 		new uFetch();
 		const notify = new Notifications$1();
 		let DataTable = [];
@@ -1334,6 +1401,9 @@ function Table($$renderer, $$props) {
 			return pages;
 		});
 		let internal_columns = {};
+		let columns_config_hidden = {};
+		let user_hidden_columns = {};
+		let configurable_columns = derived(() => Object.keys(internal_columns).filter((item) => IsColumnConfigurable(item)));
 		let idTimeoutDataChanged;
 		let idTimeoutSearch;
 		function requestDataExists() {
@@ -1348,6 +1418,36 @@ function Table($$renderer, $$props) {
 			}
 			return tempArray;
 		}
+		/**
+		* Indica si el usuario puede alternar la columna. Las columnas ocultas por
+		* configuración (incluida `internal_hash_row`) quedan fuera.
+		* @param {string} item
+		* @returns {boolean}
+		*/
+		function IsColumnConfigurable(item) {
+			return item !== "internal_hash_row" && columns_config_hidden[item] !== true;
+		}
+		/**
+		* Fusiona la selección del usuario sobre `internal_columns`. Se vuelve a
+		* llamar cada vez que se reconstruyen las columnas (refresco de datos) para
+		* que el refresco no borre la elección del usuario.
+		*/
+		function ApplyColumnPreferences() {
+			Object.keys(internal_columns).forEach((item) => {
+				if (item === "internal_hash_row") return;
+				const config_hidden = columns_config_hidden[item] === true;
+				internal_columns[item].hidden = config_hidden || user_hidden_columns[item] === true;
+			});
+		}
+		/**
+		* Sincroniza la selección cuando otra pestaña del mismo origen la cambia.
+		* @param {StorageEvent} event
+		*/
+		function HandleStorageEvent(event) {
+			if (event.key !== null && event.key !== columnPreferencesKey(storageKey)) return;
+			user_hidden_columns = loadColumnPreferences(storageKey);
+			ApplyColumnPreferences();
+		}
 		function RowIsSelected(internal_hash_row) {
 			return SelectedRows.has(internal_hash_row);
 		}
@@ -1359,8 +1459,8 @@ function Table($$renderer, $$props) {
 			try {
 				let filteredData = GetSelectedRows();
 				if (filteredData && filteredData.length > 0) {
-					if (type === "xlsx") ExportTableToXlsx(filteredData, columns, fileNameExport);
-					else ExportTableToHTML(filteredData, columns, fileNameExport);
+					if (type === "xlsx") ExportTableToXlsx(filteredData, internal_columns, fileNameExport);
+					else ExportTableToHTML(filteredData, internal_columns, fileNameExport);
 					notify.push({
 						message: `Exported ${filteredData.length} rows to ${type.toUpperCase()}.`,
 						color: "success",
@@ -1388,6 +1488,7 @@ function Table($$renderer, $$props) {
 			clearInterval(auto_refresh);
 			clearTimeout(idTimeoutDataChanged);
 			clearTimeout(idTimeoutSearch);
+			if (storageKey && typeof window !== "undefined") window.removeEventListener("storage", HandleStorageEvent);
 		});
 		function ChangeIntervalRefresh() {
 			if (requestDataExists()) {
@@ -1504,6 +1605,9 @@ function Table($$renderer, $$props) {
 		function handleToolbarSelectionTypeChange(type) {
 			selectionType = type;
 		}
+		function handleToolbarColumns() {
+			ShowDialogColumn = true;
+		}
 		function handlePageChange(page) {
 			PageSelected = page;
 			SelectPage();
@@ -1525,6 +1629,7 @@ function Table($$renderer, $$props) {
 				showEditButton,
 				showNewButton,
 				showSelectionButton,
+				showColumnsButton,
 				iconExport,
 				iconDeleteRow,
 				left_items,
@@ -1536,6 +1641,7 @@ function Table($$renderer, $$props) {
 				onDelete: handleToolbarDelete,
 				onEdit: handleToolbarEdit,
 				onNew: handleToolbarNew,
+				onColumns: handleToolbarColumns,
 				onSelectionTypeChange: handleToolbarSelectionTypeChange,
 				get selectionType() {
 					return selectionType;
@@ -1692,13 +1798,17 @@ function Table($$renderer, $$props) {
 				onPageChange: handlePageChange,
 				onPageSizeChange: handlePageSizeChange
 			});
-			$$renderer.push(`<!----></div> <div${attr_class("modal", void 0, { "is-active": ShowDialogColumn })}><div class="modal-card"><header class="modal-card-head table_modal_head svelte-122u0gu"><p class="modal-card-title"><b><span>Columns</span></b></p> <button class="delete" aria-label="close"></button></header> <section class="modal-card-body"><div class="columns"><!--[-->`);
-			const each_array_3 = ensure_array_like(Object.keys(columns));
-			for (let $$index_3 = 0, $$length = each_array_3.length; $$index_3 < $$length; $$index_3++) {
-				let col = each_array_3[$$index_3];
-				$$renderer.push(`<div class="column"><label class="checkbox"><input type="checkbox"/> ${escape_html(col)}</label></div>`);
-			}
-			$$renderer.push(`<!--]--></div></section> <footer class="modal-card-foot table_modal_foot svelte-122u0gu"><button class="button is-success is-small svelte-122u0gu"><span>Accept</span></button> <button class="button is-small svelte-122u0gu"><span>Cancel</span></button></footer></div></div>`);
+			$$renderer.push(`<!----></div> <div${attr_class("modal", void 0, { "is-active": ShowDialogColumn })} data-testid="table-columns-modal"><div class="modal-card"><header class="modal-card-head table_modal_head svelte-122u0gu"><p class="modal-card-title"><b><span>Columns</span></b></p> <button class="delete" aria-label="close"></button></header> <section class="modal-card-body">`);
+			if (configurable_columns().length > 0) {
+				$$renderer.push(`<!--[0--><div class="columns is-multiline"><!--[-->`);
+				const each_array_3 = ensure_array_like(configurable_columns());
+				for (let $$index_3 = 0, $$length = each_array_3.length; $$index_3 < $$length; $$index_3++) {
+					let col = each_array_3[$$index_3];
+					$$renderer.push(`<div class="column is-half"><label class="checkbox"><input type="checkbox"${attr("checked", !internal_columns[col].hidden, true)}/> ${escape_html(internal_columns[col].label)}</label></div>`);
+				}
+				$$renderer.push(`<!--]--></div>`);
+			} else $$renderer.push(`<!--[-1--><div class="has-text-grey is-size-7">No hay columnas configurables.</div>`);
+			$$renderer.push(`<!--]--></section> <footer class="modal-card-foot table_modal_foot svelte-122u0gu"><button class="button is-small svelte-122u0gu" title="Restablecer columnas por defecto"><span class="icon is-small"><i class="fas fa-rotate-left"></i></span> <span>Reset</span></button> <button class="button is-success is-small svelte-122u0gu"><span>Close</span></button></footer></div></div>`);
 		}
 		do {
 			$$settled = true;
@@ -1714,6 +1824,8 @@ function Table($$renderer, $$props) {
 			showEditButton,
 			showEditRow,
 			showSelectionButton,
+			showColumnsButton,
+			storageKey,
 			showExportButton,
 			iconExport,
 			iconDeleteRow,
@@ -7030,7 +7142,7 @@ var ChartWidgets = {
 };
 //#endregion
 //#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/version.js
-var version = "9.5.5";
+var version = "9.5.6";
 //#endregion
 //#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/login/index.svelte
 function Login($$renderer, $$props) {
@@ -13302,8 +13414,6 @@ function Interval_tasks($$renderer, $$props) {
 					url: url_paths.getListIntervalTasksByIdApp,
 					data: { idapp }
 				})).json();
-				let status_sys_endp = await restoreSystemEndpoints(false, store_get($$store_subs ??= {}, "$userStore", userStore).token);
-				statusSystemEndpointsStore.set(status_sys_endp);
 				if (Array.isArray(jresp)) DataTableTasks = jresp.map((task) => {
 					const ev = latestRuntimeEvents.get(String(task.idtask));
 					if (!ev || ev.generation <= requestedGeneration) return task;
@@ -14050,8 +14160,6 @@ function Bots($$renderer, $$props) {
 					url: `${url_paths.bots}/prd`,
 					data: { idapp }
 				})).json();
-				let status_sys_endp = await restoreSystemEndpoints(false, store_get($$store_subs ??= {}, "$userStore", userStore).token);
-				statusSystemEndpointsStore.set(status_sys_endp);
 				if (jresp && jresp.success && Array.isArray(jresp.data)) DataTableBots = jresp.data;
 				else {
 					DataTableBots = [];
