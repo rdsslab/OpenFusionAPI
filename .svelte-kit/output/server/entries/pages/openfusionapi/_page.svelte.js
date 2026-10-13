@@ -7030,7 +7030,7 @@ var ChartWidgets = {
 };
 //#endregion
 //#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/version.js
-var version = "9.5.4";
+var version = "9.5.5";
 //#endregion
 //#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/login/index.svelte
 function Login($$renderer, $$props) {
@@ -7617,6 +7617,8 @@ var defaultValuesIntervalTask = (task) => {
 		window_days: "",
 		max_failed_attempts: 10,
 		history_limit: 50,
+		disabled_by: null,
+		disabled_reason: null,
 		note: ""
 	};
 	const incoming = Object.fromEntries(Object.entries(task || {}).filter(([, v]) => v !== void 0));
@@ -7691,6 +7693,27 @@ function getIntervalTaskLastResultStatus(value, response) {
 	const numericStatus = Number(value);
 	if (numericStatus === 2 && response && typeof response === "object" && !Array.isArray(response) && response.success === false) return IntervalTaskStatus[3];
 	return numericStatus >= 2 && numericStatus <= 5 ? IntervalTaskStatus[numericStatus] : null;
+}
+/**
+* Suspensión del planificador. Cuando una tarea agota `max_failed_attempts` el servidor
+* deja de programarla SIN apagar `enabled`: esa bandera es la intención del usuario y se
+* conserva. Lo que cambia es `disabled_by`, que pasa a `'system'`. Por eso es un estado
+* distinto de "Unabled" y merece su propia etiqueta: el usuario quiere que corra, pero
+* no correrá hasta que se corrija la causa y se reinicien los intentos.
+*/
+var IntervalTaskSuspendedStatus = {
+	label: "Suspended",
+	background: "danger",
+	icon: " fa-solid fa-triangle-exclamation ",
+	description: "The scheduler stopped this task after it reached Max failed attempts. The task stays Enabled, but it will not run until you fix the cause and use Reset attempts."
+};
+/** Devuelve el estado de suspensión, o `null` si el planificador no la suspendió. */
+function getIntervalTaskSuspensionStatus(task) {
+	return task?.disabled_by === "system" ? IntervalTaskSuspendedStatus : null;
+}
+/** `true` cuando la tarea está suspendida por el planificador (no por el usuario). */
+function isIntervalTaskSuspended(task) {
+	return task?.disabled_by === "system";
 }
 var defaultValuesBot = (bot) => {
 	return {
@@ -12916,6 +12939,7 @@ function CellTaskStatus($$renderer, $$props) {
 		let recordedStatus = derived(() => getIntervalTaskLastResultStatus(value, response()) || IntervalTaskStatus[Number(value)] || IntervalTaskStatusFallback);
 		let status = derived(() => currentState ? getIntervalTaskRuntimeStatus(value) : recordedStatus());
 		let lastResultStatus = derived(() => currentState ? getIntervalTaskLastResultStatus(value, response()) : null);
+		let suspension = derived(() => getIntervalTaskSuspensionStatus(row));
 		let nextIn = derived(() => {
 			if (!row?.next_run) return "";
 			const seconds = Math.round((new Date(row.next_run).getTime() - Date.now()) / 1e3);
@@ -12927,13 +12951,16 @@ function CellTaskStatus($$renderer, $$props) {
 		});
 		let title = derived(() => [
 			status().description,
+			suspension() ? suspension().description : "",
+			suspension() && row?.disabled_reason ? row.disabled_reason : "",
 			lastResultStatus() ? `Último resultado: ${lastResultStatus().label}` : "",
 			row?.failed_attempts ? `Fallos consecutivos: ${row.failed_attempts}` : "",
 			row?.last_exec_time ? `Última duración: ${row.last_exec_time} ms` : ""
 		].filter(Boolean).join("\n"));
 		$$renderer.push(`<td><div class="tags has-addons"${attr("title", title())}><span${attr_class(`tag is-${stringify(status().background)}`)}><span class="icon is-small"><i${attr_class(clsx(status().icon))}></i></span> <span>${escape_html(status().label)}</span></span> `);
-		if (row?.failed_attempts > 0) $$renderer.push(`<!--[0--><span class="tag is-dark">${escape_html(row.failed_attempts)} fails</span>`);
-		else if (nextIn() && status() === IntervalTaskStatus[0]) $$renderer.push(`<!--[1--><span class="tag is-dark">next ${escape_html(nextIn())}</span>`);
+		if (suspension()) $$renderer.push(`<!--[0--><span class="tag is-danger"><span class="icon is-small"><i${attr_class(clsx(suspension().icon))}></i></span> <span>${escape_html(suspension().label)}</span></span>`);
+		else if (row?.failed_attempts > 0) $$renderer.push(`<!--[1--><span class="tag is-dark">${escape_html(row.failed_attempts)} fails</span>`);
+		else if (nextIn() && status() === IntervalTaskStatus[0]) $$renderer.push(`<!--[2--><span class="tag is-dark">next ${escape_html(nextIn())}</span>`);
 		else $$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]--></div></td>`);
 		bind_props($$props, {
@@ -13041,13 +13068,17 @@ function History($$renderer, $$props) {
 //#endregion
 //#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/interval_tasks/index.svelte
 function tab_guide($$renderer) {
-	$$renderer.push(`<div class="content is-small"><h4>How to schedule an endpoint</h4> <ol><li>Select an existing endpoint and keep the new task disabled.</li> <li>Choose <strong>Interval</strong> for every N seconds or <strong>Cron</strong> for calendar times.</li> <li>Set an API Key when the endpoint is private and does not belong to the system app.</li> <li>Save, select the task, run it once with <strong>Run now</strong>, and inspect History.</li> <li>Enable it only after the test succeeds.</li></ol> <h4>Schedule fields</h4> <p>A cron example for weekdays at 07:00 is <code>0 7 * * 1-5</code>. Timezone and execution
+	$$renderer.push(`<div class="content is-small"><h4>How to schedule an endpoint</h4> <ol><li>Select an existing endpoint. Give the task a long <strong>interval</strong> (or a far cron) so
+				it does not fire on its own yet.</li> <li>Choose <strong>Interval</strong> for every N seconds or <strong>Cron</strong> for calendar times.</li> <li>Set an API Key when the endpoint is private and does not belong to the system app.</li> <li>Save, select the task, run it once with <strong>Run now</strong>, and inspect History.</li> <li>Once the test succeeds, set the real interval (or cron) and make sure <strong>Enabled</strong> is on.</li></ol> <h4>Schedule fields</h4> <p>A cron example for weekdays at 07:00 is <code>0 7 * * 1-5</code>. Timezone and execution
 			window are optional. Date Start and Date End restrict the task's lifetime; they do not change
 			its frequency.</p> <h4>Parameters and failures</h4> <p>Use <code>${escape_html(JSON.stringify({
 		data: { id: 42 },
 		headers: { "x-source": "scheduler" }
-	}))}</code> in Parameters. Failed executions use exponential backoff and the task is disabled after Max failed
-			attempts. Reset attempts only after correcting the cause.</p></div>`);
+	}))}</code> in Parameters. Failed executions use exponential backoff and, after Max failed attempts consecutive
+			failures, the scheduler <strong>suspends</strong> the task: it stays Enabled (your intent) but
+			stops running, and the status cell shows a red <strong>Suspended</strong> tag. Correct the
+			cause first, then use <strong>Reset attempts</strong> to clear the counter and lift the suspension.
+			A task you turned off yourself stays off after a reset.</p></div>`);
 }
 function Interval_tasks($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -13128,6 +13159,8 @@ function Interval_tasks($$renderer, $$props) {
 			"last_exec_time",
 			"last_response",
 			"failed_attempts",
+			"disabled_by",
+			"disabled_reason",
 			"task_enabled"
 		];
 		function applyRuntimeEvent(task, ev) {
@@ -13222,6 +13255,8 @@ function Interval_tasks($$renderer, $$props) {
 			window_end: { label: "Window to" },
 			window_days: { label: "Days" },
 			history_limit: { hidden: true },
+			disabled_by: { hidden: true },
+			disabled_reason: { hidden: true },
 			note: { hidden: true },
 			access: { hidden: true },
 			app: { hidden: true },
@@ -13231,8 +13266,10 @@ function Interval_tasks($$renderer, $$props) {
 		};
 		let runtime = derived(() => selectedRow.idtask ? DataTableTasks.find((t) => String(t.idtask) === String(selectedRow.idtask)) || null : null);
 		let runtimeStatus = derived(() => runtime() ? getIntervalTaskRuntimeStatus(runtime().status) : null);
+		let suspensionStatus = derived(() => runtime() ? getIntervalTaskSuspensionStatus(runtime()) : null);
 		let lastResultStatus = derived(() => runtime() ? getIntervalTaskLastResultStatus(runtime().status, runtime().last_response) : null);
 		let historyTaskRuntime = derived(() => historyTask?.idtask ? DataTableTasks.find((t) => String(t.idtask) === String(historyTask.idtask)) || null : null);
+		let historyTaskSuspended = derived(() => isIntervalTaskSuspended(historyTaskRuntime()));
 		let nextIn = derived(() => {
 			if (!runtime()?.next_run) return "";
 			const seconds = Math.round((new Date(runtime().next_run).getTime() - Date.now()) / 1e3);
@@ -13578,7 +13615,7 @@ function Interval_tasks($$renderer, $$props) {
 		function $$render_inner($$renderer) {
 			{
 				function taskActions($$renderer) {
-					$$renderer.push(`<div class="field has-addons"><p class="control"><button class="button is-small"${attr("disabled", !historyTask?.idtask, true)} title="Despierta el planificador y ejecuta la tarea inmediatamente"><span class="icon is-small"><i class="fa-solid fa-bolt"></i></span> <span>Run now</span></button></p> <p class="control"><button class="button is-small is-danger"${attr("disabled", !historyTask?.idtask || Number(historyTaskRuntime()?.status) !== 1, true)}${attr("title", !historyTask?.idtask ? "Select a single task to act on it" : Number(historyTaskRuntime()?.status) === 1 ? "Aborta la ejecución en vuelo; la tarea no se deshabilita y conserva su programación" : "No hay ninguna ejecución en vuelo que detener")}><span class="icon is-small"><i class="fa-solid fa-stop"></i></span> <span>Stop now</span></button></p> <p class="control"><button class="button is-small"${attr("disabled", !historyTask?.idtask, true)} title="Reinicia el contador de fallos y reactiva la tarea si el backoff la deshabilitó"><span class="icon is-small"><i class="fa-solid fa-rotate-left"></i></span> <span>Reset attempts</span></button></p></div>`);
+					$$renderer.push(`<div class="field has-addons"><p class="control"><button class="button is-small"${attr("disabled", !historyTask?.idtask || historyTaskSuspended(), true)}${attr("title", !historyTask?.idtask ? "Select a single task to act on it" : historyTaskSuspended() ? "The scheduler suspended this task: fix the cause and use Reset attempts" : "Despierta el planificador y ejecuta la tarea inmediatamente")}><span class="icon is-small"><i class="fa-solid fa-bolt"></i></span> <span>Run now</span></button></p> <p class="control"><button class="button is-small is-danger"${attr("disabled", !historyTask?.idtask || Number(historyTaskRuntime()?.status) !== 1, true)}${attr("title", !historyTask?.idtask ? "Select a single task to act on it" : Number(historyTaskRuntime()?.status) === 1 ? "Aborta la ejecución en vuelo; la tarea no se deshabilita y conserva su programación" : "No hay ninguna ejecución en vuelo que detener")}><span class="icon is-small"><i class="fa-solid fa-stop"></i></span> <span>Stop now</span></button></p> <p class="control"><button class="button is-small"${attr("disabled", !historyTask?.idtask, true)} title="Reinicia el contador de fallos y levanta la suspensión si el planificador la detuvo. No reactiva una tarea apagada por el usuario"><span class="icon is-small"><i class="fa-solid fa-rotate-left"></i></span> <span>Reset attempts</span></button></p></div>`);
 				}
 				Table($$renderer, {
 					showEditRow: true,
@@ -13643,7 +13680,7 @@ function Interval_tasks($$renderer, $$props) {
 						{
 							function r01($$renderer) {
 								$$renderer.push(`<div class="field has-addons">`);
-								if (selectedRow.idtask) $$renderer.push(`<!--[0--><p class="control"><button${attr_class("button is-small is-warning", void 0, { "is-loading": runNowPending })}${attr("disabled", !runtime()?.task_enabled || Number(runtime()?.status) === 1 && !runtime()?.allow_concurrent, true)}${attr("title", !runtime()?.task_enabled ? "Enable and save the task before running it" : Number(runtime()?.status) === 1 && !runtime()?.allow_concurrent ? "The task is already running and does not allow concurrency" : "Runs the last saved configuration immediately")}><span class="icon is-small"><i class="fa-solid fa-bolt"></i></span> <span>Run now</span></button></p> <p class="control"><button${attr_class("button is-small is-danger", void 0, { "is-loading": stopNowPending })}${attr("disabled", Number(runtime()?.status) !== 1, true)}${attr("title", Number(runtime()?.status) === 1 ? "Aborts the execution in flight; the task is not disabled and keeps its schedule" : "There is no execution in flight to stop")}><span class="icon is-small"><i class="fa-solid fa-stop"></i></span> <span>Stop now</span></button></p>`);
+								if (selectedRow.idtask) $$renderer.push(`<!--[0--><p class="control"><button${attr_class("button is-small is-warning", void 0, { "is-loading": runNowPending })}${attr("disabled", !runtime()?.task_enabled || Boolean(suspensionStatus()) || Number(runtime()?.status) === 1 && !runtime()?.allow_concurrent, true)}${attr("title", !runtime()?.task_enabled ? "Enable and save the task before running it" : suspensionStatus() ? "The scheduler suspended this task: fix the cause and use Reset attempts" : Number(runtime()?.status) === 1 && !runtime()?.allow_concurrent ? "The task is already running and does not allow concurrency" : "Runs the last saved configuration immediately")}><span class="icon is-small"><i class="fa-solid fa-bolt"></i></span> <span>Run now</span></button></p> <p class="control"><button${attr_class("button is-small is-danger", void 0, { "is-loading": stopNowPending })}${attr("disabled", Number(runtime()?.status) !== 1, true)}${attr("title", Number(runtime()?.status) === 1 ? "Aborts the execution in flight; the task is not disabled and keeps its schedule" : "There is no execution in flight to stop")}><span class="icon is-small"><i class="fa-solid fa-stop"></i></span> <span>Stop now</span></button></p>`);
 								else $$renderer.push("<!--[-1-->");
 								$$renderer.push(`<!--]--> <p class="control"><button class="button is-small is-link"><span class="icon is-small"><i class="fa-solid fa-rocket"></i></span> <span>Save &amp; Deploy</span></button></p> <p class="control"><button class="button is-small"><span class="icon is-small"><i class="fa-solid fa-xmark"></i></span> <span>Cancel</span></button></p></div>`);
 							}
@@ -13656,10 +13693,20 @@ function Interval_tasks($$renderer, $$props) {
 						}
 						$$renderer.push(`<!----> `);
 						if (runtime() && runtimeStatus()) {
-							$$renderer.push(`<!--[0--><div class="box py-3"><div class="level is-mobile mb-2"><div class="level-left"><span class="icon-text"><span class="icon"><i${attr_class(clsx(runtimeStatus().icon), "svelte-zqkhiy")}></i></span> <span class="has-text-weight-semibold">Runtime status</span></span></div> <div class="level-right"><div class="tags"><span${attr_class(`tag is-${stringify(runtimeStatus().background)}`, "svelte-zqkhiy")}>${escape_html(runtimeStatus().label)}</span> `);
+							$$renderer.push(`<!--[0--><div class="box py-3"><div class="level is-mobile mb-2"><div class="level-left"><span class="icon-text"><span class="icon"><i${attr_class(clsx(runtimeStatus().icon), "svelte-zqkhiy")}></i></span> <span class="has-text-weight-semibold">Runtime status</span></span></div> <div class="level-right"><div class="tags">`);
+							if (suspensionStatus()) $$renderer.push(`<!--[0--><span${attr_class(`tag is-${stringify(suspensionStatus().background)}`, "svelte-zqkhiy")}><span class="icon is-small"><i${attr_class(clsx(suspensionStatus().icon), "svelte-zqkhiy")}></i></span> <span>${escape_html(suspensionStatus().label)}</span></span>`);
+							else $$renderer.push("<!--[-1-->");
+							$$renderer.push(`<!--]--> <span${attr_class(`tag is-${stringify(runtimeStatus().background)}`, "svelte-zqkhiy")}>${escape_html(runtimeStatus().label)}</span> `);
 							if (lastResultStatus()) $$renderer.push(`<!--[0--><span${attr_class(`tag is-${stringify(lastResultStatus().background)}`, "svelte-zqkhiy")}>Last result: ${escape_html(lastResultStatus().label)}</span>`);
 							else $$renderer.push("<!--[-1-->");
-							$$renderer.push(`<!--]--></div></div></div> <p class="help mb-3">${escape_html(runtimeStatus().description)}</p> <div class="columns is-multiline is-mobile mb-0"><div class="column is-one-quarter"><p class="heading">Last run</p> <p>${escape_html(formatMoment(runtime().last_run))}</p></div> <div class="column is-one-quarter"><p class="heading">Next run</p> <p>${escape_html(formatMoment(runtime().next_run))}${escape_html(nextIn() ? ` (in ${nextIn()})` : "")}</p></div> <div class="column is-one-quarter"><p class="heading">Last duration</p> <p>${escape_html(runtime().last_exec_time ? `${runtime().last_exec_time} ms` : "—")}</p></div> <div class="column is-one-quarter"><p class="heading">Failed attempts</p> <p${attr_class("", void 0, { "has-text-danger": Number(runtime().max_failed_attempts ?? 0) > 0 && Number(runtime().failed_attempts ?? 0) >= Number(runtime().max_failed_attempts) })}>${escape_html(runtime().failed_attempts ?? 0)} / ${escape_html(runtime().max_failed_attempts ?? 0)}</p></div></div></div>`);
+							$$renderer.push(`<!--]--></div></div></div> <p class="help mb-3">${escape_html(runtimeStatus().description)}</p> `);
+							if (suspensionStatus()) {
+								$$renderer.push(`<!--[0--><article class="message is-danger"><div class="message-body">${escape_html(suspensionStatus().description)} `);
+								if (runtime().disabled_reason) $$renderer.push(`<!--[0--><br/><span class="is-size-7">${escape_html(runtime().disabled_reason)}</span>`);
+								else $$renderer.push("<!--[-1-->");
+								$$renderer.push(`<!--]--></div></article>`);
+							} else $$renderer.push("<!--[-1-->");
+							$$renderer.push(`<!--]--> <div class="columns is-multiline is-mobile mb-0"><div class="column is-one-quarter"><p class="heading">Last run</p> <p>${escape_html(formatMoment(runtime().last_run))}</p></div> <div class="column is-one-quarter"><p class="heading">Next run</p> <p>${escape_html(formatMoment(runtime().next_run))}${escape_html(nextIn() ? ` (in ${nextIn()})` : "")}</p></div> <div class="column is-one-quarter"><p class="heading">Last duration</p> <p>${escape_html(runtime().last_exec_time ? `${runtime().last_exec_time} ms` : "—")}</p></div> <div class="column is-one-quarter"><p class="heading">Failed attempts</p> <p${attr_class("", void 0, { "has-text-danger": Number(runtime().max_failed_attempts ?? 0) > 0 && Number(runtime().failed_attempts ?? 0) >= Number(runtime().max_failed_attempts) })}>${escape_html(runtime().failed_attempts ?? 0)} / ${escape_html(runtime().max_failed_attempts ?? 0)}</p></div></div></div>`);
 						} else $$renderer.push("<!--[-1-->");
 						$$renderer.push(`<!--]--> <div>`);
 						Tab($$renderer, {
