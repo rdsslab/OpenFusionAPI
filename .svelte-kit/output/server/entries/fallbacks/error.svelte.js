@@ -1,7 +1,7 @@
 import { n as index_server_exports } from "../../chunks/index-server.js";
 import { _ as noop } from "../../chunks/shared.js";
 import "../../chunks/routing.js";
-import { D as escape_html, Ft as noop$1, v as getContext } from "../../chunks/server.js";
+import { D as escape_html, Rt as noop$1, v as getContext } from "../../chunks/server.js";
 import "../../chunks/index-server2.js";
 import "../../chunks/exports.js";
 import "../../chunks/paths.js";

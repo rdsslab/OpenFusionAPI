@@ -189,6 +189,17 @@ function skip_nodes(remove = true) {
 		node = next;
 	}
 }
+/**
+*
+* @param {TemplateNode} node
+*/
+function read_hydration_instruction(node) {
+	if (!node || node.nodeType !== 8) {
+		hydration_mismatch();
+		throw HYDRATION_ERROR;
+	}
+	return node.data;
+}
 //#endregion
 //#region node_modules/svelte/src/internal/shared/errors.js
 /**
@@ -344,8 +355,10 @@ function clone(value, cloned, path, paths, original = null, no_tojson = false) {
 	}
 }
 /**
-* @param {Value} source
+* @template {Value} T
+* @param {T} source
 * @param {string} label
+* @returns {T}
 */
 function tag(source, label) {
 	source.label = label;
@@ -1264,11 +1277,13 @@ var Batch = class Batch {
 */
 function flushSync(fn) {
 	var was_flushing_sync = is_flushing_sync;
+	var prev_previous_batch = previous_batch;
+	previous_batch = null;
 	is_flushing_sync = true;
 	try {
 		var result;
 		if (fn) {
-			if (current_batch !== null && !current_batch.is_fork) current_batch.flush();
+			flushSync();
 			result = fn();
 		}
 		while (true) {
@@ -1278,6 +1293,7 @@ function flushSync(fn) {
 		}
 	} finally {
 		is_flushing_sync = was_flushing_sync;
+		previous_batch = prev_previous_batch;
 	}
 }
 function infinite_loop_guard() {
@@ -1410,7 +1426,7 @@ function reset_all(effect) {
 /** @import { Derived, Effect, Source, Value } from '#client' */
 /** @type {Set<Effect>} */
 var eager_effects = /* @__PURE__ */ new Set();
-/** @type {Map<Source, any>} */
+/** @type {Map<Value, any>} */
 var old_values = /* @__PURE__ */ new Map();
 var eager_effects_deferred = false;
 /**
@@ -1455,7 +1471,7 @@ function mutable_source(initial_value, immutable = false, trackable = true) {
 }
 /**
 * @template V
-* @param {Source<V>} source
+* @param {Value<V>} source
 * @param {V} value
 * @param {boolean} [should_proxy]
 * @returns {V}
@@ -1476,7 +1492,7 @@ var seen = null;
 var count_deps = 0;
 /**
 * @template V
-* @param {Source<V>} source
+* @param {Value<V>} source
 * @param {V} value
 * @param {Effect[] | null} [updated_during_traversal]
 * @returns {V}
@@ -1798,6 +1814,7 @@ function handle_error(error) {
 * @param {Effect | null} effect
 */
 function invoke_error_boundary(error, effect) {
+	if (error === HYDRATION_ERROR) throw error;
 	if (effect !== null && (effect.f & 16384) !== 0) return;
 	while (effect !== null) {
 		if ((effect.f & 128) !== 0 && (effect.f & 33570816) === 0) {
@@ -2112,10 +2129,6 @@ var captured_signals = null;
 //#endregion
 //#region node_modules/svelte/src/internal/client/runtime.js
 /** @import { Derived, Effect, Reaction, Source, Value } from '#client' */
-/**
-* True if updating in an effect context that is reactive (i.e. not branch/root effects)
-*/
-var is_updating_effect = false;
 var is_destroying_effect = false;
 /** @param {boolean} value */
 function set_is_destroying_effect(value) {
@@ -2137,7 +2150,7 @@ function set_active_effect(effect) {
 /**
 * When sources are created within a reaction, reading and writing
 * them within that reaction should not cause a re-run
-* @type {null | Set<Source>}
+* @type {null | Set<Value>}
 */
 var current_sources = null;
 /** @param {Value} value */
@@ -2155,10 +2168,10 @@ var skipped_deps = 0;
 /**
 * Tracks writes that the effect it's executed in doesn't listen to yet,
 * so that the dependency can be added to the effect later on if it then reads it
-* @type {null | Source[]}
+* @type {null | Value[]}
 */
 var untracked_writes = null;
-/** @param {null | Source[]} value */
+/** @param {null | Value[]} value */
 function set_untracked_writes(value) {
 	untracked_writes = value;
 }
@@ -2346,9 +2359,7 @@ function update_effect(effect) {
 	if ((flags & 16384) !== 0) return;
 	set_signal_status(effect, CLEAN);
 	var previous_effect = active_effect;
-	var was_updating_effect = is_updating_effect;
 	active_effect = effect;
-	is_updating_effect = (flags & 96) === 0;
 	try {
 		if ((flags & 16777232) !== 0) destroy_block_effect_children(effect);
 		else destroy_effect_children(effect);
@@ -2357,7 +2368,6 @@ function update_effect(effect) {
 		effect.teardown = typeof teardown === "function" ? teardown : null;
 		effect.wv = write_version;
 	} finally {
-		is_updating_effect = was_updating_effect;
 		active_effect = previous_effect;
 	}
 }
@@ -2397,7 +2407,7 @@ function get(signal) {
 			old_values.set(derived, value);
 			return value;
 		}
-		var should_connect = (derived.f & 512) === 0 && !untracking && active_reaction !== null && (is_updating_effect || (active_reaction.f & 512) !== 0);
+		var should_connect = (derived.f & 512) === 0 && !untracking && active_reaction !== null && (active_reaction.f & 512) !== 0;
 		var is_new = (derived.f & REACTION_RAN) === 0;
 		if (is_dirty(derived)) {
 			if (should_connect) derived.f |= 512;
@@ -2421,7 +2431,9 @@ function reconnect(derived) {
 	derived.f |= 512;
 	if (derived.deps === null) return;
 	for (const dep of derived.deps) {
-		(dep.reactions ??= []).push(derived);
+		var reactions = dep.reactions;
+		if (reactions === null) dep.reactions = [derived];
+		else if (!includes.call(reactions, derived)) reactions.push(derived);
 		if ((dep.f & 2) !== 0 && (dep.f & 512) === 0) {
 			unfreeze_derived_effects(dep);
 			reconnect(dep);
@@ -3967,6 +3979,6 @@ function derived(fn) {
 	};
 }
 //#endregion
-export { set as $, active_effect as A, LEGACY_PROPS as At, effect_tracking as B, hydratable_serialization_failed as C, skip_nodes as Ct, escape_html as D, HYDRATION_ERROR as Dt, clsx$1 as E, svelte_boundary_reset_noop as Et, untrack as F, noop as Ft, clear_text_content as G, pause_effect as H, block as I, run as It, get_next_sibling as J, create_text as K, branch as L, get as M, array_from as Mt, set_active_effect as N, define_property as Nt, is_passive_event as O, EFFECT_PRESERVED as Ot, set_active_reaction as P, fallback as Pt, mutable_source as Q, component_root as R, hydratable_clobbering as S, set_hydrating as St, attr as T, lifecycle_double_unmount as Tt, render_effect as U, move_effect as V, invoke_error_boundary as W, increment as X, init_operations as Y, internal_set as Z, getAllContexts as _, hydrate_next as _t, derived as a, queue_micro_task as at, setContext as b, next as bt, render as c, pop$1 as ct, stringify as d, tag as dt, source as et, unsubscribe_stores as f, snapshot as ft, createContext as g, experimental_async_required as gt, get_render_context as h, svelte_boundary_reset_onerror as ht, bind_props as i, defer_effect as it, active_reaction as j, safe_not_equal as jt, subscribe_to_store as k, EFFECT_TRANSPARENT as kt, spread_props as l, push$1 as lt, html as m, hydration_failed as mt, attr_style as n, current_batch as nt, ensure_array_like as o, component_context as ot, get_user_code_location as p, async_mode_flag as pt, get_first_child as q, attributes as r, flushSync as rt, head as s, mark_as_component as st, attr_class as t, Batch as tt, store_get as u, set_component_context as ut, getContext as v, hydrate_node as vt, lifecycle_function_unavailable as w, hydration_mismatch as wt, ssr_context as x, set_hydrate_node as xt, hasContext as y, hydrating as yt, destroy_effect as z };
+export { set as $, active_effect as A, DESTROYING as At, effect_tracking as B, hydratable_serialization_failed as C, set_hydrating as Ct, escape_html as D, svelte_boundary_reset_noop as Dt, clsx$1 as E, lifecycle_double_unmount as Et, untrack as F, array_from as Ft, clear_text_content as G, pause_effect as H, block as I, define_property as It, get_next_sibling as J, create_text as K, branch as L, fallback as Lt, get as M, EFFECT_TRANSPARENT as Mt, set_active_effect as N, LEGACY_PROPS as Nt, is_passive_event as O, HYDRATION_ERROR as Ot, set_active_reaction as P, safe_not_equal as Pt, mutable_source as Q, component_root as R, noop as Rt, hydratable_clobbering as S, set_hydrate_node as St, attr as T, hydration_mismatch as Tt, render_effect as U, move_effect as V, invoke_error_boundary as W, increment as X, init_operations as Y, internal_set as Z, getAllContexts as _, hydrate_next as _t, derived as a, queue_micro_task as at, setContext as b, next as bt, render as c, pop$1 as ct, stringify as d, tag as dt, source as et, unsubscribe_stores as f, snapshot as ft, createContext as g, experimental_async_required as gt, get_render_context as h, svelte_boundary_reset_onerror as ht, bind_props as i, defer_effect as it, active_reaction as j, EFFECT_PRESERVED as jt, subscribe_to_store as k, DESTROYED as kt, spread_props as l, push$1 as lt, html as m, hydration_failed as mt, attr_style as n, current_batch as nt, ensure_array_like as o, component_context as ot, get_user_code_location as p, async_mode_flag as pt, get_first_child as q, attributes as r, flushSync as rt, head as s, mark_as_component as st, attr_class as t, Batch as tt, store_get as u, set_component_context as ut, getContext as v, hydrate_node as vt, lifecycle_function_unavailable as w, skip_nodes as wt, ssr_context as x, read_hydration_instruction as xt, hasContext as y, hydrating as yt, destroy_effect as z, run as zt };
 
 //# sourceMappingURL=server.js.map

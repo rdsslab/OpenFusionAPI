@@ -1,6 +1,6 @@
 import "./index-server.js";
 import "./internal.js";
-import { $ as set, A as active_effect, At as LEGACY_PROPS, B as effect_tracking, Ct as skip_nodes, Dt as HYDRATION_ERROR, Et as svelte_boundary_reset_noop, F as untrack, G as clear_text_content, H as pause_effect, I as block, J as get_next_sibling, K as create_text, L as branch, M as get, Mt as array_from, N as set_active_effect, Nt as define_property, O as is_passive_event, Ot as EFFECT_PRESERVED, P as set_active_reaction, Q as mutable_source, R as component_root, St as set_hydrating, U as render_effect, V as move_effect, W as invoke_error_boundary, X as increment, Y as init_operations, Z as internal_set, _t as hydrate_next, a as derived, at as queue_micro_task, b as setContext, bt as next, c as render, ct as pop, et as source, ht as svelte_boundary_reset_onerror, it as defer_effect, j as active_reaction, kt as EFFECT_TRANSPARENT, lt as push, mt as hydration_failed, nt as current_batch, ot as component_context, pt as async_mode_flag, q as get_first_child, rt as flushSync, st as mark_as_component, tt as Batch, ut as set_component_context, vt as hydrate_node, wt as hydration_mismatch, xt as set_hydrate_node, yt as hydrating, z as destroy_effect } from "./server.js";
+import { $ as set, A as active_effect, At as DESTROYING, B as effect_tracking, Ct as set_hydrating, Dt as svelte_boundary_reset_noop, F as untrack, Ft as array_from, G as clear_text_content, H as pause_effect, I as block, It as define_property, J as get_next_sibling, K as create_text, L as branch, M as get, Mt as EFFECT_TRANSPARENT, N as set_active_effect, Nt as LEGACY_PROPS, O as is_passive_event, Ot as HYDRATION_ERROR, P as set_active_reaction, Q as mutable_source, R as component_root, St as set_hydrate_node, Tt as hydration_mismatch, U as render_effect, V as move_effect, W as invoke_error_boundary, X as increment, Y as init_operations, Z as internal_set, _t as hydrate_next, a as derived, at as queue_micro_task, b as setContext, bt as next, c as render, ct as pop, et as source, ht as svelte_boundary_reset_onerror, it as defer_effect, j as active_reaction, jt as EFFECT_PRESERVED, kt as DESTROYED, lt as push, mt as hydration_failed, nt as current_batch, ot as component_context, pt as async_mode_flag, q as get_first_child, rt as flushSync, st as mark_as_component, tt as Batch, ut as set_component_context, vt as hydrate_node, wt as skip_nodes, xt as read_hydration_instruction, yt as hydrating, z as destroy_effect } from "./server.js";
 /**
 * `$env/dynamic/public`
 * @type {Record<string, string>}
@@ -288,11 +288,11 @@ var Boundary = class {
 		this.transform_error = transform_error ?? this.parent?.transform_error ?? ((e) => e);
 		this.#effect = block(() => {
 			if (hydrating) {
-				const comment = this.#hydrate_open;
+				const comment_data = read_hydration_instruction(this.#hydrate_open);
 				hydrate_next();
-				const server_rendered_pending = comment.data === "[!";
-				if (comment.data.startsWith("[?")) {
-					const serialized_error = JSON.parse(comment.data.slice(2));
+				const server_rendered_pending = comment_data === "[!";
+				if (comment_data.startsWith("[?")) {
+					const serialized_error = JSON.parse(comment_data.slice(2));
 					this.#hydrate_failed_content(serialized_error);
 				} else if (server_rendered_pending) this.#hydrate_pending_content();
 				else this.#hydrate_resolved_content();
@@ -329,6 +329,7 @@ var Boundary = class {
 		var did_reset = false;
 		var calling_on_error = false;
 		const reset = () => {
+			if (this.#is_destroyed()) return;
 			if (did_reset) {
 				svelte_boundary_reset_noop();
 				return;
@@ -343,6 +344,7 @@ var Boundary = class {
 			});
 		};
 		const invoke_onerror = () => {
+			if (this.#is_destroyed()) return;
 			try {
 				calling_on_error = true;
 				this.#props.onerror?.(error, reset);
@@ -356,12 +358,16 @@ var Boundary = class {
 			invoke_onerror
 		};
 	}
+	#is_destroyed() {
+		return (this.#effect.f & (DESTROYED | DESTROYING)) !== 0;
+	}
 	#hydrate_pending_content() {
 		const pending = this.#props.pending;
 		if (!pending) return;
 		this.is_pending = true;
 		this.#pending_effect = branch(() => pending(this.#anchor));
 		queue_micro_task(() => {
+			if (this.#is_destroyed()) return;
 			var fragment = this.#offscreen_fragment = document.createDocumentFragment();
 			var anchor = create_text();
 			var handled = false;
@@ -502,13 +508,14 @@ var Boundary = class {
 	}
 	/** @param {unknown} error */
 	error(error) {
+		if (error === HYDRATION_ERROR) throw error;
 		if (!this.#props.onerror && !this.#props.failed) throw error;
 		if (current_batch?.is_fork) {
 			if (this.#main_effect) current_batch.skip_effect(this.#main_effect);
 			if (this.#pending_effect) current_batch.skip_effect(this.#pending_effect);
 			if (this.#failed_effect) current_batch.skip_effect(this.#failed_effect);
 			current_batch.oncommit(() => {
-				this.#handle_error(error);
+				if (!this.#is_destroyed()) this.#handle_error(error);
 			});
 		} else this.#handle_error(error);
 	}
@@ -536,9 +543,10 @@ var Boundary = class {
 		let failed = this.#props.failed;
 		/** @param {unknown} transformed_error */
 		const handle_error_result = (transformed_error) => {
+			if (this.#is_destroyed()) return;
 			const { reset, invoke_onerror } = this.#create_reset(transformed_error);
 			invoke_onerror();
-			if (failed) this.#failed_effect = this.#run(() => {
+			if (failed && !this.#is_destroyed()) this.#failed_effect = this.#run(() => {
 				try {
 					return branch(() => {
 						var effect = active_effect;
@@ -553,6 +561,7 @@ var Boundary = class {
 			});
 		};
 		queue_micro_task(() => {
+			if (this.#is_destroyed()) return;
 			/** @type {unknown} */
 			var result;
 			try {
@@ -1036,7 +1045,7 @@ var options = {
 		app: ({ head, body, assets, nonce, env }) => "<!doctype html>\n<html lang=\"en\">\n	<head>\n		<title>OpenFusion API | Low-Code, AI-Friendly API Platform</title>\n		<meta charset=\"utf-8\" />\n		<link rel=\"icon\" href=\"" + assets + "/favicon.png\" />\n		<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n		<meta\n			name=\"description\"\n			content=\"OpenFusion API is a production-ready, low-code API platform to build, govern, and deploy endpoints fast for humans and AI agents with MCP support.\"\n		/>\n		<meta\n			name=\"keywords\"\n			content=\"OpenFusion API, low-code API platform, MCP, AI agents, API gateway, SOAP to REST, SQL API, integration platform, universal-fetch\"\n		/>\n		<meta name=\"robots\" content=\"index, follow\" />\n		<meta name=\"author\" content=\"OpenFusion API\" />\n\n		<meta property=\"og:type\" content=\"website\" />\n		<meta\n			property=\"og:title\"\n			content=\"OpenFusion API | Production-Ready APIs for Humans and AI Agents\"\n		/>\n		<meta\n			property=\"og:description\"\n			content=\"Build and deploy API endpoints in minutes with reusable handlers, JSON Schema, environment isolation, and MCP-ready tooling.\"\n		/>\n		<meta property=\"og:site_name\" content=\"OpenFusion API\" />\n\n		<meta name=\"twitter:card\" content=\"summary_large_image\" />\n		<meta name=\"twitter:title\" content=\"OpenFusion API | Low-Code API Platform\" />\n		<meta\n			name=\"twitter:description\"\n			content=\"A production-tested platform to create integration APIs faster, including AI-agent workflows and MCP tooling.\"\n		/>\n\n		<script type=\"application/ld+json\">\n			{\n				\"@context\": \"https://schema.org\",\n				\"@type\": \"SoftwareApplication\",\n				\"name\": \"OpenFusion API\",\n				\"applicationCategory\": \"DeveloperApplication\",\n				\"operatingSystem\": \"Linux, Windows, Docker\",\n				\"description\": \"Low-code and AI-friendly platform to create, manage, and deploy API endpoints with built-in handlers, schema validation, and MCP integration.\",\n				\"url\": \"https://www.openfusionapi.com\",\n				\"softwareVersion\": \"1\"\n			}\n		<\/script>\n		" + head + "\n	</head>\n	<body data-sveltekit-preload-data=\"hover\">\n		<div style=\"display: contents\">" + body + "</div>\n	</body>\n</html>\n",
 		error: error_template_default
 	},
-	version_hash: "1e5vdud"
+	version_hash: "bak125"
 };
 async function get_hooks() {
 	let handle;
