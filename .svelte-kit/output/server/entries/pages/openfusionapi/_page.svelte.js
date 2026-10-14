@@ -124,6 +124,27 @@ var storeBotChanged = writable(null);
 writable([]);
 //#endregion
 //#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/utils.js
+/**
+* Normaliza un `data_test` a la forma canónica que espera el `RESTTester` y que
+* el backend reconoce como suya: `query`/`headers` como arrays y `body`/`auth`
+* como objetos con `selection` numérico.
+*
+* El `selection` no es cosmético: el backend (`normalizeDataTest` en
+* libOpenFusionAPI) envuelve en `body.json.code` cualquier `data_test` que no
+* traiga ninguna señal del Tester, y un `body`/`auth` vacío sin `selection` era
+* justo el disparador de que la configuración de query/headers acabara dentro
+* del Body como JSON.
+*/
+var ensureDataTestShape = (data_test) => {
+	const dt = data_test && typeof data_test === "object" && !Array.isArray(data_test) ? data_test : {};
+	if (!Array.isArray(dt.query)) dt.query = [];
+	if (!Array.isArray(dt.headers)) dt.headers = [];
+	if (dt.body == null || typeof dt.body !== "object" || Array.isArray(dt.body)) dt.body = {};
+	if (typeof dt.body.selection !== "number") dt.body.selection = 0;
+	if (dt.auth == null || typeof dt.auth !== "object" || Array.isArray(dt.auth)) dt.auth = {};
+	if (typeof dt.auth.selection !== "number") dt.auth.selection = 0;
+	return dt;
+};
 var getHandlerParams = (handler) => {
 	const list = get(listHandlerStore);
 	return Array.isArray(list) ? list.find((item) => item.id == handler) : {};
@@ -143,7 +164,8 @@ var mergeSourceOverwrite = (target, source) => {
 	for (const key of Object.keys(source)) {
 		const srcVal = source[key];
 		const tarVal = target[key];
-		if (isPlainObject(tarVal) && isPlainObject(srcVal)) result[key] = mergeSourceOverwrite(tarVal, srcVal);
+		if (key === "data_test" && isPlainObject(srcVal)) result[key] = ensureDataTestShape(mergeSourceOverwrite(tarVal || {}, srcVal));
+		else if (isPlainObject(tarVal) && isPlainObject(srcVal)) result[key] = mergeSourceOverwrite(tarVal, srcVal);
 		else result[key] = srcVal;
 	}
 	return result;
@@ -958,6 +980,98 @@ function TablePagination($$renderer, $$props) {
 	});
 }
 //#endregion
+//#region node_modules/@rdsslab/svelte-components/dist/Modal/Modal.svelte
+function Modal($$renderer, $$props) {
+	$$renderer.component(($$renderer) => {
+		/**
+		* Represents the parameters supported by the base Modal component.
+		*
+		* @typedef {Object} ModalProps
+		* @property {boolean} [show=false] - Controls the active/visible state of the modal.
+		* @property {import('svelte').Snippet} [children] - The Svelte snippet representing the body/content of the modal.
+		* @property {boolean} [showCloseButton=false] - Determines if a large top-right closing 'X' button should be displayed.
+		* @property {boolean} [closeOnEscape=true] - Whether the modal closes when Escape is pressed.
+		* @property {boolean} [closeOnBackground=true] - Whether the modal closes when clicking the background.
+		*/
+		/** @type {ModalProps & Record<string, any>} */
+		let { show = false, children, showCloseButton = false, closeOnEscape = true, closeOnBackground = true } = $$props;
+		const isBrowser = typeof document !== "undefined";
+		function handleKeydown(e) {
+			if (e.key === "Escape" && show && closeOnEscape) {
+				show = false;
+				e.stopPropagation();
+			}
+		}
+		onDestroy(() => {
+			if (!isBrowser) return;
+			document.body.style.overflow = "";
+			document.removeEventListener("keydown", handleKeydown);
+		});
+		$$renderer.push(`<div${attr_class("modal", void 0, { "is-active": show })} role="dialog" aria-modal="true"><div class="modal-background"></div> <div class="modal-content">`);
+		children?.($$renderer);
+		$$renderer.push(`<!----></div> `);
+		if (showCloseButton) $$renderer.push(`<!--[0--><button class="modal-close is-large" aria-label="close"></button>`);
+		else $$renderer.push("<!--[-1-->");
+		$$renderer.push(`<!--]--></div>`);
+		bind_props($$props, {
+			show,
+			showCloseButton
+		});
+	});
+}
+//#endregion
+//#region node_modules/@rdsslab/svelte-components/dist/Dialog/Modal.svelte
+function Modal_1($$renderer, $$props) {
+	$$renderer.component(($$renderer) => {
+		/**
+		* Represents the configurable properties for the Dialog Modal component.
+		*
+		* @typedef {Object} DialogModalProps
+		* @property {boolean} [show=false] - Boolean state to control whether the dialog is open or strictly hidden.
+		* @property {import('svelte').Snippet} [title] - Svelte snippet used to render the card's top header/title text.
+		* @property {function(Event): void} [oncancel] - Function executed when the 'x' button or 'CANCEL' button is clicked.
+		* @property {function(Event): void} [onaccept] - Function executed when the 'ACCEPT' button is clicked.
+		* @property {import('svelte').Snippet} [body] - Svelte snippet used to render the main body logic and text.
+		* @property {string} [label_accept='ACCEPT'] - Text label shown on the primary accept button.
+		* @property {string} [label_cancel='CANCEL'] - Text label shown on the secondary cancel button.
+		* @property {boolean} [closeOnEscape=true] - Whether the modal closes when Escape is pressed.
+		* @property {boolean} [closeOnBackground=true] - Whether the modal closes when clicking the background.
+		*/
+		/** @type {DialogModalProps & Record<string, any>} */
+		let { show = false, title, oncancel, onaccept, body, label_accept = "ACCEPT", label_cancel = "CANCEL", closeOnEscape = true, closeOnBackground = true } = $$props;
+		let $$settled = true;
+		let $$inner_renderer;
+		function $$render_inner($$renderer) {
+			Modal($$renderer, {
+				closeOnEscape,
+				closeOnBackground,
+				get show() {
+					return show;
+				},
+				set show($$value) {
+					show = $$value;
+					$$settled = false;
+				},
+				children: ($$renderer) => {
+					$$renderer.push(`<div class="modal-card"><header class="modal-card-head has-background-dark svelte-zl17qn"><p class="modal-card-title has-text-white svelte-zl17qn"><b>`);
+					title?.($$renderer);
+					$$renderer.push(`<!----></b></p> <button class="delete" aria-label="close"></button></header> <section class="modal-card-body">`);
+					body?.($$renderer);
+					$$renderer.push(`<!----></section> <footer class="modal-card-foot has-background-dark svelte-zl17qn"><button class="button is-success is-small">${escape_html(label_accept)}</button> <button class="button is-small">${escape_html(label_cancel)}</button></footer></div>`);
+				},
+				$$slots: { default: true }
+			});
+		}
+		do {
+			$$settled = true;
+			$$inner_renderer = $$renderer.copy();
+			$$render_inner($$inner_renderer);
+		} while (!$$settled);
+		$$renderer.subsume($$inner_renderer);
+		bind_props($$props, { show });
+	});
+}
+//#endregion
 //#region node_modules/@rdsslab/svelte-components/dist/Table/utils/export_data.js
 function FileName(fileNameExport, extension = "txt") {
 	let fName = "Report";
@@ -1303,6 +1417,18 @@ function loadColumnPreferences(tableKey) {
 		return {};
 	}
 }
+/**
+* Borra las preferencias de columnas de una tabla.
+* @param {string} tableKey - Identificador estable de la tabla.
+*/
+function clearColumnPreferences(tableKey) {
+	if (!tableKey || !storageAvailable()) return;
+	try {
+		localStorage.removeItem(columnPreferencesKey(tableKey));
+	} catch (error) {
+		console.warn("[Table] No se pudieron borrar las preferencias de columnas:", error);
+	}
+}
 //#endregion
 //#region node_modules/@rdsslab/svelte-components/dist/Table/Table.svelte
 function Table($$renderer, $$props) {
@@ -1438,6 +1564,13 @@ function Table($$renderer, $$props) {
 				const config_hidden = columns_config_hidden[item] === true;
 				internal_columns[item].hidden = config_hidden || user_hidden_columns[item] === true;
 			});
+		}
+		/** Restablece la visibilidad por defecto definida por el desarrollador. */
+		function ResetColumns() {
+			user_hidden_columns = {};
+			clearColumnPreferences(storageKey);
+			ApplyColumnPreferences();
+			oncolumnschange(snapshot(user_hidden_columns));
 		}
 		/**
 		* Sincroniza la selección cuando otra pestaña del mismo origen la cambia.
@@ -1798,17 +1931,44 @@ function Table($$renderer, $$props) {
 				onPageChange: handlePageChange,
 				onPageSizeChange: handlePageSizeChange
 			});
-			$$renderer.push(`<!----></div> <div${attr_class("modal", void 0, { "is-active": ShowDialogColumn })} data-testid="table-columns-modal"><div class="modal-card"><header class="modal-card-head table_modal_head svelte-122u0gu"><p class="modal-card-title"><b><span>Columns</span></b></p> <button class="delete" aria-label="close"></button></header> <section class="modal-card-body">`);
-			if (configurable_columns().length > 0) {
-				$$renderer.push(`<!--[0--><div class="columns is-multiline"><!--[-->`);
-				const each_array_3 = ensure_array_like(configurable_columns());
-				for (let $$index_3 = 0, $$length = each_array_3.length; $$index_3 < $$length; $$index_3++) {
-					let col = each_array_3[$$index_3];
-					$$renderer.push(`<div class="column is-half"><label class="checkbox"><input type="checkbox"${attr("checked", !internal_columns[col].hidden, true)}/> ${escape_html(internal_columns[col].label)}</label></div>`);
+			$$renderer.push(`<!----></div> `);
+			{
+				function title($$renderer) {
+					$$renderer.push(`<span>Columns</span>`);
 				}
-				$$renderer.push(`<!--]--></div>`);
-			} else $$renderer.push(`<!--[-1--><div class="has-text-grey is-size-7">No hay columnas configurables.</div>`);
-			$$renderer.push(`<!--]--></section> <footer class="modal-card-foot table_modal_foot svelte-122u0gu"><button class="button is-small svelte-122u0gu" title="Restablecer columnas por defecto"><span class="icon is-small"><i class="fas fa-rotate-left"></i></span> <span>Reset</span></button> <button class="button is-success is-small svelte-122u0gu"><span>Close</span></button></footer></div></div>`);
+				function body($$renderer) {
+					if (configurable_columns().length > 0) {
+						$$renderer.push(`<!--[0--><div class="columns is-multiline"><!--[-->`);
+						const each_array_3 = ensure_array_like(configurable_columns());
+						for (let $$index_3 = 0, $$length = each_array_3.length; $$index_3 < $$length; $$index_3++) {
+							let col = each_array_3[$$index_3];
+							$$renderer.push(`<div class="column is-half"><label class="checkbox"><input type="checkbox"${attr("checked", !internal_columns[col].hidden, true)}/> ${escape_html(internal_columns[col].label)}</label></div>`);
+						}
+						$$renderer.push(`<!--]--></div>`);
+					} else $$renderer.push(`<!--[-1--><div class="has-text-grey is-size-7">No hay columnas configurables.</div>`);
+					$$renderer.push(`<!--]-->`);
+				}
+				Modal_1($$renderer, {
+					label_accept: "Close",
+					label_cancel: "Reset",
+					onaccept: () => ShowDialogColumn = false,
+					oncancel: ResetColumns,
+					get show() {
+						return ShowDialogColumn;
+					},
+					set show($$value) {
+						ShowDialogColumn = $$value;
+						$$settled = false;
+					},
+					title,
+					body,
+					$$slots: {
+						title: true,
+						body: true
+					}
+				});
+			}
+			$$renderer.push(`<!---->`);
 		}
 		do {
 			$$settled = true;
@@ -1839,98 +1999,6 @@ function Table($$renderer, $$props) {
 			right_items,
 			GetSelectedRows
 		});
-	});
-}
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Modal/Modal.svelte
-function Modal($$renderer, $$props) {
-	$$renderer.component(($$renderer) => {
-		/**
-		* Represents the parameters supported by the base Modal component.
-		*
-		* @typedef {Object} ModalProps
-		* @property {boolean} [show=false] - Controls the active/visible state of the modal.
-		* @property {import('svelte').Snippet} [children] - The Svelte snippet representing the body/content of the modal.
-		* @property {boolean} [showCloseButton=false] - Determines if a large top-right closing 'X' button should be displayed.
-		* @property {boolean} [closeOnEscape=true] - Whether the modal closes when Escape is pressed.
-		* @property {boolean} [closeOnBackground=true] - Whether the modal closes when clicking the background.
-		*/
-		/** @type {ModalProps & Record<string, any>} */
-		let { show = false, children, showCloseButton = false, closeOnEscape = true, closeOnBackground = true } = $$props;
-		const isBrowser = typeof document !== "undefined";
-		function handleKeydown(e) {
-			if (e.key === "Escape" && show && closeOnEscape) {
-				show = false;
-				e.stopPropagation();
-			}
-		}
-		onDestroy(() => {
-			if (!isBrowser) return;
-			document.body.style.overflow = "";
-			document.removeEventListener("keydown", handleKeydown);
-		});
-		$$renderer.push(`<div${attr_class("modal", void 0, { "is-active": show })} role="dialog" aria-modal="true"><div class="modal-background"></div> <div class="modal-content">`);
-		children?.($$renderer);
-		$$renderer.push(`<!----></div> `);
-		if (showCloseButton) $$renderer.push(`<!--[0--><button class="modal-close is-large" aria-label="close"></button>`);
-		else $$renderer.push("<!--[-1-->");
-		$$renderer.push(`<!--]--></div>`);
-		bind_props($$props, {
-			show,
-			showCloseButton
-		});
-	});
-}
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Dialog/Modal.svelte
-function Modal_1($$renderer, $$props) {
-	$$renderer.component(($$renderer) => {
-		/**
-		* Represents the configurable properties for the Dialog Modal component.
-		*
-		* @typedef {Object} DialogModalProps
-		* @property {boolean} [show=false] - Boolean state to control whether the dialog is open or strictly hidden.
-		* @property {import('svelte').Snippet} [title] - Svelte snippet used to render the card's top header/title text.
-		* @property {function(Event): void} [oncancel] - Function executed when the 'x' button or 'CANCEL' button is clicked.
-		* @property {function(Event): void} [onaccept] - Function executed when the 'ACCEPT' button is clicked.
-		* @property {import('svelte').Snippet} [body] - Svelte snippet used to render the main body logic and text.
-		* @property {string} [label_accept='ACCEPT'] - Text label shown on the primary accept button.
-		* @property {string} [label_cancel='CANCEL'] - Text label shown on the secondary cancel button.
-		* @property {boolean} [closeOnEscape=true] - Whether the modal closes when Escape is pressed.
-		* @property {boolean} [closeOnBackground=true] - Whether the modal closes when clicking the background.
-		*/
-		/** @type {DialogModalProps & Record<string, any>} */
-		let { show = false, title, oncancel, onaccept, body, label_accept = "ACCEPT", label_cancel = "CANCEL", closeOnEscape = true, closeOnBackground = true } = $$props;
-		let $$settled = true;
-		let $$inner_renderer;
-		function $$render_inner($$renderer) {
-			Modal($$renderer, {
-				closeOnEscape,
-				closeOnBackground,
-				get show() {
-					return show;
-				},
-				set show($$value) {
-					show = $$value;
-					$$settled = false;
-				},
-				children: ($$renderer) => {
-					$$renderer.push(`<div class="modal-card"><header class="modal-card-head has-background-dark svelte-zl17qn"><p class="modal-card-title has-text-white svelte-zl17qn"><b>`);
-					title?.($$renderer);
-					$$renderer.push(`<!----></b></p> <button class="delete" aria-label="close"></button></header> <section class="modal-card-body">`);
-					body?.($$renderer);
-					$$renderer.push(`<!----></section> <footer class="modal-card-foot has-background-dark svelte-zl17qn"><button class="button is-success is-small">${escape_html(label_accept)}</button> <button class="button is-small">${escape_html(label_cancel)}</button></footer></div>`);
-				},
-				$$slots: { default: true }
-			});
-		}
-		do {
-			$$settled = true;
-			$$inner_renderer = $$renderer.copy();
-			$$render_inner($$inner_renderer);
-		} while (!$$settled);
-		$$renderer.subsume($$inner_renderer);
-		bind_props($$props, { show });
 	});
 }
 //#endregion
@@ -7142,7 +7210,7 @@ var ChartWidgets = {
 };
 //#endregion
 //#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/version.js
-var version = "9.5.6";
+var version = "9.5.9";
 //#endregion
 //#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/login/index.svelte
 function Login($$renderer, $$props) {
@@ -7679,7 +7747,7 @@ var defaultEndpoint = {
 			value: ""
 		}],
 		body: { selection: 0 },
-		headers: {},
+		headers: [],
 		auth: { selection: 0 }
 	},
 	latest_updater: null,
@@ -8913,6 +8981,7 @@ function Variables($$renderer, $$props) {
 		let ShowDialogCopyEndpoint = false;
 		let var_replace_copy = false;
 		let var_to_copy = {};
+		let target_env_selected = "";
 		let Datavars = {};
 		let DataAppVars = [];
 		let env_dev = derived(() => {
@@ -8984,8 +9053,10 @@ function Variables($$renderer, $$props) {
 			onchange(snapshot(Datavars));
 		}
 		function internalOncopy(v) {
+			var_to_copy = { ...v };
+			var_replace_copy = false;
+			target_env_selected = "";
 			ShowDialogCopyEndpoint = true;
-			var_to_copy = v;
 		}
 		let $$settled = true;
 		let $$inner_renderer;
@@ -9091,12 +9162,20 @@ function Variables($$renderer, $$props) {
 						options: available_environments_list(),
 						onchange: (e) => {
 							var_to_copy.env_destination = e;
+							var_to_copy.idvar_destination = void 0;
 							if (DataAppVars && Array.isArray(DataAppVars)) {
 								let var_exists = DataAppVars.find((item) => {
 									return item.name == var_to_copy.name && item.environment == var_to_copy.env_destination;
 								});
 								if (var_exists && var_exists.idvar) var_to_copy.idvar_destination = var_exists.idvar;
 							}
+						},
+						get option() {
+							return target_env_selected;
+						},
+						set option($$value) {
+							target_env_selected = $$value;
+							$$settled = false;
 						}
 					});
 					$$renderer.push(`<!----></p></div> `);
@@ -9105,7 +9184,8 @@ function Variables($$renderer, $$props) {
 					$$renderer.push(`<!--]--> `);
 					if (var_to_copy && var_to_copy.idvar_destination) {
 						$$renderer.push(`<!--[0--><label class="checkbox"><input type="checkbox"${attr("checked", var_replace_copy, true)}/> I agree to copy and/or replace the application variable to the <strong>${escape_html(var_to_copy.env_destination)}</strong> environment.</label> `);
-						$$renderer.push(`<!--[0--><br/> <div class="icon-text"><span class="icon has-text-warning"><i class="fas fa-exclamation-triangle"></i></span> <span>You must agree to continue.</span></div>`);
+						if (!var_replace_copy) $$renderer.push(`<!--[0--><br/> <div class="icon-text"><span class="icon has-text-warning"><i class="fas fa-exclamation-triangle"></i></span> <span>You must agree to continue.</span></div>`);
+						else $$renderer.push("<!--[-1-->");
 						$$renderer.push(`<!--]-->`);
 					} else $$renderer.push("<!--[-1-->");
 					$$renderer.push(`<!--]-->`);
@@ -9114,7 +9194,14 @@ function Variables($$renderer, $$props) {
 					title: titleModal,
 					body: bodyDialogModal,
 					onaccept: async () => {
-						if (var_to_copy.idvar_destination && true) {
+						if (!var_to_copy.env_destination) {
+							noty.push({
+								message: "You must select an environment to copy the variable to.",
+								color: "danger"
+							});
+							return;
+						}
+						if (var_to_copy.idvar_destination && !var_replace_copy) {
 							noty.push({
 								message: "You must agree to replace the variable.",
 								color: "danger"
@@ -11214,10 +11301,10 @@ function Endpoint($$renderer, $$props) {
 						onchange: (e) => {
 							if (app && app.endpoints) {
 								let endpoint_find = app.endpoints.find((ep) => {
-									return ep.environment == endpoint_env_copy && ep.handler == endpoint.handler && ep.method == endpoint.method && ep.resource == endpoint.resource;
+									return ep.environment == e && ep.handler == endpoint.handler && ep.method == endpoint.method && ep.resource == endpoint.resource;
 								});
 								endpoint_copied = { ...endpoint };
-								endpoint_copied.environment = endpoint_env_copy;
+								endpoint_copied.environment = e;
 								endpoint_copied.idendpoint = null;
 								endpoint_copied.endpoint = createEndpoint(endpoint_copied.method, app.app, endpoint_copied.resource, endpoint_copied.environment);
 								if (endpoint_find) endpoint_copied.idendpoint = endpoint_find.idendpoint;
@@ -11246,7 +11333,14 @@ function Endpoint($$renderer, $$props) {
 					title: titleModal,
 					body: bodyDialogModal,
 					onaccept: async () => {
-						if (!endpoint_copied.idendpoint || endpoint_copied.idendpoint.length === 0 || endpoint_replace_copy) {
+						if (!endpoint_env_copy) {
+							notify.push({
+								message: "You must select an environment to copy the endpoint to.",
+								color: "warning"
+							});
+							return;
+						}
+						if (!endpoint_copied?.idendpoint || endpoint_replace_copy) {
 							if (endpoint_env_copy && endpoint_env_copy !== "") {
 								try {
 									let result = await EndpointSave(endpoint_copied);
@@ -11271,7 +11365,7 @@ function Endpoint($$renderer, $$props) {
 							}
 						} else notify.push({
 							message: "You must accept overwriting the endpoint data.",
-							color: "success"
+							color: "warning"
 						});
 					},
 					get show() {
@@ -11966,6 +12060,43 @@ function Editor($$renderer, $$props) {
 			idendpoint = data.idendpoint || void 0;
 			setValuesEndpoint();
 		}
+		/**
+		* Rescata un `data_test` que una versión anterior guardó envuelto:
+		*   { body: { selection, json: { code: <data_test real> } } }
+		*
+		* Ese envoltorio nació de confundir la config vacía del Tester con un body
+		* crudo (ver `normalizeDataTest` en libOpenFusionAPI): al reabrir el endpoint
+		* la config aparecía como JSON dentro de la pestaña Body. Se devuelve el
+		* `data_test` interno cuando es reconocible y el envoltorio no aporta datos
+		* propios, para que la config vuelva a sus pestañas y quede corregida al
+		* guardar.
+		*/
+		function unwrapNestedDataTest(data_test) {
+			if (!data_test || typeof data_test !== "object" || Array.isArray(data_test)) return data_test;
+			const TESTER_KEYS = [
+				"query",
+				"headers",
+				"body",
+				"auth",
+				"last_response"
+			];
+			if (!Object.keys(data_test).every((k) => TESTER_KEYS.includes(k))) return data_test;
+			const body = data_test.body;
+			if (!body || typeof body !== "object" || Array.isArray(body)) return data_test;
+			if (Object.keys(body).some((k) => k !== "selection" && k !== "json")) return data_test;
+			const json = body.json;
+			if (!json || typeof json !== "object" || Array.isArray(json)) return data_test;
+			const code = json.code;
+			if (!code || typeof code !== "object" || Array.isArray(code)) return data_test;
+			if (Object.keys(code).length === 0) return data_test;
+			if (!Object.keys(code).every((k) => TESTER_KEYS.includes(k))) return data_test;
+			const esObj = (v) => v && typeof v === "object" && !Array.isArray(v);
+			if (!(Array.isArray(code.query) || Array.isArray(code.headers) || esObj(code.body) || esObj(code.auth))) return data_test;
+			const filaConDatos = (rows) => Array.isArray(rows) && rows.some((r) => r && typeof r === "object" && (String(r.key ?? "").length > 0 || String(r.value ?? "").length > 0));
+			const authConDatos = esObj(data_test.auth) && (data_test.auth.basic && String(data_test.auth.basic.username ?? "").length > 0 || data_test.auth.bearer && String(data_test.auth.bearer.token ?? "").length > 0);
+			if (filaConDatos(data_test.query) || filaConDatos(data_test.headers) || authConDatos) return data_test;
+			return code;
+		}
 		function normalizeEndpoint(ep) {
 			if (!ep) return ep;
 			for (const field of [
@@ -12005,7 +12136,7 @@ function Editor($$renderer, $$props) {
 			ep.ctrl ??= {};
 			ep.ctrl.users ??= [];
 			ep.ctrl.log ??= {};
-			ep.data_test ??= {};
+			ep.data_test = ensureDataTestShape(unwrapNestedDataTest(ep.data_test));
 			return ep;
 		}
 		async function setValuesEndpoint() {
@@ -12747,7 +12878,7 @@ function Editor($$renderer, $$props) {
 				url: endpoint.endpoint,
 				methodDisabled: true,
 				onchange: (d) => {
-					endpoint.data_test = d.data;
+					endpoint.data_test = ensureDataTestShape(d.data);
 					if (d.last_response) endpoint.data_test.last_response = {
 						data: getResultLimited(d.last_response.data),
 						sizeKBResponse: d.last_response.sizeKBResponse,
