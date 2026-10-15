@@ -7210,7 +7210,7 @@ var ChartWidgets = {
 };
 //#endregion
 //#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/version.js
-var version = "9.5.9";
+var version = "9.5.10";
 //#endregion
 //#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/login/index.svelte
 function Login($$renderer, $$props) {

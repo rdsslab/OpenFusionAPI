@@ -10,7 +10,7 @@ return {
 	assets: new Set(["admin-ui/apiclients.png","admin-ui/apikeys.png","admin-ui/basic.png","admin-ui/bots.png","admin-ui/dashboard.png","admin-ui/endpoints.png","admin-ui/logs.png","admin-ui/system-users.png","admin-ui/tasks.png","admin-ui/variables.png","android-chrome-192x192.png","android-chrome-512x512.png","apple-touch-icon.png","favicon-16x16.png","favicon-32x32.png","favicon.ico","favicon.png","icono01.png","landing/screenshot.png"]),
 	mimeTypes: {".png":"image/png"},
 	_: {
-		client: {start:"_app/immutable/entry/start.lUfYs9vo.js",app:"_app/immutable/entry/app.VEwgK9ix.js",imports:["_app/immutable/entry/start.lUfYs9vo.js","_app/immutable/chunks/BgjDwbrB.js","_app/immutable/chunks/d_gSMTLE.js","_app/immutable/chunks/cTqEIRSM.js","_app/immutable/entry/app.VEwgK9ix.js","_app/immutable/chunks/d_gSMTLE.js","_app/immutable/chunks/xihTtKlq.js"],stylesheets:[],fonts:[],uses_env_dynamic_public:false},
+		client: {start:"_app/immutable/entry/start.B9jJAoJl.js",app:"_app/immutable/entry/app.B4gkxOFh.js",imports:["_app/immutable/entry/start.B9jJAoJl.js","_app/immutable/chunks/DnYs1tiB.js","_app/immutable/chunks/CH6E3wQD.js","_app/immutable/chunks/CE0xUbfB.js","_app/immutable/entry/app.B4gkxOFh.js","_app/immutable/chunks/CH6E3wQD.js","_app/immutable/chunks/xihTtKlq.js"],stylesheets:[],fonts:[],uses_env_dynamic_public:false},
 		nodes: [
 			__memo(() => import('./nodes/0.js')),
 			__memo(() => import('./nodes/1.js'))
