@@ -1029,16 +1029,18 @@ function Modal_1($$renderer, $$props) {
 		* @typedef {Object} DialogModalProps
 		* @property {boolean} [show=false] - Boolean state to control whether the dialog is open or strictly hidden.
 		* @property {import('svelte').Snippet} [title] - Svelte snippet used to render the card's top header/title text.
-		* @property {function(Event): void} [oncancel] - Function executed when the 'x' button or 'CANCEL' button is clicked.
+		* @property {function(Event): void} [oncancel] - Function executed only when the 'CANCEL' button is clicked. The 'x' button never triggers it.
 		* @property {function(Event): void} [onaccept] - Function executed when the 'ACCEPT' button is clicked.
+		* @property {function(Event): void} [onclose] - Function executed when the 'x' button is clicked, after the dialog is closed. Optional; the 'x' only closes.
 		* @property {import('svelte').Snippet} [body] - Svelte snippet used to render the main body logic and text.
+		* @property {import('svelte').Snippet} [footer] - Optional snippet with extra footer buttons, rendered before the accept/cancel buttons.
 		* @property {string} [label_accept='ACCEPT'] - Text label shown on the primary accept button.
 		* @property {string} [label_cancel='CANCEL'] - Text label shown on the secondary cancel button.
 		* @property {boolean} [closeOnEscape=true] - Whether the modal closes when Escape is pressed.
 		* @property {boolean} [closeOnBackground=true] - Whether the modal closes when clicking the background.
 		*/
 		/** @type {DialogModalProps & Record<string, any>} */
-		let { show = false, title, oncancel, onaccept, body, label_accept = "ACCEPT", label_cancel = "CANCEL", closeOnEscape = true, closeOnBackground = true } = $$props;
+		let { show = false, title, oncancel, onaccept, onclose, body, footer, label_accept = "ACCEPT", label_cancel = "CANCEL", closeOnEscape = true, closeOnBackground = true } = $$props;
 		let $$settled = true;
 		let $$inner_renderer;
 		function $$render_inner($$renderer) {
@@ -1057,7 +1059,9 @@ function Modal_1($$renderer, $$props) {
 					title?.($$renderer);
 					$$renderer.push(`<!----></b></p> <button class="delete" aria-label="close"></button></header> <section class="modal-card-body">`);
 					body?.($$renderer);
-					$$renderer.push(`<!----></section> <footer class="modal-card-foot has-background-dark svelte-zl17qn"><button class="button is-success is-small">${escape_html(label_accept)}</button> <button class="button is-small">${escape_html(label_cancel)}</button></footer></div>`);
+					$$renderer.push(`<!----></section> <footer class="modal-card-foot has-background-dark svelte-zl17qn">`);
+					footer?.($$renderer);
+					$$renderer.push(`<!----> <button class="button is-success is-small">${escape_html(label_accept)}</button> <button class="button is-small">${escape_html(label_cancel)}</button></footer></div>`);
 				},
 				$$slots: { default: true }
 			});
@@ -1355,6 +1359,120 @@ var ExportTableToHTML = (filteredData, columns, fileNameExport) => {
 	}
 };
 //#endregion
+//#region node_modules/@rdsslab/svelte-components/dist/class/sha.js
+/**
+*
+*  Secure Hash Algorithm (SHA256)
+*  http://www.webtoolkit.info/
+*
+*  Original code by Angel Marin, Paul Johnston.
+*
+**/
+function sha256(s) {
+	var chrsz = 8;
+	function safe_add(x, y) {
+		var lsw = (x & 65535) + (y & 65535);
+		return (x >> 16) + (y >> 16) + (lsw >> 16) << 16 | lsw & 65535;
+	}
+	function S(X, n) {
+		return X >>> n | X << 32 - n;
+	}
+	function R(X, n) {
+		return X >>> n;
+	}
+	function Ch(x, y, z) {
+		return x & y ^ ~x & z;
+	}
+	function Maj(x, y, z) {
+		return x & y ^ x & z ^ y & z;
+	}
+	function Sigma0256(x) {
+		return S(x, 2) ^ S(x, 13) ^ S(x, 22);
+	}
+	function Sigma1256(x) {
+		return S(x, 6) ^ S(x, 11) ^ S(x, 25);
+	}
+	function Gamma0256(x) {
+		return S(x, 7) ^ S(x, 18) ^ R(x, 3);
+	}
+	function Gamma1256(x) {
+		return S(x, 17) ^ S(x, 19) ^ R(x, 10);
+	}
+	function core_sha256(m, l) {
+		var K = new Array(1116352408, 1899447441, 3049323471, 3921009573, 961987163, 1508970993, 2453635748, 2870763221, 3624381080, 310598401, 607225278, 1426881987, 1925078388, 2162078206, 2614888103, 3248222580, 3835390401, 4022224774, 264347078, 604807628, 770255983, 1249150122, 1555081692, 1996064986, 2554220882, 2821834349, 2952996808, 3210313671, 3336571891, 3584528711, 113926993, 338241895, 666307205, 773529912, 1294757372, 1396182291, 1695183700, 1986661051, 2177026350, 2456956037, 2730485921, 2820302411, 3259730800, 3345764771, 3516065817, 3600352804, 4094571909, 275423344, 430227734, 506948616, 659060556, 883997877, 958139571, 1322822218, 1537002063, 1747873779, 1955562222, 2024104815, 2227730452, 2361852424, 2428436474, 2756734187, 3204031479, 3329325298);
+		var HASH = new Array(1779033703, 3144134277, 1013904242, 2773480762, 1359893119, 2600822924, 528734635, 1541459225);
+		var W = new Array(64);
+		var a, b, c, d, e, f, g, h, i, j;
+		var T1, T2;
+		m[l >> 5] |= 128 << 24 - l % 32;
+		m[(l + 64 >> 9 << 4) + 15] = l;
+		for (var i = 0; i < m.length; i += 16) {
+			a = HASH[0];
+			b = HASH[1];
+			c = HASH[2];
+			d = HASH[3];
+			e = HASH[4];
+			f = HASH[5];
+			g = HASH[6];
+			h = HASH[7];
+			for (var j = 0; j < 64; j++) {
+				if (j < 16) W[j] = m[j + i];
+				else W[j] = safe_add(safe_add(safe_add(Gamma1256(W[j - 2]), W[j - 7]), Gamma0256(W[j - 15])), W[j - 16]);
+				T1 = safe_add(safe_add(safe_add(safe_add(h, Sigma1256(e)), Ch(e, f, g)), K[j]), W[j]);
+				T2 = safe_add(Sigma0256(a), Maj(a, b, c));
+				h = g;
+				g = f;
+				f = e;
+				e = safe_add(d, T1);
+				d = c;
+				c = b;
+				b = a;
+				a = safe_add(T1, T2);
+			}
+			HASH[0] = safe_add(a, HASH[0]);
+			HASH[1] = safe_add(b, HASH[1]);
+			HASH[2] = safe_add(c, HASH[2]);
+			HASH[3] = safe_add(d, HASH[3]);
+			HASH[4] = safe_add(e, HASH[4]);
+			HASH[5] = safe_add(f, HASH[5]);
+			HASH[6] = safe_add(g, HASH[6]);
+			HASH[7] = safe_add(h, HASH[7]);
+		}
+		return HASH;
+	}
+	function str2binb(str) {
+		var bin = Array();
+		var mask = (1 << chrsz) - 1;
+		for (var i = 0; i < str.length * chrsz; i += chrsz) bin[i >> 5] |= (str.charCodeAt(i / chrsz) & mask) << 24 - i % 32;
+		return bin;
+	}
+	function Utf8Encode(string) {
+		string = string.replace(/\r\n/g, "\n");
+		var utftext = "";
+		for (var n = 0; n < string.length; n++) {
+			var c = string.charCodeAt(n);
+			if (c < 128) utftext += String.fromCharCode(c);
+			else if (c > 127 && c < 2048) {
+				utftext += String.fromCharCode(c >> 6 | 192);
+				utftext += String.fromCharCode(c & 63 | 128);
+			} else {
+				utftext += String.fromCharCode(c >> 12 | 224);
+				utftext += String.fromCharCode(c >> 6 & 63 | 128);
+				utftext += String.fromCharCode(c & 63 | 128);
+			}
+		}
+		return utftext;
+	}
+	function binb2hex(binarray) {
+		var hex_tab = "0123456789abcdef";
+		var str = "";
+		for (var i = 0; i < binarray.length * 4; i++) str += hex_tab.charAt(binarray[i >> 2] >> (3 - i % 4) * 8 + 4 & 15) + hex_tab.charAt(binarray[i >> 2] >> (3 - i % 4) * 8 & 15);
+		return str;
+	}
+	s = Utf8Encode(s);
+	return binb2hex(core_sha256(str2binb(s), s.length * chrsz));
+}
+//#endregion
 //#region node_modules/@rdsslab/svelte-components/dist/Table/utils/utils.js
 function checkIsArray(data) {
 	return data && Array.isArray(data);
@@ -1397,27 +1515,6 @@ function storageAvailable() {
 	}
 }
 /**
-* Lee las preferencias de columnas de una tabla.
-* @param {string} tableKey - Identificador estable de la tabla.
-* @returns {Record<string, true>} Mapa `{ nombreColumna: true }` con las columnas ocultas.
-*/
-function loadColumnPreferences(tableKey) {
-	if (!tableKey || !storageAvailable()) return {};
-	try {
-		const raw = localStorage.getItem(columnPreferencesKey(tableKey));
-		if (!raw) return {};
-		const parsed = JSON.parse(raw);
-		if (!parsed || parsed.v !== STORAGE_VERSION || !Array.isArray(parsed.hidden)) return {};
-		/** @type {Record<string, true>} */
-		const hidden = {};
-		for (const name of parsed.hidden) if (typeof name === "string" && name.length > 0) hidden[name] = true;
-		return hidden;
-	} catch (error) {
-		console.warn("[Table] No se pudieron leer las preferencias de columnas:", error);
-		return {};
-	}
-}
-/**
 * Borra las preferencias de columnas de una tabla.
 * @param {string} tableKey - Identificador estable de la tabla.
 */
@@ -1428,6 +1525,32 @@ function clearColumnPreferences(tableKey) {
 	} catch (error) {
 		console.warn("[Table] No se pudieron borrar las preferencias de columnas:", error);
 	}
+}
+/**
+* Construye una clave automática y estable para una tabla que no recibió
+* `storageKey`. Se apoya en la ruta actual y en la firma de sus columnas, de
+* modo que dos tablas con columnas distintas obtengan claves distintas.
+*
+* Límite conocido: dos tablas con la MISMA firma de columnas y en la misma
+* ruta comparten clave. En ese caso conviene definir `storageKey` explícito
+* (el registro de claves activas avisa por consola de la colisión).
+*
+* @param {string} path - Ruta de la página (p.ej. `location.pathname`).
+* @param {Iterable<string>} columnNames - Nombres de las columnas.
+* @returns {string} Clave de tabla con el prefijo `auto:`.
+*/
+function autoColumnPreferencesKey(path, columnNames) {
+	const digest = sha256([...columnNames || []].sort().join("|") || "columns").slice(0, 12);
+	return `auto:${path || ""}:${digest}`;
+}
+/** Claves de tabla actualmente montadas, para detectar colisiones. */
+var activeKeys = /* @__PURE__ */ new Set();
+/**
+* Libera una clave registrada al desmontar la tabla.
+* @param {string} tableKey
+*/
+function unregisterActiveColumnPreferencesKey(tableKey) {
+	if (tableKey) activeKeys.delete(tableKey);
 }
 //#endregion
 //#region node_modules/@rdsslab/svelte-components/dist/Table/Table.svelte
@@ -1446,7 +1569,8 @@ function Table($$renderer, $$props) {
 		* @property {boolean} [showEditRow=false] - Toggles whether inline row editing is active.
 		* @property {boolean} [showSelectionButton=true] - Visibility toggle for the row selection mode dropdown.
 		* @property {boolean} [showColumnsButton=true] - Visibility toggle for the 'Columns' dialog button (lets the user hide/show columns).
-		* @property {string} [storageKey=''] - Stable identifier used to persist the user's hidden-columns choice in localStorage. When empty, the choice lives only in memory.
+		* @property {boolean} [persistColumns=true] - When true (default), the hidden-columns choice is persisted in localStorage. Set to false to keep it in memory only.
+		* @property {string} [storageKey=''] - Stable, unique identifier used to persist the user's hidden-columns choice in localStorage. When empty, a stable automatic key derived from the route and the column set is used (requires persistColumns=true). Define it explicitly when two tables share the same column names.
 		* @property {function} [oncolumnschange] - Called with the map of columns hidden by the user every time the choice changes.
 		* @property {boolean} [showExportButton=true] - Visibility toggle for Export HTML/Excel buttons.
 		* @property {string} [iconExport='fa-solid fa-file-excel'] - FontAwesome class for the 'Export to Excel' icon.
@@ -1470,7 +1594,7 @@ function Table($$renderer, $$props) {
 		* @property {function} [onchangecell] - Fired when data in an inline cell input morphs.
 		*/
 		/** @type {TableProps & Record<string, any>} */
-		let { RawDataTable = void 0, selectionType = 0, columns = {}, showNewButton = false, showEditButton = false, showEditRow = false, showSelectionButton = true, showColumnsButton = true, storageKey = "", showExportButton = true, iconExport = "fa-solid fa-file-excel", iconDeleteRow = "fa-solid fa-trash", showDeleteButton = false, pageSize = [
+		let { RawDataTable = void 0, selectionType = 0, columns = {}, showNewButton = false, showEditButton = false, showEditRow = false, showSelectionButton = true, showColumnsButton = true, persistColumns = true, storageKey = "", showExportButton = true, iconExport = "fa-solid fa-file-excel", iconDeleteRow = "fa-solid fa-trash", showDeleteButton = false, pageSize = [
 			25,
 			50,
 			100,
@@ -1529,7 +1653,10 @@ function Table($$renderer, $$props) {
 		let internal_columns = {};
 		let columns_config_hidden = {};
 		let user_hidden_columns = {};
+		let activeStorageKey = "";
+		let registeredKey = "";
 		let configurable_columns = derived(() => Object.keys(internal_columns).filter((item) => IsColumnConfigurable(item)));
+		derived(ResolveStorageKey);
 		let idTimeoutDataChanged;
 		let idTimeoutSearch;
 		function requestDataExists() {
@@ -1554,6 +1681,24 @@ function Table($$renderer, $$props) {
 			return item !== "internal_hash_row" && columns_config_hidden[item] !== true;
 		}
 		/**
+		* Determina la clave de persistencia a usar. Orden de precedencia:
+		*  1. `persistColumns = false` → sin persistencia.
+		*  2. `storageKey` explícita → se usa tal cual.
+		*  3. Clave automática estable a partir de la ruta y la firma de columnas.
+		*
+		* Se prefiere la configuración `columns` del desarrollador (estable) y se
+		* cae a las columnas reales de los datos solo si no hay configuración.
+		* @returns {string}
+		*/
+		function ResolveStorageKey() {
+			if (!persistColumns) return "";
+			if (storageKey) return storageKey;
+			const configured = columns ? Object.keys(columns) : [];
+			const source = configured.length > 0 ? configured : Object.keys(internal_columns);
+			if (source.length === 0) return "";
+			return autoColumnPreferencesKey(typeof window !== "undefined" ? window.location.pathname : "", source);
+		}
+		/**
 		* Fusiona la selección del usuario sobre `internal_columns`. Se vuelve a
 		* llamar cada vez que se reconstruyen las columnas (refresco de datos) para
 		* que el refresco no borre la elección del usuario.
@@ -1568,7 +1713,7 @@ function Table($$renderer, $$props) {
 		/** Restablece la visibilidad por defecto definida por el desarrollador. */
 		function ResetColumns() {
 			user_hidden_columns = {};
-			clearColumnPreferences(storageKey);
+			clearColumnPreferences(activeStorageKey);
 			ApplyColumnPreferences();
 			oncolumnschange(snapshot(user_hidden_columns));
 		}
@@ -1576,11 +1721,7 @@ function Table($$renderer, $$props) {
 		* Sincroniza la selección cuando otra pestaña del mismo origen la cambia.
 		* @param {StorageEvent} event
 		*/
-		function HandleStorageEvent(event) {
-			if (event.key !== null && event.key !== columnPreferencesKey(storageKey)) return;
-			user_hidden_columns = loadColumnPreferences(storageKey);
-			ApplyColumnPreferences();
-		}
+		function HandleStorageEvent(event) {}
 		function RowIsSelected(internal_hash_row) {
 			return SelectedRows.has(internal_hash_row);
 		}
@@ -1621,7 +1762,11 @@ function Table($$renderer, $$props) {
 			clearInterval(auto_refresh);
 			clearTimeout(idTimeoutDataChanged);
 			clearTimeout(idTimeoutSearch);
-			if (storageKey && typeof window !== "undefined") window.removeEventListener("storage", HandleStorageEvent);
+			if (registeredKey) {
+				unregisterActiveColumnPreferencesKey(registeredKey);
+				registeredKey = "";
+			}
+			if (typeof window !== "undefined") window.removeEventListener("storage", HandleStorageEvent);
 		});
 		function ChangeIntervalRefresh() {
 			if (requestDataExists()) {
@@ -1936,6 +2081,9 @@ function Table($$renderer, $$props) {
 				function title($$renderer) {
 					$$renderer.push(`<span>Columns</span>`);
 				}
+				function footer($$renderer) {
+					$$renderer.push(`<button class="button is-warning is-small mr-auto" title="Hide all columns" data-testid="table-hide-all-columns"${attr("disabled", configurable_columns().length === 0, true)}><span class="icon is-small"><i class="fas fa-eye-slash"></i></span> <span>Hide all</span></button>`);
+				}
 				function body($$renderer) {
 					if (configurable_columns().length > 0) {
 						$$renderer.push(`<!--[0--><div class="columns is-multiline"><!--[-->`);
@@ -1945,11 +2093,11 @@ function Table($$renderer, $$props) {
 							$$renderer.push(`<div class="column is-half"><label class="checkbox"><input type="checkbox"${attr("checked", !internal_columns[col].hidden, true)}/> ${escape_html(internal_columns[col].label)}</label></div>`);
 						}
 						$$renderer.push(`<!--]--></div>`);
-					} else $$renderer.push(`<!--[-1--><div class="has-text-grey is-size-7">No hay columnas configurables.</div>`);
+					} else $$renderer.push(`<!--[-1--><div class="has-text-grey is-size-7">No configurable columns.</div>`);
 					$$renderer.push(`<!--]-->`);
 				}
 				Modal_1($$renderer, {
-					label_accept: "Close",
+					label_accept: "Accept",
 					label_cancel: "Reset",
 					onaccept: () => ShowDialogColumn = false,
 					oncancel: ResetColumns,
@@ -1961,9 +2109,11 @@ function Table($$renderer, $$props) {
 						$$settled = false;
 					},
 					title,
+					footer,
 					body,
 					$$slots: {
 						title: true,
+						footer: true,
 						body: true
 					}
 				});
@@ -1985,6 +2135,7 @@ function Table($$renderer, $$props) {
 			showEditRow,
 			showSelectionButton,
 			showColumnsButton,
+			persistColumns,
 			storageKey,
 			showExportButton,
 			iconExport,
