@@ -7946,7 +7946,7 @@ var defaultValuesIntervalTask = (task) => {
 		window_start: "",
 		window_end: "",
 		window_days: "",
-		max_failed_attempts: 10,
+		max_failed_attempts: 0,
 		history_limit: 50,
 		disabled_by: null,
 		disabled_reason: null,
@@ -13491,6 +13491,7 @@ function Interval_tasks($$renderer, $$props) {
 		let historyTask = {};
 		let selectedRow = defaultValuesIntervalTask({});
 		let optionsEndpoints = [];
+		let endpoints = [];
 		let optionsApiKeys = [];
 		let activeTab = 0;
 		const TAB_HISTORY = 2;
@@ -13641,7 +13642,13 @@ function Interval_tasks($$renderer, $$props) {
 			params: {},
 			exec_time_limit: {},
 			failed_attempts: {},
-			max_failed_attempts: { label: "Max fails" },
+			max_failed_attempts: {
+				label: "Max fails",
+				decorator: {
+					component: void 0,
+					props: { suffix: (row) => row?.disabled_by === "system" ? " ⚠ Suspended by errors" : "" }
+				}
+			},
 			last_exec_time: {},
 			last_response: {},
 			timezone: { hidden: true },
@@ -13698,6 +13705,14 @@ function Interval_tasks($$renderer, $$props) {
 				})).json();
 				if (Array.isArray(jresp)) DataTableTasks = jresp.map((task) => {
 					const ev = latestRuntimeEvents.get(String(task.idtask));
+					if (endpoints && endpoints.length > 0 && task.idendpoint) {
+						const ep = endpoints.find((e) => String(e.idendpoint) === String(task.idendpoint));
+						if (ep) {
+							task.url = ep.endpoint || task.url || "";
+							task.method = ep.method || task.method || "";
+							task.resource = ep.resource || task.resource || "";
+						}
+					}
 					if (!ev || ev.generation <= requestedGeneration) return task;
 					return applyRuntimeEvent(task, ev);
 				});
@@ -13947,8 +13962,8 @@ function Interval_tasks($$renderer, $$props) {
 			Basic$1($$renderer, {
 				type: "number",
 				label: "Max failed attempts: ",
-				placeholder: "10",
-				min: 1,
+				placeholder: "0",
+				min: 0,
 				step: 1,
 				get value() {
 					return selectedRow.max_failed_attempts;
@@ -13958,7 +13973,10 @@ function Interval_tasks($$renderer, $$props) {
 					$$settled = false;
 				}
 			});
-			$$renderer.push(`<!----></div> <div class="column is-one-third">`);
+			$$renderer.push(`<!----> `);
+			if (Number(selectedRow.max_failed_attempts ?? 0) === 0) $$renderer.push(`<!--[0--><p class="is-size-7 has-text-info mt-1">Task will not be disabled due to errors.</p>`);
+			else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--></div> <div class="column is-one-third">`);
 			Basic$1($$renderer, {
 				type: "number",
 				label: "History limit: ",
