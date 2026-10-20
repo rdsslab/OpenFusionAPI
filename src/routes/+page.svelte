@@ -215,19 +215,19 @@
 						ctaPrimary: 'View on GitHub',
 						ctaSecondary: 'Read the docs (libOpenFusionAPI)',
 						stats: [
-							{ value: '10+', label: 'Handlers' },
-							{ value: '8', label: 'Databases' },
+							{ value: '11', label: 'Handlers' },
+							{ value: '9', label: 'Databases' },
 							{ value: '3', label: 'Environments' },
-							{ value: '13.13.0', label: 'Latest release' }
+							{ value: '13.13.4', label: 'Latest release' }
 						]
 					},
 					strip: [
-						'Version 13.13.0',
+						'Version 13.13.4',
 						'MIT License',
 						'Docker + PM2 runtime',
 						'JSON Schema contracts',
 						'MCP tooling',
-						'Graceful shutdown'
+						'Hive / Impala support'
 					],
 					problem: {
 						kicker: 'The problem it solves',
@@ -263,7 +263,7 @@
 							},
 							{
 								title: 'Multi-database support',
-								desc: 'PostgreSQL, MySQL, MS SQL Server, MariaDB, Oracle, SQLite, SAP HANA and MongoDB from a single platform.'
+								desc: 'PostgreSQL, MySQL, MS SQL Server, MariaDB, Oracle, SQLite, SAP HANA, MongoDB, Apache Hive / Cloudera Impala from a single platform.'
 							},
 							{
 								title: 'JSON Schema validation',
@@ -322,6 +322,10 @@
 							},
 							{ code: 'MONGODB', desc: 'Query and mutate MongoDB collections' },
 							{ code: 'HANA', desc: 'Connect to SAP HANA databases' },
+							{
+								code: 'HIVE_DRIVER',
+								desc: 'Query Apache Hive / Cloudera Impala via pure JS Thrift (no native deps); worker-thread isolated, TLS, array binds, pagination'
+							},
 							{
 								code: 'MCP',
 								desc: 'Expose endpoints as MCP tools consumable by AI agents'
@@ -470,19 +474,19 @@
 						ctaPrimary: 'Ver en GitHub',
 						ctaSecondary: 'Leer documentación (libOpenFusionAPI)',
 						stats: [
-							{ value: '10+', label: 'Handlers' },
-							{ value: '8', label: 'Bases de datos' },
+							{ value: '11', label: 'Handlers' },
+							{ value: '9', label: 'Bases de datos' },
 							{ value: '3', label: 'Entornos' },
-							{ value: '13.13.0', label: 'Última versión' }
+							{ value: '13.13.4', label: 'Última versión' }
 						]
 					},
 					strip: [
-						'Versión 13.13.0',
+						'Versión 13.13.4',
 						'Licencia MIT',
 						'Runtime Docker + PM2',
 						'Contratos JSON Schema',
 						'Herramientas MCP',
-						'Apagado ordenado'
+						'Soporte Hive / Impala'
 					],
 					problem: {
 						kicker: 'El problema que resuelve',
@@ -518,7 +522,7 @@
 							},
 							{
 								title: 'Soporte multi-base de datos',
-								desc: 'PostgreSQL, MySQL, MS SQL Server, MariaDB, Oracle, SQLite, SAP HANA y MongoDB desde una sola plataforma.'
+								desc: 'PostgreSQL, MySQL, MS SQL Server, MariaDB, Oracle, SQLite, SAP HANA, MongoDB, Apache Hive / Cloudera Impala desde una sola plataforma.'
 							},
 							{
 								title: 'Validación JSON Schema',
@@ -580,6 +584,10 @@
 								desc: 'Consulta y modifica colecciones MongoDB'
 							},
 							{ code: 'HANA', desc: 'Conecta a bases de datos SAP HANA' },
+							{
+								code: 'HIVE_DRIVER',
+								desc: 'Consulta Apache Hive / Cloudera Impala con driver Thrift JS puro (sin dependencias nativas); aislado en worker thread, con TLS, binds de arrays y paginación'
+							},
 							{
 								code: 'MCP',
 								desc: 'Expone endpoints como herramientas MCP consumibles por agentes de IA'
@@ -1797,8 +1805,6 @@
 		color: var(--accent-2);
 		font-size: 0.82rem;
 		font-weight: 700;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
 	}
 
 	.eco-card h3 {

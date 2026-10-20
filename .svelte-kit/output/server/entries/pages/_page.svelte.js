@@ -137,11 +137,11 @@ function _page($$renderer, $$props) {
 				ctaSecondary: "Read the docs (libOpenFusionAPI)",
 				stats: [
 					{
-						value: "10+",
+						value: "11",
 						label: "Handlers"
 					},
 					{
-						value: "8",
+						value: "9",
 						label: "Databases"
 					},
 					{
@@ -149,18 +149,18 @@ function _page($$renderer, $$props) {
 						label: "Environments"
 					},
 					{
-						value: "13.13.0",
+						value: "13.13.4",
 						label: "Latest release"
 					}
 				]
 			},
 			strip: [
-				"Version 13.13.0",
+				"Version 13.13.4",
 				"MIT License",
 				"Docker + PM2 runtime",
 				"JSON Schema contracts",
 				"MCP tooling",
-				"Graceful shutdown"
+				"Hive / Impala support"
 			],
 			problem: {
 				kicker: "The problem it solves",
@@ -196,7 +196,7 @@ function _page($$renderer, $$props) {
 					},
 					{
 						title: "Multi-database support",
-						desc: "PostgreSQL, MySQL, MS SQL Server, MariaDB, Oracle, SQLite, SAP HANA and MongoDB from a single platform."
+						desc: "PostgreSQL, MySQL, MS SQL Server, MariaDB, Oracle, SQLite, SAP HANA, MongoDB, Apache Hive / Cloudera Impala from a single platform."
 					},
 					{
 						title: "JSON Schema validation",
@@ -260,6 +260,10 @@ function _page($$renderer, $$props) {
 					{
 						code: "HANA",
 						desc: "Connect to SAP HANA databases"
+					},
+					{
+						code: "HIVE_DRIVER",
+						desc: "Query Apache Hive / Cloudera Impala via pure JS Thrift (no native deps); worker-thread isolated, TLS, array binds, pagination"
 					},
 					{
 						code: "MCP",
