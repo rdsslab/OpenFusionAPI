@@ -7361,7 +7361,7 @@ var ChartWidgets = {
 };
 //#endregion
 //#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/version.js
-var version = "9.5.10";
+var version = "9.5.14";
 //#endregion
 //#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/login/index.svelte
 function Login($$renderer, $$props) {
@@ -10638,6 +10638,155 @@ function SqlHana($$renderer, $$props) {
 	});
 }
 //#endregion
+//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/hiveDriver.svelte
+function HiveDriver($$renderer, $$props) {
+	$$renderer.component(($$renderer) => {
+		let { endpoint = {}, onchange = () => {} } = $$props;
+		let cnx_sample = {
+			host: "localhost",
+			port: 21050,
+			username: "",
+			password: "",
+			authType: "PLAIN",
+			useTLS: false,
+			maxRows: 1e3,
+			timeoutMs: 3e4
+		};
+		let sample_bind_post = { bind: {
+			categories: [
+				"X",
+				"Y",
+				"Z"
+			],
+			min_id: 1
+		} };
+		let tabList = [
+			{
+				label: "Query",
+				isActive: true,
+				classIcon: " fa-solid fa-database ",
+				component: tab_query
+			},
+			{
+				label: "Pass Parameters",
+				component: tab_pass_params
+			},
+			{
+				label: "Connection Parameters",
+				component: tab_cnx_params
+			}
+		];
+		let query_code = "";
+		let cnx_custom = {};
+		let cnx_appvar = "";
+		function fnOnChange() {
+			onchange(getData());
+		}
+		function getData() {
+			return {
+				code: query_code,
+				custom_data: cnx_appvar && typeof cnx_appvar === "string" && cnx_appvar.trim().length > 0 ? cnx_appvar : cnx_custom,
+				data_test: snapshot(endpoint.data_test)
+			};
+		}
+		function tab_query($$renderer) {
+			$$renderer.push(`<div><div><div><div class="content is-small"><span style="font-style: oblique; font-weight: bold;">$nameparameter</span> to bind a scalar value, or <span style="font-style: oblique; font-weight: bold;">:nameparameter</span> for array bind (expands to <code>IN (...)</code>). See the "Pass Parameters" tab.</div></div></div> `);
+			EditorCode($$renderer, {
+				isReadOnly: false,
+				lang: "sql",
+				showFormat: true,
+				onchange: (c) => {
+					fnOnChange();
+				},
+				get code() {
+					return query_code;
+				},
+				set code($$value) {
+					query_code = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----></div>`);
+		}
+		function tab_pass_params($$renderer) {
+			$$renderer.push(`<div><div class="content is-small"><p>This handler connects to <strong>Apache Hive / Cloudera Impala</strong> via the pure-JS <code>hive-driver</code> (Thrift TCP). It supports both scalar bind (<code>$param</code>) and array bind (<code>:param</code>) for <code>IN (...)</code> filters.</p> <div class="block"><h4>Parameter rules</h4> <div class="block">If you use <strong>"$param"</strong>, the value is a scalar (number, string, boolean, <code>NULL</code>). <br/> <div class="block">For example: <br/> <code>SELECT id, name, category FROM enddb.demo WHERE category = $category;</code></div></div> <div class="block">If you use <strong>":param"</strong>, the value is an array that expands into <code>IN (...)</code>. <br/> <div class="block">For example: <br/> <code>SELECT * FROM enddb.demo WHERE category IN ($categories) AND id >= $min_id LIMIT 1000;</code> <br/> The request payload should look like: <br/> `);
+			JSONView($$renderer, {
+				get jsonObject() {
+					return sample_bind_post;
+				},
+				set jsonObject($$value) {
+					sample_bind_post = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----> <br/> Internally the query becomes: <br/> <code>SELECT * FROM enddb.demo WHERE category IN ('X', 'Y') AND id >= 1 LIMIT 1000;</code></div></div> <div class="icon-text"><span class="icon has-text-warning"><i class="fa-solid fa-circle-exclamation"></i></span> <span>Always include <code>LIMIT</code> or a narrowing <code>WHERE</code>; <code>SELECT *</code> without a filter will pull the entire result set into memory.</span></div></div> `);
+			if (endpoint.method === "GET") $$renderer.push(`<!--[0--><div class="block"><div class="icon-text"><span class="icon has-text-warning"><i class="fas fa-exclamation-triangle"></i></span> <span>GET Method — simple requests work well; bind parameters come from the query string.</span></div></div>`);
+			else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--></div></div>`);
+		}
+		function tab_cnx_params($$renderer) {
+			$$renderer.push(`<div><div class="content is-small">Configuration object for the <code>hive-driver</code> TCP connection. <div class="block"><h4>Connection parameters</h4> <p>Most common settings:</p> `);
+			JSONView($$renderer, {
+				get jsonObject() {
+					return cnx_sample;
+				},
+				set jsonObject($$value) {
+					cnx_sample = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----></div> <div class="block"><details><summary>Full parameter reference</summary> <table class="table is-bordered is-small"><thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead><tbody><tr><td>host</td><td>string</td><td>Required. HiveServer2 / Impala host</td></tr><tr><td>port</td><td>number</td><td>Default 21050</td></tr><tr><td>username</td><td>string</td><td>LDAP / domain user (for PLAIN)</td></tr><tr><td>password</td><td>string</td><td>Domain password (use TLS in production)</td></tr><tr><td>authType</td><td>string</td><td>PLAIN (default), NONE / NOSASL, KERBEROS (future)</td></tr><tr><td>useTLS</td><td>boolean</td><td>Enable SSL on the TCP socket</td></tr><tr><td>tls</td><td>object</td><td>TLS options: ca, rejectUnauthorized, cert, key</td></tr><tr><td>maxRows</td><td>number</td><td>Fetch batch size (default 1000). Not a total result limit.</td></tr><tr><td>timeoutMs</td><td>number</td><td>Query timeout (default 30000)</td></tr></tbody></table></details></div></div> `);
+			Params_json_selector($$renderer, {
+				onselect: (selected) => {
+					fnOnChange();
+				},
+				get custom() {
+					return cnx_custom;
+				},
+				set custom($$value) {
+					cnx_custom = $$value;
+					$$settled = false;
+				},
+				get appvar() {
+					return cnx_appvar;
+				},
+				set appvar($$value) {
+					cnx_appvar = $$value;
+					$$settled = false;
+				},
+				get environment() {
+					return endpoint.environment;
+				},
+				set environment($$value) {
+					endpoint.environment = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----></div>`);
+		}
+		let $$settled = true;
+		let $$inner_renderer;
+		function $$render_inner($$renderer) {
+			Tab($$renderer, {
+				get tabs() {
+					return tabList;
+				},
+				set tabs($$value) {
+					tabList = $$value;
+					$$settled = false;
+				}
+			});
+		}
+		do {
+			$$settled = true;
+			$$inner_renderer = $$renderer.copy();
+			$$render_inner($$inner_renderer);
+		} while (!$$settled);
+		$$renderer.subsume($$inner_renderer);
+		bind_props($$props, { endpoint });
+	});
+}
+//#endregion
 //#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/text.svelte
 function Text($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -12496,6 +12645,20 @@ function Editor($$renderer, $$props) {
 				"json_schema",
 				"app_vars",
 				"mcp"
+			]),
+			HIVE_DRIVER: /* @__PURE__ */ new Set([
+				"endpoint",
+				"config",
+				"docs",
+				"auth",
+				"cors",
+				"price",
+				"tester",
+				"backups",
+				"logs",
+				"json_schema",
+				"app_vars",
+				"mcp"
 			])
 		};
 		let derivedtabList = derived(() => {
@@ -12819,8 +12982,20 @@ function Editor($$renderer, $$props) {
 							$$settled = false;
 						}
 					});
-				} else if (endpoint?.handler == "SQL_BULK_I") {
+				} else if (endpoint?.handler == "HIVE_DRIVER") {
 					$$renderer.push("<!--[5-->");
+					HiveDriver($$renderer, {
+						onchange: onChangeValueHandler,
+						get endpoint() {
+							return endpoint;
+						},
+						set endpoint($$value) {
+							endpoint = $$value;
+							$$settled = false;
+						}
+					});
+				} else if (endpoint?.handler == "SQL_BULK_I") {
+					$$renderer.push("<!--[6-->");
 					SqlBulkInsert($$renderer, {
 						onchange: onChangeValueHandler,
 						get endpoint() {
@@ -12832,7 +13007,7 @@ function Editor($$renderer, $$props) {
 						}
 					});
 				} else if (endpoint?.handler == "FETCH") {
-					$$renderer.push("<!--[6-->");
+					$$renderer.push("<!--[7-->");
 					Fetch($$renderer, {
 						onchange: onChangeValueHandler,
 						get endpoint() {
@@ -12844,7 +13019,7 @@ function Editor($$renderer, $$props) {
 						}
 					});
 				} else if (endpoint?.handler == "FUNCTION") {
-					$$renderer.push("<!--[7-->");
+					$$renderer.push("<!--[8-->");
 					CustomFunction($$renderer, {
 						onchange: onChangeValueHandler,
 						get endpoint() {
@@ -12856,7 +13031,7 @@ function Editor($$renderer, $$props) {
 						}
 					});
 				} else if (endpoint?.handler == "TEXT") {
-					$$renderer.push("<!--[8-->");
+					$$renderer.push("<!--[9-->");
 					Text($$renderer, {
 						onchange: onChangeValueHandler,
 						get endpoint() {
@@ -12868,7 +13043,7 @@ function Editor($$renderer, $$props) {
 						}
 					});
 				} else if (endpoint?.handler == "MONGODB") {
-					$$renderer.push("<!--[9-->");
+					$$renderer.push("<!--[10-->");
 					Mongodb($$renderer, {
 						onchange: onChangeValueHandler,
 						get endpoint() {
@@ -12879,7 +13054,7 @@ function Editor($$renderer, $$props) {
 							$$settled = false;
 						}
 					});
-				} else if (endpoint?.handler == "NOAPPLY" || endpoint?.handler == "No Handler" || endpoint?.handler == "NA") $$renderer.push(`<!--[10--><div>No Handler</div>`);
+				} else if (endpoint?.handler == "NOAPPLY" || endpoint?.handler == "No Handler" || endpoint?.handler == "NA") $$renderer.push(`<!--[11--><div>No Handler</div>`);
 				else $$renderer.push(`<!--[-1--><div>No Handler</div>`);
 				$$renderer.push(`<!--]--></div>`);
 			} else $$renderer.push("<!--[-1-->");

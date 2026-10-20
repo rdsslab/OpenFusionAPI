@@ -218,16 +218,16 @@
 							{ value: '10+', label: 'Handlers' },
 							{ value: '8', label: 'Databases' },
 							{ value: '3', label: 'Environments' },
-							{ value: '100%', label: 'Open source' }
+							{ value: '13.13.0', label: 'Latest release' }
 						]
 					},
 					strip: [
+						'Version 13.13.0',
 						'MIT License',
-						'Docker-ready',
-						'PM2 runtime',
-						'JSON Schema',
-						'MCP support',
-						'OWASP-hardened'
+						'Docker + PM2 runtime',
+						'JSON Schema contracts',
+						'MCP tooling',
+						'Graceful shutdown'
 					],
 					problem: {
 						kicker: 'The problem it solves',
@@ -286,9 +286,9 @@
 								desc: 'Per-endpoint response caching with TTL, plus built-in JWT generation and validation.'
 							},
 							{
-								title: 'Automation you can govern',
-								desc: 'Recurring interval tasks on cron or interval, plus messaging bots — all with full access control.'
-							}
+								title: 'Interval tasks (v13.13.0)',
+								desc: 'Recurring schedules with automatic suspension when max_failed_attempts is reached; disabled_by and disabled_reason distinguish system suspension from manual disable.'
+							},
 						]
 					},
 					handlers: {
@@ -310,7 +310,7 @@
 							},
 							{
 								code: 'SOAP',
-								desc: 'Convert legacy SOAP/WSDL services into clean REST endpoints'
+								desc: 'Turn legacy SOAP/WSDL services into REST endpoints; resolves $_VAR_* AppVars inside the JSON config at any depth'
 							},
 							{
 								code: 'JS',
@@ -473,16 +473,16 @@
 							{ value: '10+', label: 'Handlers' },
 							{ value: '8', label: 'Bases de datos' },
 							{ value: '3', label: 'Entornos' },
-							{ value: '100%', label: 'Open source' }
+							{ value: '13.13.0', label: 'Última versión' }
 						]
 					},
 					strip: [
+						'Versión 13.13.0',
 						'Licencia MIT',
-						'Listo para Docker',
-						'Runtime PM2',
-						'JSON Schema',
-						'Soporte MCP',
-						'Endurecido OWASP'
+						'Runtime Docker + PM2',
+						'Contratos JSON Schema',
+						'Herramientas MCP',
+						'Apagado ordenado'
 					],
 					problem: {
 						kicker: 'El problema que resuelve',
@@ -541,9 +541,9 @@
 								desc: 'Caché de respuestas por endpoint con TTL, más generación y validación JWT integradas.'
 							},
 							{
-								title: 'Automatización gobernada',
-								desc: 'Tareas recurrentes con intervalos o cron, más bots de mensajería, todo con control de acceso completo.'
-							}
+								title: 'Tareas programadas (v13.13.0)',
+								desc: 'Ejecutión periódica con suspensión automática al agotar fallos; disabled_by y disabled_reason diferencian suspensión del sistema de apagado manual.'
+							},
 						]
 					},
 					handlers: {
@@ -565,7 +565,7 @@
 							},
 							{
 								code: 'SOAP',
-								desc: 'Convierte servicios legacy SOAP/WSDL en endpoints REST limpios'
+								desc: 'Convierte servicios legacy SOAP/WSDL en endpoints REST; resuelve AppVars $_VAR_* dentro del config JSON a cualquier profundidad'
 							},
 							{
 								code: 'JS',
@@ -761,7 +761,10 @@
 
 	<main>
 		<section class="hero">
-			<span class="hero-badge">{t.hero.badge}</span>
+			<span class="hero-badge">
+				<span style="width: 6px; height: 6px; border-radius: 50%; background: var(--accent-1); display: inline-block;" aria-hidden="true"></span>
+				{t.hero.badge}
+			</span>
 			<h1>{t.hero.title}</h1>
 			<p class="hero-sub">{t.hero.subtitle}</p>
 
@@ -884,7 +887,7 @@
 			<div class="steps">
 				{#each t.how.steps as step, i (step)}
 					<article class="step">
-						<span class="step-num">0{i + 1}</span>
+						<span class="step-num">{i + 1}</span>
 						<h3>{step.title}</h3>
 						<p>{step.desc}</p>
 					</article>
@@ -1196,9 +1199,21 @@
 
 		background: var(--bg);
 		background-image:
-			radial-gradient(60rem 40rem at 10% -10%, rgba(255, 107, 26, 0.28), transparent 60%),
-			radial-gradient(50rem 36rem at 90% 8%, rgba(255, 140, 66, 0.16), transparent 55%),
-			radial-gradient(56rem 42rem at 50% 110%, rgba(255, 61, 0, 0.2), transparent 60%);
+			linear-gradient(
+				to right,
+				rgba(255, 255, 255, 0.035) 1px,
+				transparent 1px
+			),
+			linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+			radial-gradient(70rem 34rem at 50% -6%, rgba(255, 107, 26, 0.2), transparent 65%);
+		background-size:
+			68px 68px,
+			68px 68px,
+			100% 100%;
+		background-position:
+			center top,
+			center top,
+			center top;
 		color: var(--text);
 		font-family:
 			ui-sans-serif,
@@ -1412,16 +1427,13 @@
 	}
 
 	.hero-badge {
-		background: rgba(255, 107, 26, 0.14);
-		border: 1px solid rgba(255, 107, 26, 0.4);
-		border-radius: 999px;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
 		color: #ffd0a3;
-		display: inline-block;
-		font-size: 0.85rem;
+		font-size: 0.82rem;
 		font-weight: 600;
-		letter-spacing: 0.02em;
 		margin-bottom: 1.5rem;
-		padding: 0.4rem 1rem;
 	}
 
 	h1 {
@@ -1477,15 +1489,18 @@
 	}
 
 	.stat-value {
-		color: var(--accent-1);
-		font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-		font-size: 1.6rem;
-		font-weight: 700;
+		color: #ffb54e;
+		font-family: ui-sans-serif, system-ui, sans-serif;
+		font-size: clamp(1.9rem, 3vw, 2.35rem);
+		font-weight: 850;
+		line-height: 1;
+		letter-spacing: -0.02em;
 	}
 
 	.stat-label {
 		color: var(--muted);
-		font-size: 0.88rem;
+		font-size: 0.9rem;
+		letter-spacing: -0.01em;
 	}
 
 	.hero-shot {
@@ -1539,11 +1554,10 @@
 	.kicker {
 		color: var(--accent-2);
 		display: inline-block;
-		font-size: 0.8rem;
+		font-size: 0.82rem;
 		font-weight: 700;
-		letter-spacing: 0.08em;
+		letter-spacing: 0.01em;
 		margin-bottom: 0.8rem;
-		text-transform: uppercase;
 	}
 
 	h2 {
@@ -1698,10 +1712,18 @@
 	}
 
 	.step-num {
-		color: var(--accent-2);
-		font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-		font-size: 1.4rem;
+		background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+		border-radius: 50%;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		color: #fff;
+		font-family: ui-sans-serif, system-ui, sans-serif;
+		font-size: 0.75rem;
 		font-weight: 700;
+		height: 1.6rem;
+		width: 1.6rem;
+		margin-bottom: 0.4rem;
 	}
 
 	.step h3 {
