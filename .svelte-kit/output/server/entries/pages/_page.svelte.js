@@ -1,7 +1,7 @@
 import { r as onDestroy } from "../../chunks/index-server.js";
 import { D as escape_html, T as attr, a as derived, d as stringify, n as attr_style, o as ensure_array_like, s as head, t as attr_class } from "../../chunks/server.js";
 import { t as resolve } from "../../chunks/paths.js";
-//#region src/routes/+page.svelte
+// src/routes/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const logo = "/android-chrome-192x192.png";
@@ -126,6 +126,7 @@ function _page($$renderer, $$props) {
 			nav: {
 				docs: "Documentation",
 				features: "Features",
+				utilities: "Utilities",
 				app: "Enter",
 				github: "GitHub"
 			},
@@ -325,6 +326,176 @@ function _page($$renderer, $$props) {
 					}
 				]
 			},
+			functionVars: {
+				kicker: "Server-side utilities",
+				title: "What your JS handlers can call.",
+				text: "Every FUNCTION and JS handler has access to a curated set of server-side libraries — no extra installs, no build step. Pick the right tool for the integration.",
+				groups: [
+					{
+						label: "Runtime & Auth",
+						items: [
+							{
+								name: "ofapi",
+								desc: "Runtime helpers: server info, JWT tokens, structured errors, async logging"
+							},
+							{
+								name: "jwt",
+								desc: "JWT signing with process JWT_KEY"
+							},
+							{
+								name: "crypto",
+								desc: "Node.js crypto (hash, sign, HMAC, encrypt, random bytes)"
+							},
+							{
+								name: "uuid",
+								desc: "Generate UUIDs (v1/v4)"
+							}
+						]
+					},
+					{
+						label: "AI & Agents",
+						items: [
+							{
+								name: "OpenAI",
+								desc: "Official SDK for language/reasoning/multimodal models"
+							},
+							{
+								name: "askAIWithTools",
+								desc: "Agent calls an AI with structured tool definitions"
+							},
+							{
+								name: "askIAWithMCP",
+								desc: "Agent consumes an endpoint via MCP protocol"
+							},
+							{
+								name: "listMcpTools",
+								desc: "List available MCP tools"
+							}
+						]
+					},
+					{
+						label: "Data & Files",
+						items: [
+							{
+								name: "mongoose",
+								desc: "MongoDB ODM for modeling collections"
+							},
+							{
+								name: "sequelize",
+								desc: "Multi-database ORM (PostgreSQL, MySQL, SQLite, etc.)"
+							},
+							{
+								name: "dnsPromises",
+								desc: "DNS resolution and lookup"
+							},
+							{
+								name: "sftpClient",
+								desc: "SFTP/SSH file transfers"
+							}
+						]
+					},
+					{
+						label: "XML & Documents",
+						items: [
+							{
+								name: "xmlCrypto",
+								desc: "XML digital signatures (sign / verify)"
+							},
+							{
+								name: "xmldom",
+								desc: "W3C DOM parser/manipulator for XML"
+							},
+							{
+								name: "xmlFormatter",
+								desc: "Pretty-print XML strings"
+							},
+							{
+								name: "xml2js",
+								desc: "XML ↔ JavaScript object conversion"
+							},
+							{
+								name: "pdfjs",
+								desc: "PDF parsing and rendering"
+							},
+							{
+								name: "createImageFromHTML / createPDFFromHTML",
+								desc: "Render HTML to image or PDF"
+							},
+							{
+								name: "QRCodeStyling",
+								desc: "Generate styled QR codes"
+							}
+						]
+					},
+					{
+						label: "Spreadsheets & Canvas",
+						items: [
+							{
+								name: "xlsx / xlsx_style",
+								desc: "Build/read Excel workbooks with styling"
+							},
+							{
+								name: "canvas",
+								desc: "Node canvas (images, charts, drawing)"
+							},
+							{
+								name: "json_to_xlsx_buffer",
+								desc: "Convert JSON arrays directly to XLSX buffers"
+							}
+						]
+					},
+					{
+						label: "Network & Messaging",
+						items: [
+							{
+								name: "ldap / ldapts",
+								desc: "Active Directory / LDAP client (bind, search, modify)"
+							},
+							{
+								name: "nodemailer",
+								desc: "Send email via SMTP"
+							},
+							{
+								name: "uFetch / uFetchAutoEnv",
+								desc: "Resilient HTTP requests with environment-aware URLs"
+							},
+							{
+								name: "URLAutoEnvironment",
+								desc: "Build environment-aware endpoint URLs"
+							},
+							{
+								name: "PromiseSequence / sequentialPromises",
+								desc: "Run promises in sequence, with results"
+							}
+						]
+					},
+					{
+						label: "Utilities",
+						items: [
+							{
+								name: "forge",
+								desc: "TLS / X.509 certificate and key operations"
+							},
+							{
+								name: "luxon",
+								desc: "Modern date/time library with time zones"
+							},
+							{
+								name: "z",
+								desc: "Zod schema validation"
+							},
+							{
+								name: "console / Date / Math / JSON / URL",
+								desc: "Standard JS built-ins"
+							},
+							{
+								name: "setTimeout / setInterval / AbortController",
+								desc: "Timers and cancellation"
+							}
+						]
+					}
+				]
+			},
 			adminUi: {
 				kicker: "Admin UI overview",
 				title: "Real admin interface — built for humans and AI.",
@@ -401,7 +572,14 @@ function _page($$renderer, $$props) {
 				$$renderer.push(`<title>OpenFusion API | Low-Code, AI-Friendly API Platform</title>`);
 			});
 		});
-		$$renderer.push(`<div class="landing svelte-1uha8ag"><header class="nav svelte-1uha8ag"><a class="brand svelte-1uha8ag"${attr("href", resolve("/"))} aria-label="OpenFusion API"><img${attr("src", logo)} alt="OpenFusion API logo" width="36" height="36" class="svelte-1uha8ag"/> <span class="svelte-1uha8ag">OpenFusion API</span></a> <nav class="nav-links svelte-1uha8ag"><a href="#docs" class="svelte-1uha8ag">${escape_html(t().nav.docs)}</a> <a href="#features" class="svelte-1uha8ag">${escape_html(t().nav.features)}</a> <div class="lang svelte-1uha8ag"><button${attr("aria-pressed", true)} type="button"${attr_class("svelte-1uha8ag", void 0, { "active": true })}>EN</button> <button${attr("aria-pressed", false)} type="button"${attr_class("svelte-1uha8ag", void 0, { "active": false })}>ES</button></div> <a class="btn btn-ghost btn-enter svelte-1uha8ag"${attr("href", resolve(appUrl))}>${escape_html(t().nav.app)}</a> <a class="btn btn-primary svelte-1uha8ag"${attr("href", githubUrl)} target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true" class="svelte-1uha8ag"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z" class="svelte-1uha8ag"></path></svg> ${escape_html(t().nav.github)}</a></nav></header> <main class="svelte-1uha8ag"><section class="hero svelte-1uha8ag"><span class="hero-badge svelte-1uha8ag"><span style="width: 6px; height: 6px; border-radius: 50%; background: var(--accent-1); display: inline-block;" aria-hidden="true" class="svelte-1uha8ag"></span> ${escape_html(t().hero.badge)}</span> <h1 class="svelte-1uha8ag">${escape_html(t().hero.title)}</h1> <p class="hero-sub svelte-1uha8ag">${escape_html(t().hero.subtitle)}</p> <div class="hero-cta svelte-1uha8ag"><a class="btn btn-primary btn-lg svelte-1uha8ag"${attr("href", githubUrl)} target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true" class="svelte-1uha8ag"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z" class="svelte-1uha8ag"></path></svg> ${escape_html(t().hero.ctaPrimary)}</a> <a class="btn btn-ghost btn-lg svelte-1uha8ag"${attr("href", libUrl)} target="_blank" rel="noopener noreferrer">${escape_html(t().hero.ctaSecondary)} <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="svelte-1uha8ag"><path d="M5 12h14" class="svelte-1uha8ag"></path><path d="m12 5 7 7-7 7" class="svelte-1uha8ag"></path></svg></a></div> <div class="hero-stats svelte-1uha8ag"><!--[-->`);
+		$$renderer.push(`<div class="landing svelte-1uha8ag"><header class="nav svelte-1uha8ag"><a class="brand svelte-1uha8ag"${attr("href", resolve("/"))} aria-label="OpenFusion API"><img${attr("src", logo)} alt="OpenFusion API logo" width="36" height="36" class="svelte-1uha8ag"/> <span class="svelte-1uha8ag">OpenFusion API</span></a> <nav class="nav-links svelte-1uha8ag"><a href="#docs" class="svelte-1uha8ag">${escape_html(t().nav.docs)}</a> <a href="#features" class="svelte-1uha8ag">${escape_html(t().nav.features)}</a> <a href="#functionVars" class="svelte-1uha8ag">${escape_html(t().nav.utilities)}</a> <div class="lang svelte-1uha8ag"><button${attr("aria-pressed", true)} type="button"${attr_class("svelte-1uha8ag", void 0, { "active": true })}>EN</button> <button${attr("aria-pressed", false)} type="button"${attr_class("svelte-1uha8ag", void 0, { "active": false })}>ES</button></div> <a class="btn btn-ghost btn-enter svelte-1uha8ag"${attr("href", resolve(appUrl))}>${escape_html(t().nav.app)}</a> <a class="btn btn-primary svelte-1uha8ag"${attr("href", githubUrl)} target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true" class="svelte-1uha8ag"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z" class="svelte-1uha8ag"></path></svg> ${escape_html(t().nav.github)}</a></nav></header> <main class="svelte-1uha8ag"><section class="hero svelte-1uha8ag"><div class="hero-grid svelte-1uha8ag"><div class="hero-lead svelte-1uha8ag"><span class="hero-badge svelte-1uha8ag"><span style="width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block;" aria-hidden="true" class="svelte-1uha8ag"></span> ${escape_html(t().hero.badge)}</span> <h1 class="svelte-1uha8ag">${escape_html(t().hero.title)}</h1> <p class="hero-sub svelte-1uha8ag">${escape_html(t().hero.subtitle)}</p> <div class="hero-cta svelte-1uha8ag"><a class="btn btn-primary btn-lg svelte-1uha8ag"${attr("href", githubUrl)} target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true" class="svelte-1uha8ag"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z" class="svelte-1uha8ag"></path></svg> ${escape_html(t().hero.ctaPrimary)}</a> <a class="btn btn-ghost btn-lg svelte-1uha8ag"${attr("href", libUrl)} target="_blank" rel="noopener noreferrer">${escape_html(t().hero.ctaSecondary)} <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="svelte-1uha8ag"><path d="M5 12h14" class="svelte-1uha8ag"></path><path d="m12 5 7 7-7 7" class="svelte-1uha8ag"></path></svg></a></div></div> <div class="hero-wire svelte-1uha8ag" aria-label="API wire trace example"><div class="wire-label svelte-1uha8ag">Live endpoint response</div> <div class="wire-method svelte-1uha8ag">POST</div> <div class="wire-path svelte-1uha8ag">/api/app/dev/orders/v1</div> <div class="wire-body svelte-1uha8ag"><pre class="svelte-1uha8ag"><code class="svelte-1uha8ag">{
+  "status": 200,
+  "handler": "SQL",
+  "elapsed_ms": 12,
+  "data": [
+    { "id": 41, "total": 124.50 }
+  ]
+}</code></pre></div></div></div> <div class="hero-stats svelte-1uha8ag"><!--[-->`);
 		const each_array = ensure_array_like(t().hero.stats);
 		for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
 			let stat = each_array[$$index];
@@ -425,11 +603,11 @@ function _page($$renderer, $$props) {
 			let row = each_array_3[$$index_3];
 			$$renderer.push(`<li class="svelte-1uha8ag">${escape_html(row)}</li>`);
 		}
-		$$renderer.push(`<!--]--></ul></div></div></section> <section class="section svelte-1uha8ag" id="features"><div class="section-head svelte-1uha8ag"><span class="kicker svelte-1uha8ag">${escape_html(t().features.kicker)}</span> <h2 class="svelte-1uha8ag">${escape_html(t().features.title)}</h2></div> <div class="grid svelte-1uha8ag"><!--[-->`);
+		$$renderer.push(`<!--]--></ul></div></div></section> <section class="section svelte-1uha8ag" id="features"><div class="section-head svelte-1uha8ag"><span class="kicker svelte-1uha8ag">${escape_html(t().features.kicker)}</span> <h2 class="svelte-1uha8ag">${escape_html(t().features.title)}</h2></div> <div class="feature-ledger svelte-1uha8ag"><!--[-->`);
 		const each_array_4 = ensure_array_like(t().features.items);
-		for (let $$index_4 = 0, $$length = each_array_4.length; $$index_4 < $$length; $$index_4++) {
-			let feature = each_array_4[$$index_4];
-			$$renderer.push(`<article class="card svelte-1uha8ag"><h3 class="svelte-1uha8ag">${escape_html(feature.title)}</h3> <p class="svelte-1uha8ag">${escape_html(feature.desc)}</p></article>`);
+		for (let i = 0, $$length = each_array_4.length; i < $$length; i++) {
+			let feature = each_array_4[i];
+			$$renderer.push(`<div class="feature-row svelte-1uha8ag"><div class="feature-num svelte-1uha8ag">${escape_html(String(i + 1).padStart(2, "0"))}</div> <div class="svelte-1uha8ag"><h3 class="svelte-1uha8ag">${escape_html(feature.title)}</h3> <p class="svelte-1uha8ag">${escape_html(feature.desc)}</p></div></div>`);
 		}
 		$$renderer.push(`<!--]--></div></section> <section class="section svelte-1uha8ag" id="handlers"><div class="section-head svelte-1uha8ag"><span class="kicker svelte-1uha8ag">${escape_html(t().handlers.kicker)}</span> <h2 class="svelte-1uha8ag">${escape_html(t().handlers.title)}</h2> <p class="svelte-1uha8ag">${escape_html(t().handlers.text)}</p></div> <div class="handler-grid svelte-1uha8ag"><!--[-->`);
 		const each_array_5 = ensure_array_like(t().handlers.list);
@@ -437,63 +615,74 @@ function _page($$renderer, $$props) {
 			let handler = each_array_5[$$index_5];
 			$$renderer.push(`<div class="handler-chip svelte-1uha8ag"><code class="svelte-1uha8ag">${escape_html(handler.code)}</code> <span class="svelte-1uha8ag">${escape_html(handler.desc)}</span></div>`);
 		}
+		$$renderer.push(`<!--]--></div></section> <section class="section svelte-1uha8ag" id="functionVars"><div class="section-head svelte-1uha8ag"><span class="kicker svelte-1uha8ag">${escape_html(t().functionVars.kicker)}</span> <h2 class="svelte-1uha8ag">${escape_html(t().functionVars.title)}</h2> <p class="svelte-1uha8ag">${escape_html(t().functionVars.text)}</p></div> <div class="fnvar-grid svelte-1uha8ag"><!--[-->`);
+		const each_array_6 = ensure_array_like(t().functionVars.groups);
+		for (let $$index_7 = 0, $$length = each_array_6.length; $$index_7 < $$length; $$index_7++) {
+			let group = each_array_6[$$index_7];
+			$$renderer.push(`<article class="fnvar-group svelte-1uha8ag"><h3 class="svelte-1uha8ag">${escape_html(group.label)}</h3> <div class="fnvar-list svelte-1uha8ag"><!--[-->`);
+			const each_array_7 = ensure_array_like(group.items);
+			for (let $$index_6 = 0, $$length = each_array_7.length; $$index_6 < $$length; $$index_6++) {
+				let item = each_array_7[$$index_6];
+				$$renderer.push(`<div class="fnvar-item svelte-1uha8ag"><code class="svelte-1uha8ag">${escape_html(item.name)}</code> <span class="svelte-1uha8ag">${escape_html(item.desc)}</span></div>`);
+			}
+			$$renderer.push(`<!--]--></div></article>`);
+		}
 		$$renderer.push(`<!--]--></div></section> <section class="section svelte-1uha8ag" id="how"><div class="section-head svelte-1uha8ag"><span class="kicker svelte-1uha8ag">${escape_html(t().how.kicker)}</span> <h2 class="svelte-1uha8ag">${escape_html(t().how.title)}</h2></div> <div class="steps svelte-1uha8ag"><!--[-->`);
-		const each_array_6 = ensure_array_like(t().how.steps);
-		for (let i = 0, $$length = each_array_6.length; i < $$length; i++) {
-			let step = each_array_6[i];
+		const each_array_8 = ensure_array_like(t().how.steps);
+		for (let i = 0, $$length = each_array_8.length; i < $$length; i++) {
+			let step = each_array_8[i];
 			$$renderer.push(`<article class="step svelte-1uha8ag"><span class="step-num svelte-1uha8ag">${escape_html(i + 1)}</span> <h3 class="svelte-1uha8ag">${escape_html(step.title)}</h3> <p class="svelte-1uha8ag">${escape_html(step.desc)}</p></article>`);
 		}
 		$$renderer.push(`<!--]--></div> <div class="agent svelte-1uha8ag"><div class="svelte-1uha8ag"><h3 class="svelte-1uha8ag">${escape_html(t().how.agentTitle)}</h3> <p class="svelte-1uha8ag">${escape_html(t().how.agentText)}</p></div> <div class="agent-flow svelte-1uha8ag"><!--[-->`);
-		const each_array_7 = ensure_array_like(t().how.steps);
-		for (let i = 0, $$length = each_array_7.length; i < $$length; i++) {
-			let step = each_array_7[i];
+		const each_array_9 = ensure_array_like(t().how.steps);
+		for (let i = 0, $$length = each_array_9.length; i < $$length; i++) {
+			let step = each_array_9[i];
 			$$renderer.push(`<span class="svelte-1uha8ag">${escape_html(i + 1)}. ${escape_html(step.title)}</span>`);
 		}
 		$$renderer.push(`<!--]--></div></div></section> <section class="section svelte-1uha8ag" id="admin-ui"><div class="section-head svelte-1uha8ag"><span class="kicker svelte-1uha8ag">${escape_html(t().adminUi.kicker)}</span> <h2 class="svelte-1uha8ag">${escape_html(t().adminUi.title)}</h2> <p class="svelte-1uha8ag">${escape_html(t().adminUi.text)}</p></div> <div class="admin-ui-grid svelte-1uha8ag"><!--[-->`);
-		const each_array_8 = ensure_array_like(t().adminUi.sections);
-		for (let $$index_9 = 0, $$length = each_array_8.length; $$index_9 < $$length; $$index_9++) {
-			let section = each_array_8[$$index_9];
+		const each_array_10 = ensure_array_like(t().adminUi.sections);
+		for (let $$index_11 = 0, $$length = each_array_10.length; $$index_11 < $$length; $$index_11++) {
+			let section = each_array_10[$$index_11];
 			$$renderer.push(`<article class="admin-ui-card svelte-1uha8ag"><h3 class="svelte-1uha8ag">${escape_html(section.title)}</h3> <p class="svelte-1uha8ag">${escape_html(section.desc)}</p> <ul class="svelte-1uha8ag"><!--[-->`);
-			const each_array_9 = ensure_array_like(section.items);
-			for (let $$index_8 = 0, $$length = each_array_9.length; $$index_8 < $$length; $$index_8++) {
-				let item = each_array_9[$$index_8];
+			const each_array_11 = ensure_array_like(section.items);
+			for (let $$index_10 = 0, $$length = each_array_11.length; $$index_10 < $$length; $$index_10++) {
+				let item = each_array_11[$$index_10];
 				$$renderer.push(`<li class="svelte-1uha8ag">${escape_html(item)}</li>`);
 			}
 			$$renderer.push(`<!--]--></ul></article>`);
 		}
 		$$renderer.push(`<!--]--></div> <div class="admin-ui-screenshots svelte-1uha8ag"><h3 class="screenshots-title svelte-1uha8ag">${escape_html("Admin UI Screenshots")}</h3> <div class="carousel svelte-1uha8ag" role="region" aria-label="Admin UI screenshots carousel"><div class="carousel-track svelte-1uha8ag"${attr_style(`transform: translateX(${stringify(-0)}%);`)}><!--[-->`);
-		const each_array_10 = ensure_array_like(screenshots);
-		for (let i = 0, $$length = each_array_10.length; i < $$length; i++) {
-			let screenshot = each_array_10[i];
+		const each_array_12 = ensure_array_like(screenshots);
+		for (let i = 0, $$length = each_array_12.length; i < $$length; i++) {
+			let screenshot = each_array_12[i];
 			$$renderer.push(`<div class="carousel-slide svelte-1uha8ag" style="width: 100%;"><figure class="carousel-figure svelte-1uha8ag"><button type="button" class="carousel-figure-btn svelte-1uha8ag"${attr("aria-label", `Enlarge: ${screenshot.alt.en}`)}><img${attr("src", screenshot.src)}${attr("alt", screenshot.alt[lang])}${attr("loading", i === 0 ? "eager" : "lazy")} class="svelte-1uha8ag"/></button> <figcaption class="svelte-1uha8ag">${escape_html(screenshot.caption[lang])}</figcaption></figure></div>`);
 		}
 		$$renderer.push(`<!--]--></div> <button class="carousel-btn carousel-prev svelte-1uha8ag"${attr("aria-label", "Previous screenshot")}><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1uha8ag"><path d="M15 18l-6-6 6-6" class="svelte-1uha8ag"></path></svg></button> <button class="carousel-btn carousel-next svelte-1uha8ag"${attr("aria-label", "Next screenshot")}><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svelte-1uha8ag"><path d="M9 18l6-6-6-6" class="svelte-1uha8ag"></path></svg></button> <div class="carousel-indicators svelte-1uha8ag" aria-label="Slide indicators"><!--[-->`);
-		const each_array_11 = ensure_array_like(screenshots);
-		for (let i = 0, $$length = each_array_11.length; i < $$length; i++) {
-			each_array_11[i];
+		const each_array_13 = ensure_array_like(screenshots);
+		for (let i = 0, $$length = each_array_13.length; i < $$length; i++) {
+			each_array_13[i];
 			$$renderer.push(`<button${attr_class(`carousel-indicator ${i === currentSlide ? "active" : ""}`, "svelte-1uha8ag")}${attr("aria-label", `Go to slide ${i + 1}`)}${attr("aria-current", i === currentSlide ? "true" : "false")}></button>`);
 		}
 		$$renderer.push(`<!--]--></div></div> <p class="carousel-hint svelte-1uha8ag">${escape_html("Click image to enlarge • Auto-advances every 5s")}</p> `);
 		$$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]--></div></section> <section class="section svelte-1uha8ag" id="docs"><div class="section-head svelte-1uha8ag"><span class="kicker svelte-1uha8ag">${escape_html(t().ecosystem.kicker)}</span> <h2 class="svelte-1uha8ag">${escape_html(t().ecosystem.title)}</h2></div> <div class="ecosystem svelte-1uha8ag"><!--[-->`);
-		const each_array_12 = ensure_array_like(t().ecosystem.items);
-		for (let $$index_12 = 0, $$length = each_array_12.length; $$index_12 < $$length; $$index_12++) {
-			let item = each_array_12[$$index_12];
+		const each_array_14 = ensure_array_like(t().ecosystem.items);
+		for (let $$index_14 = 0, $$length = each_array_14.length; $$index_14 < $$length; $$index_14++) {
+			let item = each_array_14[$$index_14];
 			$$renderer.push(`<article${attr_class("eco-card svelte-1uha8ag", void 0, { "highlight": item.highlight })}><span class="eco-role svelte-1uha8ag">${escape_html(item.role)}</span> <h3 class="svelte-1uha8ag">${escape_html(item.name)}</h3> <p class="svelte-1uha8ag">${escape_html(item.desc)}</p> <a${attr_class("btn btn-sm svelte-1uha8ag", void 0, {
 				"btn-primary": item.highlight,
 				"btn-ghost": !item.highlight
 			})}${attr("href", item.url)} target="_blank" rel="noopener noreferrer">${escape_html(item.cta)}</a></article>`);
 		}
 		$$renderer.push(`<!--]--></div></section> <section class="section svelte-1uha8ag" id="quickstart"><div class="section-head svelte-1uha8ag"><span class="kicker svelte-1uha8ag">${escape_html(t().quickstart.kicker)}</span> <h2 class="svelte-1uha8ag">${escape_html(t().quickstart.title)}</h2></div> <div class="quickstart svelte-1uha8ag"><div class="quick-col svelte-1uha8ag"><ol class="svelte-1uha8ag"><!--[-->`);
-		const each_array_13 = ensure_array_like(t().quickstart.steps);
-		for (let $$index_13 = 0, $$length = each_array_13.length; $$index_13 < $$length; $$index_13++) {
-			let step = each_array_13[$$index_13];
+		const each_array_15 = ensure_array_like(t().quickstart.steps);
+		for (let $$index_15 = 0, $$length = each_array_15.length; $$index_15 < $$length; $$index_15++) {
+			let step = each_array_15[$$index_15];
 			$$renderer.push(`<li class="svelte-1uha8ag"><code class="svelte-1uha8ag">${escape_html(step)}</code></li>`);
 		}
 		$$renderer.push(`<!--]--></ol> <p class="creds svelte-1uha8ag">${escape_html(t().quickstart.defaultCreds)} <code class="svelte-1uha8ag">${escape_html(t().quickstart.user)}</code> / <code class="svelte-1uha8ag">${escape_html(t().quickstart.pass)}</code></p></div> <div class="quick-col svelte-1uha8ag"><h3 class="svelte-1uha8ag">${escape_html(t().quickstart.local.title)}</h3> <pre class="svelte-1uha8ag"><code class="svelte-1uha8ag">${escape_html(t().quickstart.local.code)}</code></pre></div></div></section> <section class="cta svelte-1uha8ag"><h2 class="svelte-1uha8ag">${escape_html(t().cta.title)}</h2> <p class="svelte-1uha8ag">${escape_html(t().cta.text)}</p> <div class="cta-buttons svelte-1uha8ag"><a class="btn btn-primary btn-lg svelte-1uha8ag"${attr("href", githubUrl)} target="_blank" rel="noopener noreferrer">${escape_html(t().cta.github)}</a> <a class="btn btn-ghost btn-lg svelte-1uha8ag"${attr("href", libUrl)} target="_blank" rel="noopener noreferrer">${escape_html(t().cta.docs)}</a> <a class="btn btn-ghost btn-lg btn-enter svelte-1uha8ag"${attr("href", resolve(appUrl))}>${escape_html(t().cta.console)}</a></div></section></main> <footer class="footer svelte-1uha8ag"><div class="footer-top svelte-1uha8ag"><a class="brand svelte-1uha8ag"${attr("href", resolve("/"))}><img${attr("src", logo)} alt="OpenFusion API logo" width="32" height="32" class="svelte-1uha8ag"/> <span class="svelte-1uha8ag">OpenFusion API</span></a> <p class="svelte-1uha8ag">${escape_html(t().footer.tagline)}</p> <p class="footer-open svelte-1uha8ag">${escape_html(t().footer.open)} · <a href="https://www.openfusionapi.com" target="_blank" rel="noopener noreferrer" class="svelte-1uha8ag">openfusionapi.com</a></p></div> <div class="footer-links svelte-1uha8ag"><a${attr("href", libUrl)} target="_blank" rel="noopener noreferrer" class="svelte-1uha8ag">${escape_html(t().footer.links.docs)}</a> <a${attr("href", libUrl)} target="_blank" rel="noopener noreferrer" class="svelte-1uha8ag">${escape_html(t().footer.links.handlers)}</a> <a${attr("href", githubUrl)} target="_blank" rel="noopener noreferrer" class="svelte-1uha8ag">${escape_html(t().footer.links.compose)}</a> <a${attr("href", githubUrl)} target="_blank" rel="noopener noreferrer" class="svelte-1uha8ag">${escape_html(t().footer.links.license)}</a></div> <p class="footer-rights svelte-1uha8ag">${escape_html(t().footer.rights)}</p></footer></div>`);
 	});
 }
-//#endregion
 export { _page as default };
 
 //# sourceMappingURL=_page.svelte.js.map

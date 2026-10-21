@@ -1,4 +1,4 @@
-//#region node_modules/@sveltejs/kit/src/utils/hash.js
+// node_modules/@sveltejs/kit/src/utils/hash.js
 /**
 * Hash using djb2
 * @param {import('types').StrictBody[]} values
@@ -15,8 +15,7 @@ function hash(...values) {
 	} else throw new TypeError("value must be a string or TypedArray");
 	return (hash >>> 0).toString(36);
 }
-//#endregion
-//#region node_modules/@sveltejs/kit/src/utils/exports.js
+// node_modules/@sveltejs/kit/src/utils/exports.js
 /**
 * @param {Set<string>} expected
 */
@@ -84,7 +83,6 @@ var validate_page_exports = validator(valid_page_exports);
 var validate_layout_server_exports = validator(valid_layout_server_exports);
 var validate_page_server_exports = validator(valid_page_server_exports);
 var validate_server_exports = validator(valid_server_exports);
-//#endregion
 export { validate_server_exports as a, validate_page_server_exports as i, validate_layout_server_exports as n, hash as o, validate_page_exports as r, validate_layout_exports as t };
 
 //# sourceMappingURL=exports.js.map

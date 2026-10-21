@@ -41,20 +41,17 @@ if (is_legacy) {
 	}();
 	updated_listener.v = () => updated.current = true;
 }
-//#endregion
-//#region node_modules/@sveltejs/kit/src/runtime/client/client.js
+// node_modules/@sveltejs/kit/src/runtime/client/client.js
 /** @import { RemoteFunctionDataNode, ServerNodesResponse, ServerRedirectNode } from 'types' */
 /** @import { CacheEntry } from './remote-functions/cache.svelte.js' */
 /** @import { Query } from './remote-functions/query/instance.svelte.js' */
 /** @import { LiveQuery } from './remote-functions/query-live/instance.svelte.js' */
 var { onMount, tick } = index_server_exports;
-//#endregion
-//#region node_modules/@sveltejs/kit/src/runtime/app/state/server.js
+// node_modules/@sveltejs/kit/src/runtime/app/state/server.js
 function context() {
 	return getContext("__request__");
 }
-//#endregion
-//#region node_modules/@sveltejs/kit/src/runtime/app/state/index.js
+// node_modules/@sveltejs/kit/src/runtime/app/state/index.js
 /**
 * A read-only reactive object with information about the current page, serving several use cases:
 * - retrieving the combined `data` of all pages/layouts anywhere in your component tree (also see [loading data](https://svelte.dev/docs/kit/load))
@@ -118,14 +115,12 @@ var page = {
 		return context().page.url;
 	}
 };
-//#endregion
-//#region node_modules/@sveltejs/kit/src/runtime/components/svelte-5/error.svelte
+// node_modules/@sveltejs/kit/src/runtime/components/svelte-5/error.svelte
 function Error$1($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		$$renderer.push(`<h1>${escape_html(page.status)}</h1> <p>${escape_html(page.error?.message)}</p>`);
 	});
 }
-//#endregion
 export { Error$1 as default };
 
 //# sourceMappingURL=error.svelte.js.map

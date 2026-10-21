@@ -18,7 +18,7 @@ import prettierPluginHtml from "prettier/plugins/html.mjs";
 import prettierPluginSql from "prettier-plugin-sql";
 import { Renderer, marked } from "marked";
 import "echarts";
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/paths.js
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/paths.js
 var url_paths = {
 	app: "/api/system/api/app/prd",
 	apps_get_list: "/api/system/api/apps/prd",
@@ -84,8 +84,7 @@ var url_paths = {
 	auditLogStats: "/api/system/system/audit/log/stats/prd",
 	auditLogPrune: "/api/system/audit/log/prune/prd"
 };
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/stores.js
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/stores.js
 /**
 * Emite eventos de autenticación globales.
 * Valores posibles:
@@ -122,8 +121,7 @@ var storeBotStatusChanged = writable(null);
 */
 var storeBotChanged = writable(null);
 writable([]);
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/utils.js
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/utils.js
 /**
 * Normaliza un `data_test` a la forma canónica que espera el `RESTTester` y que
 * el backend reconoce como suya: `query`/`headers` como arrays y `body`/`auth`
@@ -170,8 +168,7 @@ var mergeSourceOverwrite = (target, source) => {
 	}
 	return result;
 };
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/request.js
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/request.js
 /**
 * Verifica el status HTTP de una respuesta.
 * Si es 401, emite el evento `unauthorized` al authEventStore y lanza un error.
@@ -365,8 +362,7 @@ var GetAuditLogStats = async (options = {}) => {
 var PruneAuditLogs = async () => {
 	return await checkStatus(await new uFetch().post({ url: url_paths.auditLogPrune })).json();
 };
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/jwtUtils.js
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/jwtUtils.js
 /**
 * Decodifica el payload (segunda parte) de un JWT.
 * Los segmentos de un JWT usan base64url (RFC 7515): `-`/`_` en vez de `+`/`/`
@@ -447,8 +443,7 @@ function logJwtExpiration(token) {
 		});
 	} catch {}
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/permissions.js
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/permissions.js
 /**
 * Client-side permission evaluation for internal users.
 * Mirrors the backend permissions.js logic.
@@ -490,11 +485,9 @@ function currentUserHasPermission(user, environment, resource, action) {
 function getDefaultEnvironment() {
 	return "prd";
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/img/favicon.png
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/img/favicon.png
 var favicon_default = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAABwRJREFUWEeNl1tsXNUVhr+195mZYztxlCo3gngiKFWwhFQqpVGT2M7F5ELpQ2ugQUV9gaoqvfDQIKWFxA4EikMCTVtQCmpJo8Z1EuOmoiShVGrVhz4godL0pRdBLpCQW6P4NuOZOavZ+5yZOWPPAJZGPnPOnr3+9a9//WsfmVwuTxqjq9WAWFSMaGTAWDQSxWTw34k/6u9bUOGvuUH6pJew0MoBAuaIQbGo2mS9FcSoaiCKKNg4htvHrwn4ueSXsxlhGEvggyQLqtfx9+S+gNE4CBwLh/gaX6e1YDmFZZ4YUCMqgapLyK1zoPx1EO+jVtRY//xcMaJHdAm5/HxeF0N3HQBLAcsFLBGCOuQqyUYOvfDH3CDf5Uu0TM3jhBrm1kCLe+6AoAYrloVqMTEAt5dEWH02fJwBtyX5FWzAMoKQqTJgmRDDC1nlF5SZcOtoh1F/AYUyU/OPua+CbtG5oxmMY3lWBnXPR0Mkl2URlq2RsNlYjGMiBsC50hQ9s57mI0FAbyVXWMgbGDo9APdx0CwlLG9JxLbscf7hlibxZ/xzy+MfgXZpMNHBpiBgmxpZitFUCVARngn7GXBr4184FlbJXYiOYMiI4d9qacP4DBz1F0UYyE7xijnJ+PTocfD4b/wRFlvlMTXcL5acWKLI8C8JWITQjuGDsmV9Wx8X6gDoRnKFMY7fyHgVhtMKD5ks31bLBsQLtIThzRJsbxvhXcdGOvDbD5PpEHoQ+rDc5uttGDMBLxPwT4V9GhCI4elwJ7t96uoYSO1SWOm1cFQtWTH0XbnKnnkLeaBs2CaWmxKROWEOXFdeXXCYMZfFxIPcbAK2SsAWFXJOuGrkHQLtu3CNvy2ex281kFUYPV8qsnbWQJx9wkANwallZJcs4ASWlSqcCQ0rOMmlsc18Nmvpx7JB43Yti/CnkrDd5rjlBrAdCLe5PlfLKEb2hzn9iezlav5R1mnAb8QSRIanWnfxXK2ELn8fvwJCKHSynkBfUyGrhv7wJE8Jomd7tWV+mQdV2FplI+CaGnJiJIdV167vRFl2tCzgz7KDSHvJFm5hyIs74MOyYV3bLs6nNVQVYeWmLiObX8QfxP3IcKYorJh9gouV56Nf4fZswHaEHg3IeFczjBrh5WzIHnmR/8XaVvLfp0cMBxPWdrX8mN11beTtIi2CSkd0cxeWI1hyKmwPj/NMugXP9NIyP+AHxvBYZMmXlS1tt/Km9BFV2NSHyRRaOewSUcv5clHWtj2vddlXos/oab2TTOEz/B7DGnVtM8UXZr3lTKPWbvkHuFtUBiPLWLGkHe2HuJyubf472oPloGvrCPpb97C3kYfUSlCTgY+S72GjCEMefVl6207o39Mb5O/jbgIGI8NYqUQCoNJbwuQjfAPDTrE6VrJ0p5UfE69JG84oQbzJ23eSWTaPR42Ro+Eb+t/p6D0Ay6B6BuiYc4jL6frqDszYVTqDgAXhHoZ8CdMUVtuwwc2qIMEPuAhk/B4WzDrGR1XnTBhwZuMAtA9y2SVV7iIYv505s3/GlUaUp7OPNTADQNWiPEWXvsjs9rl8C0tvSfly2zH50Ct8OoBEA5PfZK0E0lcWfbb1Aq/LEcoNgaTCTHtej2hiE8utceNWQoz+KDfCc47ORgC88g3DYlmNkf9k0W7ZJ9cr9U6LtCLneh9oUA7fEYsZQtiI5YNI6Gwd5lwjAMWHWFOyDInxbvlk+NOa5zcuR2oaVozZjzUPy+UZy6q4iXXlDMOupTA8ER6Vgfx96rvAacB1wekS15fMZRhhNZbTU+PS1f6qNtZBKlH5GA1WQXsWbuYwhg0EnI2KrDEhdxDIoBodKxbpCNq4QwxDzvNvnAj7w5fSnp8aPf6y1i8zrLgZVcV76C5bfneD2gDLTuAUGTnkAEQZPmeFVzCsxPBeTllj9nO5bl7XUZyw7Mdx3V/tXOMxpujxg6XMEYT1GM5i2YNltyuBBnzPGF5MwG0PX5rmes1oTgZBs6RT8eMdJr9KlygjWD8p3xVLhxryYnkfy1Is72dzrDH7uDR94jU7ywlOBYnYGg2m9Ea+za54AN3J2dG/K3ikgX9neCK7v7HnV1VQCZe4cQMjaupfXjrFXjrLgjs75ipnfQ/CyOmcapf5JZfqJZbKfXqy7n3l48NVdFAromNh6poH0K3xy4Y/RUfK462/4vmm9WzyoApgmvyqo6LqWAl1bt3EvXSL4SgBueRAcrZUpnP2r93B5dM0dtoT06ZQ16EzMNR8oYugcJOMYNW9TTmOfxge4IV4QSMAlTyTcqTmwIwSfBr8bs3kFtbhzguGi6HKajmo1WNbcyAz6+CdsN6bPlEVPsfIueNSf2D5S8tB9n7SO1MzUIkVN887DXD6qvH7+XxrlvfkQIPZX1ncdGvXgMr/Adgcxpok5CivAAAAAElFTkSuQmCC";
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Table/Column/Boolean.svelte
+// node_modules/@rdsslab/svelte-components/dist/Table/Column/Boolean.svelte
 function Boolean$1($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		"use strict";
@@ -534,8 +527,7 @@ function Boolean$1($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Table/Column/TextLimit.svelte
+// node_modules/@rdsslab/svelte-components/dist/Table/Column/TextLimit.svelte
 function TextLimit($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = void 0, onclick_cell = () => {}, limit = 30, css_cell = "", row = void 0 } = $$props;
@@ -553,8 +545,7 @@ function TextLimit($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Table/Column/DateTime.svelte
+// node_modules/@rdsslab/svelte-components/dist/Table/Column/DateTime.svelte
 function DateTime_1($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = void 0, onclick_cell = () => {}, row = void 0, format = "yyyy-MM-dd HH:mm:ss", fromFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", HighlightIsntToday = false, editInline = false, css_cell = "" } = $$props;
@@ -582,8 +573,7 @@ function DateTime_1($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Table/Column/TreeNode.svelte
+// node_modules/@rdsslab/svelte-components/dist/Table/Column/TreeNode.svelte
 function TreeNode_1($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = void 0, key = "" } = $$props;
@@ -629,8 +619,7 @@ function TreeNode_1($$renderer, $$props) {
 		bind_props($$props, { value });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Table/Column/TreeView.svelte
+// node_modules/@rdsslab/svelte-components/dist/Table/Column/TreeView.svelte
 function TreeView($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = void 0, onclick_cell = () => {}, css_cell = "" } = $$props;
@@ -655,8 +644,7 @@ function TreeView($$renderer, $$props) {
 		bind_props($$props, { value });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Table/Column/Auto.svelte
+// node_modules/@rdsslab/svelte-components/dist/Table/Column/Auto.svelte
 function Auto($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = void 0, onclick_cell, row = void 0, editInline = false, css_cell, onchangecell } = $$props;
@@ -739,8 +727,7 @@ function Auto($$renderer, $$props) {
 	});
 }
 writable({});
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/class/utils.js
+// node_modules/@rdsslab/svelte-components/dist/class/utils.js
 /**
 * Global store for managing active notifications.
 * Subscribers can listen to changes to update the UI.
@@ -827,8 +814,7 @@ var Notifications$1 = class {
 		});
 	}
 };
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Level/Level.svelte
+// node_modules/@rdsslab/svelte-components/dist/Level/Level.svelte
 function Level($$renderer, $$props) {
 	let { left, right } = $$props;
 	$$renderer.push(`<nav class="nav_margin svelte-6urat2"><div class="responsive-columns svelte-6urat2"><div class="responsive-column-left svelte-6urat2"><div class="container_left svelte-6urat2">`);
@@ -863,8 +849,7 @@ function Level($$renderer, $$props) {
 	} else $$renderer.push("<!--[-1-->");
 	$$renderer.push(`<!--]--></div></div></div></nav>`);
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Table/TableToolbar.svelte
+// node_modules/@rdsslab/svelte-components/dist/Table/TableToolbar.svelte
 function TableToolbar($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		/**
@@ -941,8 +926,7 @@ function TableToolbar($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Table/TablePagination.svelte
+// node_modules/@rdsslab/svelte-components/dist/Table/TablePagination.svelte
 function TablePagination($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		/**
@@ -979,8 +963,7 @@ function TablePagination($$renderer, $$props) {
 		$$renderer.push(`<!--]--></select></div></span></div></nav></div>`);
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Modal/Modal.svelte
+// node_modules/@rdsslab/svelte-components/dist/Modal/Modal.svelte
 function Modal($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		/**
@@ -1019,8 +1002,7 @@ function Modal($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Dialog/Modal.svelte
+// node_modules/@rdsslab/svelte-components/dist/Dialog/Modal.svelte
 function Modal_1($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		/**
@@ -1075,8 +1057,7 @@ function Modal_1($$renderer, $$props) {
 		bind_props($$props, { show });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Table/utils/export_data.js
+// node_modules/@rdsslab/svelte-components/dist/Table/utils/export_data.js
 function FileName(fileNameExport, extension = "txt") {
 	let fName = "Report";
 	if (fileNameExport && fileNameExport.length > 0) fName = fileNameExport;
@@ -1358,8 +1339,7 @@ var ExportTableToHTML = (filteredData, columns, fileNameExport) => {
 		console.error(error);
 	}
 };
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/class/sha.js
+// node_modules/@rdsslab/svelte-components/dist/class/sha.js
 /**
 *
 *  Secure Hash Algorithm (SHA256)
@@ -1472,13 +1452,11 @@ function sha256(s) {
 	s = Utf8Encode(s);
 	return binb2hex(core_sha256(str2binb(s), s.length * chrsz));
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Table/utils/utils.js
+// node_modules/@rdsslab/svelte-components/dist/Table/utils/utils.js
 function checkIsArray(data) {
 	return data && Array.isArray(data);
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Table/utils/columnPrefs.js
+// node_modules/@rdsslab/svelte-components/dist/Table/utils/columnPrefs.js
 /**
 * Persistencia en el navegador de las columnas que el usuario ocultó.
 *
@@ -1552,8 +1530,7 @@ var activeKeys = /* @__PURE__ */ new Set();
 function unregisterActiveColumnPreferencesKey(tableKey) {
 	if (tableKey) activeKeys.delete(tableKey);
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Table/Table.svelte
+// node_modules/@rdsslab/svelte-components/dist/Table/Table.svelte
 function Table($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		/**
@@ -2152,8 +2129,7 @@ function Table($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Input/Predictive.svelte
+// node_modules/@rdsslab/svelte-components/dist/Input/Predictive.svelte
 function Predictive($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		/**
@@ -2203,8 +2179,7 @@ function Predictive($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/FileUpload/index.svelte
+// node_modules/@rdsslab/svelte-components/dist/FileUpload/index.svelte
 function FileUpload($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { label = void 0, accept = ".json", url = "http://localhost:3000/upload", multiple = false, onselect = () => {}, onupload = () => {}, onchange = () => {}, showUploadButton = true, sizeClass = "is-small", $$slots, $$events, ...rest } = $$props;
@@ -2255,8 +2230,7 @@ function FileUpload($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Input/Basic/index.svelte
+// node_modules/@rdsslab/svelte-components/dist/Input/Basic/index.svelte
 function Basic$1($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		/**
@@ -2444,8 +2418,7 @@ function Basic$1($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Tab/Tab.svelte
+// node_modules/@rdsslab/svelte-components/dist/Tab/Tab.svelte
 function Tab($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		/**
@@ -2493,8 +2466,7 @@ function Tab($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/EditorCode/EditorCode.svelte
+// node_modules/@rdsslab/svelte-components/dist/EditorCode/EditorCode.svelte
 function EditorCode($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const dispatch = createEventDispatcher();
@@ -2782,8 +2754,7 @@ function EditorCode($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Select/BasicSelect.svelte
+// node_modules/@rdsslab/svelte-components/dist/Select/BasicSelect.svelte
 function BasicSelect($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		/**
@@ -2837,8 +2808,7 @@ function BasicSelect($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/SlideFullScreen/SlideFullScreen.svelte
+// node_modules/@rdsslab/svelte-components/dist/SlideFullScreen/SlideFullScreen.svelte
 function SlideFullScreen($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { show = false, children } = $$props;
@@ -2848,8 +2818,7 @@ function SlideFullScreen($$renderer, $$props) {
 		bind_props($$props, { show });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/RESTTester/key_value/kv.svelte
+// node_modules/@rdsslab/svelte-components/dist/RESTTester/key_value/kv.svelte
 function Kv($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { data = [], onchange = () => {}, enableFileType = false } = $$props;
@@ -2920,8 +2889,7 @@ function Kv($$renderer, $$props) {
 		bind_props($$props, { data });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/RESTTester/auth.svelte
+// node_modules/@rdsslab/svelte-components/dist/RESTTester/auth.svelte
 function tab_none($$renderer) {
 	$$renderer.push(`<label class="label is-small">No Authentication Selected</label>`);
 }
@@ -3013,8 +2981,7 @@ function Auth($$renderer, $$props) {
 		bind_props($$props, { data });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/RESTTester/body.svelte
+// node_modules/@rdsslab/svelte-components/dist/RESTTester/body.svelte
 function Body($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { data = {
@@ -3239,8 +3206,7 @@ function Body($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/JSONView/index.svelte
+// node_modules/@rdsslab/svelte-components/dist/JSONView/index.svelte
 function JSONView($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		/**
@@ -3319,8 +3285,7 @@ function JSONView($$renderer, $$props) {
 		bind_props($$props, { jsonObject });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/RESTTester/request.js
+// node_modules/@rdsslab/svelte-components/dist/RESTTester/request.js
 /**
 * Núcleo de construcción y exportación de solicitudes HTTP para RESTTester.
 *
@@ -6153,8 +6118,7 @@ function parseRequestFile(text, { fileName = "", format } = {}) {
 		fileName
 	};
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/RESTTester/index.svelte
+// node_modules/@rdsslab/svelte-components/dist/RESTTester/index.svelte
 var METHODS = [
 	{
 		method: "CONNECT",
@@ -6690,8 +6654,7 @@ function RESTTester($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Notifications/index.svelte
+// node_modules/@rdsslab/svelte-components/dist/Notifications/index.svelte
 function Notifications($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let list_notify = [];
@@ -6736,8 +6699,7 @@ function Notifications($$renderer, $$props) {
 		$$renderer.push(`<!--]--></div>`);
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/TextArea/index.svelte
+// node_modules/@rdsslab/svelte-components/dist/TextArea/index.svelte
 function TextArea$1($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		/**
@@ -6775,8 +6737,7 @@ function TextArea$1($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/MenuSide/index.svelte
+// node_modules/@rdsslab/svelte-components/dist/MenuSide/index.svelte
 function iconFallback$1($$renderer) {
 	$$renderer.push(`<i class="fas fa-cube svelte-154qom8"></i>`);
 }
@@ -6871,8 +6832,7 @@ function MenuSide($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Markdown/Viewer/index.svelte
+// node_modules/@rdsslab/svelte-components/dist/Markdown/Viewer/index.svelte
 function Viewer($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		/**
@@ -6949,8 +6909,7 @@ function Viewer($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/WebSocketClient.js
+// node_modules/@rdsslab/svelte-components/dist/WebSocketClient.js
 var HEARTBEAT_INTERVAL = 6e4;
 var PONG_TIMEOUT = 1e4;
 var MAX_RECONNECT_DELAY = 3e4;
@@ -7111,8 +7070,7 @@ var OpenFusionWebsocketClient = class extends EventTarget {
 		if (this.ws) this.ws.close(1e3, "Cierre manual");
 	}
 };
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Chart/index.svelte
+// node_modules/@rdsslab/svelte-components/dist/Chart/index.svelte
 function Chart($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { title = "Title", data = [], series = [], option = {}, chart = null } = $$props;
@@ -7130,8 +7088,7 @@ function Chart($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/Chart/TimeSeries/index.svelte
+// node_modules/@rdsslab/svelte-components/dist/Chart/TimeSeries/index.svelte
 function TimeSeries($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { title = "Title", data = [], series = [], chart = null, tooltipFormatter = void 0, option = {
@@ -7246,8 +7203,7 @@ function TimeSeries($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/App/index.svelte
+// node_modules/@rdsslab/svelte-components/dist/App/index.svelte
 function iconFallback($$renderer) {
 	$$renderer.push(`<i class="fas fa-cube svelte-azjspp"></i>`);
 }
@@ -7353,17 +7309,14 @@ function App($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/svelte-components/dist/index.js
+// node_modules/@rdsslab/svelte-components/dist/index.js
 var ChartWidgets = {
 	Base: Chart,
 	TimeSeries
 };
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/version.js
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/version.js
 var version = "9.5.14";
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/login/index.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/login/index.svelte
 function Login($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let noty = new Notifications$1();
@@ -7806,8 +7759,7 @@ function Login($$renderer, $$props) {
 		$$renderer.subsume($$inner_renderer);
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/static_values.js
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/static_values.js
 var listAccessMethod = [
 	{
 		value: "Public",
@@ -8123,8 +8075,7 @@ var BotRuntimeStatus = {
 };
 /** Estado a mostrar cuando el servidor todavía no reportó ninguno. */
 var BotRuntimeStatusFallback = BotRuntimeStatus.STOPPED;
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/common/saveDeploy.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/common/saveDeploy.svelte
 function SaveDeploy($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { left = [], onsavedeploy = () => {}, oncancel = () => {}, deploying = {
@@ -8184,8 +8135,7 @@ function SaveDeploy($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/common/textArea.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/common/textArea.svelte
 function TextArea($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { label = "Text Area Label", value = "", placeholder = "Text area placeholder" } = $$props;
@@ -8200,8 +8150,7 @@ function TextArea($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/basic/basic.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/basic/basic.svelte
 function Basic($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
@@ -8302,8 +8251,7 @@ function Basic($$renderer, $$props) {
 		bind_props($$props, { idapp });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/httpStatus.js
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/httpStatus.js
 var HTTP_STATUS_TEXT = {
 	100: "Continue",
 	101: "Switching Protocols",
@@ -8372,8 +8320,7 @@ var HTTP_STATUS_TEXT = {
 function httpStatusText(code) {
 	return HTTP_STATUS_TEXT[String(code)] ?? "Unknown Status";
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/dashboard/dashboard.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/dashboard/dashboard.svelte
 function Dashboard($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
@@ -8939,8 +8886,7 @@ function Dashboard($$renderer, $$props) {
 		bind_props($$props, { idapp });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/application_variables/variable.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/application_variables/variable.svelte
 function Variable($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
@@ -9084,8 +9030,7 @@ function Variable($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/common/Select.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/common/Select.svelte
 function Select($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { onchange = () => {}, option = "NA", css_class = " is-small ", options = [{
@@ -9122,8 +9067,7 @@ function Select($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/application_variables/variables.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/application_variables/variables.svelte
 function Variables($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
@@ -9396,8 +9340,7 @@ function Variables($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/application_variables/index.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/application_variables/index.svelte
 function Application_variables($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
@@ -9432,8 +9375,7 @@ function Application_variables($$renderer, $$props) {
 		bind_props($$props, { idapp });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/columns/cellPath.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/columns/cellPath.svelte
 function CellPath($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = void 0, row = void 0 } = $$props;
@@ -9458,8 +9400,7 @@ function CellPath($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/columns/cellAccess.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/columns/cellAccess.svelte
 function CellAccess($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		"use strict";
@@ -9481,8 +9422,7 @@ function CellAccess($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/common/icon_label.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/common/icon_label.svelte
 function Icon_label($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { color = "", label = " Label ", icon = "fas fa-home" } = $$props;
@@ -9494,8 +9434,7 @@ function Icon_label($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/columns/cellMethod.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/columns/cellMethod.svelte
 function CellMethod($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = "", row = void 0 } = $$props;
@@ -9545,8 +9484,7 @@ function CellMethod($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/columns/cellHandler.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/columns/cellHandler.svelte
 function CellHandler($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
@@ -9620,8 +9558,7 @@ function CellHandler($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/columns/cellMCPTool.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/columns/cellMCPTool.svelte
 function CellMCPTool($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		"use strict";
@@ -9636,8 +9573,7 @@ function CellMCPTool($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/columns/cellCacheTime.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/columns/cellCacheTime.svelte
 function CellCacheTime($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = void 0, row = void 0 } = $$props;
@@ -9663,8 +9599,7 @@ function CellCacheTime($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/columns/cellCountStatusCode.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/columns/cellCountStatusCode.svelte
 function CellCountStatusCode($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		"use strict";
@@ -9704,8 +9639,7 @@ function CellCountStatusCode($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/columns/cellEnv.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/columns/cellEnv.svelte
 function CellEnv($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = void 0, row = void 0 } = $$props;
@@ -9724,8 +9658,7 @@ function CellEnv($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/columns/index.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/columns/index.svelte
 var endpointColumns = {
 	enabled: {
 		label: "Enabled",
@@ -9808,8 +9741,7 @@ var endpointColumns = {
 	},
 	price_total: { hidden: true }
 };
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/app_vars_selector.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/app_vars_selector.svelte
 function App_vars_selector($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
@@ -9869,8 +9801,7 @@ function App_vars_selector($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/fetch.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/fetch.svelte
 function Fetch($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { endpoint = {}, onchange = () => {} } = $$props;
@@ -9938,8 +9869,7 @@ function Js_predefined_vars($$renderer, $$props) {
 		$$renderer.push(`<!--]--></div>`);
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/js.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/js.svelte
 function tab_pred_vars$2($$renderer) {
 	Js_predefined_vars($$renderer, {});
 }
@@ -10004,8 +9934,7 @@ function Js($$renderer, $$props) {
 		bind_props($$props, { endpoint });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/params_json_selector.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/params_json_selector.svelte
 function Params_json_selector($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { freeTyping = void 0, placeholder = void 0, classIcon = void 0, label = void 0, custom = void 0, appvar = void 0, environment = void 0, langEditor = void 0, onselect = () => {} } = $$props;
@@ -10050,8 +9979,7 @@ function Params_json_selector($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/soap.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/soap.svelte
 function Soap($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { endpoint = void 0, onchange = () => {} } = $$props;
@@ -10163,8 +10091,7 @@ function Soap($$renderer, $$props) {
 		bind_props($$props, { endpoint });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/sql.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/sql.svelte
 function Sql($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { endpoint = {
@@ -10325,8 +10252,7 @@ function Sql($$renderer, $$props) {
 		bind_props($$props, { endpoint });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/sqlBulkInsert.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/sqlBulkInsert.svelte
 function SqlBulkInsert($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { endpoint = {
@@ -10471,8 +10397,7 @@ function SqlBulkInsert($$renderer, $$props) {
 		bind_props($$props, { endpoint });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/sqlHana.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/sqlHana.svelte
 function SqlHana($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { endpoint = {}, onchange = () => {} } = $$props;
@@ -10637,8 +10562,7 @@ function SqlHana($$renderer, $$props) {
 		bind_props($$props, { endpoint });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/hiveDriver.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/hiveDriver.svelte
 function HiveDriver($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { endpoint = {}, onchange = () => {} } = $$props;
@@ -10786,8 +10710,7 @@ function HiveDriver($$renderer, $$props) {
 		bind_props($$props, { endpoint });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/text.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/text.svelte
 function Text($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let notify = new Notifications$1();
@@ -11132,8 +11055,7 @@ function Text($$renderer, $$props) {
 		bind_props($$props, { endpoint });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/mongodb.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/mongodb.svelte
 function tab_pred_vars$1($$renderer) {
 	Js_predefined_vars($$renderer, {});
 }
@@ -11261,8 +11183,7 @@ function Mongodb($$renderer, $$props) {
 		bind_props($$props, { endpoint });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/customFunction.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/customFunction.svelte
 function CustomFunction($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
@@ -11336,8 +11257,7 @@ function CustomFunction($$renderer, $$props) {
 		bind_props($$props, { endpoint });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/common/methods_select.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/common/methods_select.svelte
 function Methods_select($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { disabled = false, option = {}, onselect } = $$props;
@@ -11391,8 +11311,7 @@ function Methods_select($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/endpoint.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/endpoint.svelte
 function Endpoint($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { endpoint = {
@@ -11699,8 +11618,7 @@ function Endpoint($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/authorizations.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/authorizations.svelte
 function Authorizations($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { users = {} } = $$props;
@@ -11787,8 +11705,7 @@ function Authorizations($$renderer, $$props) {
 		bind_props($$props, { users });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/loglevel_select.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/loglevel_select.svelte
 function Loglevel_select($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { level = 0 } = $$props;
@@ -11843,8 +11760,7 @@ function Loglevel_select($$renderer, $$props) {
 		bind_props($$props, { level });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/logs.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/logs.svelte
 function Logs$1($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let uF = new uFetch(url_paths.getLogs);
@@ -12099,8 +12015,7 @@ function Logs$1($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/endpoint_bkp.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/endpoint_bkp.svelte
 function Endpoint_bkp($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let uF = new uFetch(url_paths.getEndpointBackups);
@@ -12169,8 +12084,7 @@ function Endpoint_bkp($$renderer, $$props) {
 		bind_props($$props, { idendpoint });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/telegramBot.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/telegramBot.svelte
 function inputToken($$renderer) {
 	$$renderer.push(`<span>The constant $BOT is an instance of Grammy.</span>`);
 }
@@ -12258,8 +12172,7 @@ function TelegramBot($$renderer, $$props) {
 		bind_props($$props, { endpoint });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/mcp.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/mcp.svelte
 function Mcp($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { mcp = {} } = $$props;
@@ -12317,8 +12230,7 @@ function Mcp($$renderer, $$props) {
 		bind_props($$props, { mcp });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/endpoint_label.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/endpoint_label.svelte
 function Endpoint_label($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { environment = "?", endpoint = "?", method = "?", handler = "?" } = $$props;
@@ -12339,8 +12251,7 @@ function Endpoint_label($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/editor.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/editor.svelte
 function Editor($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
@@ -13291,8 +13202,7 @@ function Editor($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/index.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/index.svelte
 function Endpoints($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
@@ -13499,8 +13409,7 @@ function Endpoints($$renderer, $$props) {
 		bind_props($$props, { idapp });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/interval_tasks/cellTaskStatus.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/interval_tasks/cellTaskStatus.svelte
 function CellTaskStatus($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = void 0, row = void 0, currentState = false } = $$props;
@@ -13538,8 +13447,7 @@ function CellTaskStatus($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/interval_tasks/cellTaskSchedule.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/interval_tasks/cellTaskSchedule.svelte
 function CellTaskSchedule($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = void 0, row = void 0 } = $$props;
@@ -13553,8 +13461,7 @@ function CellTaskSchedule($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/interval_tasks/history.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/interval_tasks/history.svelte
 function History($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
@@ -13634,8 +13541,7 @@ function History($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/interval_tasks/index.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/interval_tasks/index.svelte
 function tab_guide($$renderer) {
 	$$renderer.push(`<div class="content is-small"><h4>How to schedule an endpoint</h4> <ol><li>Select an existing endpoint. Give the task a long <strong>interval</strong> (or a far cron) so
 				it does not fire on its own yet.</li> <li>Choose <strong>Interval</strong> for every N seconds or <strong>Cron</strong> for calendar times.</li> <li>Set an API Key when the endpoint is private and does not belong to the system app.</li> <li>Save, select the task, run it once with <strong>Run now</strong>, and inspect History.</li> <li>Once the test succeeds, set the real interval (or cron) and make sure <strong>Enabled</strong> is on.</li></ol> <h4>Schedule fields</h4> <p>A cron example for weekdays at 07:00 is <code>0 7 * * 1-5</code>. Timezone and execution
@@ -14327,8 +14233,7 @@ function Interval_tasks($$renderer, $$props) {
 		bind_props($$props, { idapp });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/bots/cellBotStatus.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/bots/cellBotStatus.svelte
 function CellBotStatus($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = void 0, row = void 0 } = $$props;
@@ -14357,8 +14262,7 @@ function CellBotStatus($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/bots/bot_bkp.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/bots/bot_bkp.svelte
 function Bot_bkp($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let uF = new uFetch(url_paths.getBotBackups);
@@ -14430,8 +14334,7 @@ function Bot_bkp($$renderer, $$props) {
 		bind_props($$props, { idbot });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/bots/bot_logs.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/bots/bot_logs.svelte
 function Bot_logs($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { idbot = void 0, hours = 24 } = $$props;
@@ -14499,8 +14402,7 @@ function Bot_logs($$renderer, $$props) {
 		bind_props($$props, { idbot });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/bots/index.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/bots/index.svelte
 function Bots($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
@@ -15009,8 +14911,7 @@ function Bots($$renderer, $$props) {
 		bind_props($$props, { idapp });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/logs/cellStatusCode.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/logs/cellStatusCode.svelte
 function CellStatusCode($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = void 0, row = void 0 } = $$props;
@@ -15048,8 +14949,7 @@ function CellStatusCode($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/logs/cellTraceId.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/logs/cellTraceId.svelte
 function CellTraceId($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = void 0, row = void 0, onOpenTrace = void 0 } = $$props;
@@ -15064,8 +14964,7 @@ function CellTraceId($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/logs/request_detail.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/logs/request_detail.svelte
 function jsonBlock($$renderer, data, label) {
 	JSONView($$renderer, {
 		jsonObject: data,
@@ -15180,8 +15079,7 @@ function Request_detail($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/logs/trace_view.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/logs/trace_view.svelte
 function Trace_view($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { show = false, trace_id = "" } = $$props;
@@ -15258,8 +15156,7 @@ function Trace_view($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/logs/index.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/logs/index.svelte
 function Logs($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
@@ -15676,8 +15573,7 @@ function Logs($$renderer, $$props) {
 		bind_props($$props, { idapp });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/apikeys/cellToken.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/apikeys/cellToken.svelte
 function CellToken($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = "" } = $$props;
@@ -15693,8 +15589,7 @@ function CellToken($$renderer, $$props) {
 		$$renderer.push(`<!--]--></div></td>`);
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/apikeys/index.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/apikeys/index.svelte
 function Apikeys($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
@@ -16006,8 +15901,7 @@ function Apikeys($$renderer, $$props) {
 		bind_props($$props, { idapp });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/users/index.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/users/index.svelte
 function Users($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
@@ -16503,8 +16397,7 @@ function Users($$renderer, $$props) {
 		if ($$store_subs) unsubscribe_stores($$store_subs);
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/system_users/PermissionEditor.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/system_users/PermissionEditor.svelte
 function PermissionEditor($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { ctrl = {} } = $$props;
@@ -16651,8 +16544,7 @@ function PermissionEditor($$renderer, $$props) {
 		bind_props($$props, { ctrl });
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/system_users/index.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/system_users/index.svelte
 function System_users($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
@@ -17214,8 +17106,7 @@ function System_users($$renderer, $$props) {
 		if ($$store_subs) unsubscribe_stores($$store_subs);
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/audit_logs/cellAction.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/audit_logs/cellAction.svelte
 function CellAction($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = void 0, row = void 0 } = $$props;
@@ -17239,8 +17130,7 @@ function CellAction($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/audit_logs/cellEntity.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/audit_logs/cellEntity.svelte
 function CellEntity($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = void 0, row = void 0 } = $$props;
@@ -17262,8 +17152,7 @@ function CellEntity($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/audit_logs/audit_detail.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/audit_logs/audit_detail.svelte
 function Audit_detail($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { show = false, detail = null, loading = false } = $$props;
@@ -17414,8 +17303,7 @@ function Audit_detail($$renderer, $$props) {
 		});
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/audit_logs/index.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/audit_logs/index.svelte
 function Audit_logs($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let notify = new Notifications$1();
@@ -18125,8 +18013,7 @@ function Audit_logs($$renderer, $$props) {
 		$$renderer.subsume($$inner_renderer);
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/index.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/index.svelte
 function logoIcon($$renderer) {
 	$$renderer.push(`<img${attr("src", favicon_default)} alt="Open Fusion API" style="width: 32px; height: 32px; object-fit: contain; display: block; margin: auto;"/>`);
 }
@@ -18488,8 +18375,7 @@ function Application($$renderer, $$props) {
 		if ($$store_subs) unsubscribe_stores($$store_subs);
 	});
 }
-//#endregion
-//#region node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/index.svelte
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/index.svelte
 function OpenFusionAPI($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let page = "login";
@@ -18581,8 +18467,7 @@ function OpenFusionAPI($$renderer, $$props) {
 		$$renderer.push(`<!--]-->`);
 	});
 }
-//#endregion
-//#region src/routes/openfusionapi/+page.svelte
+// src/routes/openfusionapi/+page.svelte
 function _page($$renderer) {
 	head("gcotfn", $$renderer, ($$renderer) => {
 		$$renderer.title(($$renderer) => {
@@ -18592,7 +18477,6 @@ function _page($$renderer) {
 	});
 	OpenFusionAPI($$renderer, {});
 }
-//#endregion
 export { _page as default };
 
 //# sourceMappingURL=_page.svelte.js.map

@@ -1,6 +1,6 @@
 import { C as hydratable_serialization_failed, Rt as noop, _ as getAllContexts, b as setContext, g as createContext, gt as experimental_async_required, h as get_render_context, pt as async_mode_flag, v as getContext, w as lifecycle_function_unavailable, x as ssr_context, y as hasContext, zt as run } from "./server.js";
 import * as devalue from "devalue";
-//#region \0rolldown/runtime.js
+// \0rolldown/runtime.js
 var __defProp = Object.defineProperty;
 var __exportAll = (all, no_symbols) => {
 	let target = {};
@@ -11,8 +11,7 @@ var __exportAll = (all, no_symbols) => {
 	if (!no_symbols) __defProp(target, Symbol.toStringTag, { value: "Module" });
 	return target;
 };
-//#endregion
-//#region node_modules/svelte/src/internal/server/abort-signal.js
+// node_modules/svelte/src/internal/server/abort-signal.js
 function getAbortSignal() {
 	let context = ssr_context;
 	while (context !== null) {
@@ -21,8 +20,7 @@ function getAbortSignal() {
 	}
 	return new AbortController().signal;
 }
-//#endregion
-//#region node_modules/svelte/src/internal/server/hydratable.js
+// node_modules/svelte/src/internal/server/hydratable.js
 /** @import { HydratableLookupEntry } from '#server' */
 /**
 * @template T
@@ -83,8 +81,7 @@ function serialization_stack(root_stack, uneval_stack) {
 	if (uneval_stack) out += "Caused by:\n" + uneval_stack + "\n";
 	return out || "<missing stack trace>";
 }
-//#endregion
-//#region node_modules/svelte/src/internal/server/blocks/snippet.js
+// node_modules/svelte/src/internal/server/blocks/snippet.js
 /** @import { Snippet } from 'svelte' */
 /** @import { Renderer } from '../renderer' */
 /** @import { Getters } from '#shared' */
@@ -103,8 +100,7 @@ function createRawSnippet(fn) {
 		renderer.push(fn(...getters).render().trim());
 	};
 }
-//#endregion
-//#region node_modules/svelte/src/index-server.js
+// node_modules/svelte/src/index-server.js
 /** @import { SSRContext } from '#server' */
 /** @import { Renderer } from './internal/server/renderer.js' */
 var index_server_exports = /* @__PURE__ */ __exportAll({
@@ -151,7 +147,6 @@ function fork() {
 }
 async function tick() {}
 async function settled() {}
-//#endregion
 export { tick as i, index_server_exports as n, onDestroy as r, createEventDispatcher as t };
 
 //# sourceMappingURL=index-server.js.map

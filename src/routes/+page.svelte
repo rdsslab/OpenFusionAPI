@@ -204,6 +204,7 @@
 					nav: {
 						docs: 'Documentation',
 						features: 'Features',
+						utilities: 'Utilities',
 						app: 'Enter',
 						github: 'GitHub'
 					},
@@ -288,7 +289,7 @@
 							{
 								title: 'Interval tasks (v13.13.0)',
 								desc: 'Recurring schedules with automatic suspension when max_failed_attempts is reached; disabled_by and disabled_reason distinguish system suspension from manual disable.'
-							},
+							}
 						]
 					},
 					handlers: {
@@ -387,6 +388,110 @@
 							}
 						]
 					},
+					functionVars: {
+						kicker: 'Server-side utilities',
+						title: 'What your JS handlers can call.',
+						text: 'Every FUNCTION and JS handler has access to a curated set of server-side libraries — no extra installs, no build step. Pick the right tool for the integration.',
+						groups: [
+							{
+								label: 'Runtime & Auth',
+								items: [
+									{
+										name: 'ofapi',
+										desc: 'Runtime helpers: server info, JWT tokens, structured errors, async logging'
+									},
+									{ name: 'jwt', desc: 'JWT signing with process JWT_KEY' },
+									{
+										name: 'crypto',
+										desc: 'Node.js crypto (hash, sign, HMAC, encrypt, random bytes)'
+									},
+									{ name: 'uuid', desc: 'Generate UUIDs (v1/v4)' }
+								]
+							},
+							{
+								label: 'AI & Agents',
+								items: [
+									{ name: 'OpenAI', desc: 'Official SDK for language/reasoning/multimodal models' },
+									{
+										name: 'askAIWithTools',
+										desc: 'Agent calls an AI with structured tool definitions'
+									},
+									{ name: 'askIAWithMCP', desc: 'Agent consumes an endpoint via MCP protocol' },
+									{ name: 'listMcpTools', desc: 'List available MCP tools' }
+								]
+							},
+							{
+								label: 'Data & Files',
+								items: [
+									{ name: 'mongoose', desc: 'MongoDB ODM for modeling collections' },
+									{
+										name: 'sequelize',
+										desc: 'Multi-database ORM (PostgreSQL, MySQL, SQLite, etc.)'
+									},
+									{ name: 'dnsPromises', desc: 'DNS resolution and lookup' },
+									{ name: 'sftpClient', desc: 'SFTP/SSH file transfers' }
+								]
+							},
+							{
+								label: 'XML & Documents',
+								items: [
+									{ name: 'xmlCrypto', desc: 'XML digital signatures (sign / verify)' },
+									{ name: 'xmldom', desc: 'W3C DOM parser/manipulator for XML' },
+									{ name: 'xmlFormatter', desc: 'Pretty-print XML strings' },
+									{ name: 'xml2js', desc: 'XML ↔ JavaScript object conversion' },
+									{ name: 'pdfjs', desc: 'PDF parsing and rendering' },
+									{
+										name: 'createImageFromHTML / createPDFFromHTML',
+										desc: 'Render HTML to image or PDF'
+									},
+									{ name: 'QRCodeStyling', desc: 'Generate styled QR codes' }
+								]
+							},
+							{
+								label: 'Spreadsheets & Canvas',
+								items: [
+									{ name: 'xlsx / xlsx_style', desc: 'Build/read Excel workbooks with styling' },
+									{ name: 'canvas', desc: 'Node canvas (images, charts, drawing)' },
+									{
+										name: 'json_to_xlsx_buffer',
+										desc: 'Convert JSON arrays directly to XLSX buffers'
+									}
+								]
+							},
+							{
+								label: 'Network & Messaging',
+								items: [
+									{
+										name: 'ldap / ldapts',
+										desc: 'Active Directory / LDAP client (bind, search, modify)'
+									},
+									{ name: 'nodemailer', desc: 'Send email via SMTP' },
+									{
+										name: 'uFetch / uFetchAutoEnv',
+										desc: 'Resilient HTTP requests with environment-aware URLs'
+									},
+									{ name: 'URLAutoEnvironment', desc: 'Build environment-aware endpoint URLs' },
+									{
+										name: 'PromiseSequence / sequentialPromises',
+										desc: 'Run promises in sequence, with results'
+									}
+								]
+							},
+							{
+								label: 'Utilities',
+								items: [
+									{ name: 'forge', desc: 'TLS / X.509 certificate and key operations' },
+									{ name: 'luxon', desc: 'Modern date/time library with time zones' },
+									{ name: 'z', desc: 'Zod schema validation' },
+									{ name: 'console / Date / Math / JSON / URL', desc: 'Standard JS built-ins' },
+									{
+										name: 'setTimeout / setInterval / AbortController',
+										desc: 'Timers and cancellation'
+									}
+								]
+							}
+						]
+					},
 					adminUi: {
 						kicker: 'Admin UI overview',
 						title: 'Real admin interface — built for humans and AI.',
@@ -463,6 +568,7 @@
 					nav: {
 						docs: 'Documentación',
 						features: 'Características',
+						utilities: 'Utilidades',
 						app: 'Entrar',
 						github: 'GitHub'
 					},
@@ -547,7 +653,7 @@
 							{
 								title: 'Tareas programadas (v13.13.0)',
 								desc: 'Ejecutión periódica con suspensión automática al agotar fallos; disabled_by y disabled_reason diferencian suspensión del sistema de apagado manual.'
-							},
+							}
 						]
 					},
 					handlers: {
@@ -649,6 +755,119 @@
 							}
 						]
 					},
+					functionVars: {
+						kicker: 'Utilidades del servidor',
+						title: 'Lo que tus handlers JS pueden llamar.',
+						text: 'Cada handler FUNCTION y JS tiene acceso a un conjunto curado de librerías del servidor — sin instalaciones adicionales, sin paso de build. Elige la herramienta adecuada para cada integración.',
+						groups: [
+							{
+								label: 'Runtime y autenticación',
+								items: [
+									{
+										name: 'ofapi',
+										desc: 'Helpers de runtime: info del servidor, tokens JWT, errores estructurados, log asíncrono'
+									},
+									{ name: 'jwt', desc: 'Firma de JWT con el JWT_KEY del proceso' },
+									{
+										name: 'crypto',
+										desc: 'crypto de Node.js (hash, firma, HMAC, cifrado, bytes aleatorios)'
+									},
+									{ name: 'uuid', desc: 'Generación de UUID (v1/v4)' }
+								]
+							},
+							{
+								label: 'IA y agentes',
+								items: [
+									{
+										name: 'OpenAI',
+										desc: 'SDK oficial para modelos de lenguaje, razonamiento y multimodales'
+									},
+									{
+										name: 'askAIWithTools',
+										desc: 'Un agente llama a una IA con herramientas estructuradas'
+									},
+									{ name: 'askIAWithMCP', desc: 'Un agente consume un endpoint vía protocolo MCP' },
+									{ name: 'listMcpTools', desc: 'Listar las herramientas MCP disponibles' }
+								]
+							},
+							{
+								label: 'Datos y archivos',
+								items: [
+									{ name: 'mongoose', desc: 'ODM de MongoDB para modelar colecciones' },
+									{
+										name: 'sequelize',
+										desc: 'ORM multi-base de datos (PostgreSQL, MySQL, SQLite, etc.)'
+									},
+									{ name: 'dnsPromises', desc: 'Resolución y consulta DNS' },
+									{ name: 'sftpClient', desc: 'Transferencia de archivos por SFTP/SSH' }
+								]
+							},
+							{
+								label: 'XML y documentos',
+								items: [
+									{ name: 'xmlCrypto', desc: 'Firmas digitales XML (firmar / verificar)' },
+									{ name: 'xmldom', desc: 'Parser y manipulador DOM W3C para XML' },
+									{ name: 'xmlFormatter', desc: 'Formatear XML legible' },
+									{ name: 'xml2js', desc: 'Conversión bidireccional XML ↔ objeto JavaScript' },
+									{ name: 'pdfjs', desc: 'Análisis y renderizado de PDF' },
+									{
+										name: 'createImageFromHTML / createPDFFromHTML',
+										desc: 'Convertir HTML en imagen o PDF'
+									},
+									{ name: 'QRCodeStyling', desc: 'Generar códigos QR con estilo' }
+								]
+							},
+							{
+								label: 'Hojas de cálculo y canvas',
+								items: [
+									{ name: 'xlsx / xlsx_style', desc: 'Crear y leer libros Excel con estilos' },
+									{ name: 'canvas', desc: 'Node canvas (imágenes, gráficos, dibujo)' },
+									{
+										name: 'json_to_xlsx_buffer',
+										desc: 'Convertir arreglos JSON directamente a buffers XLSX'
+									}
+								]
+							},
+							{
+								label: 'Red y mensajería',
+								items: [
+									{
+										name: 'ldap / ldapts',
+										desc: 'Cliente de Active Directory / LDAP (bind, búsqueda, modificación)'
+									},
+									{ name: 'nodemailer', desc: 'Envío de correo por SMTP' },
+									{
+										name: 'uFetch / uFetchAutoEnv',
+										desc: 'Peticiones HTTP resilientes con URLs según el entorno'
+									},
+									{
+										name: 'URLAutoEnvironment',
+										desc: 'Construir URLs de endpoint según el entorno'
+									},
+									{
+										name: 'PromiseSequence / sequentialPromises',
+										desc: 'Ejecutar promesas en secuencia y recoger resultados'
+									}
+								]
+							},
+							{
+								label: 'Utilidades',
+								items: [
+									{ name: 'forge', desc: 'Operaciones con certificados y claves TLS / X.509' },
+									{ name: 'luxon', desc: 'Librería moderna de fecha/hora con zonas horarias' },
+									{ name: 'z', desc: 'Validación de esquemas con Zod' },
+									{
+										name: 'console / Date / Math / JSON / URL',
+										desc: 'Built-ins estándar de JavaScript'
+									},
+									{
+										name: 'setTimeout / setInterval / AbortController',
+										desc: 'Temporizadores y cancelación'
+									}
+								]
+							}
+						]
+					},
 					adminUi: {
 						kicker: 'Vista de la consola admin',
 						title: 'Interfaz real — diseñada para humanos y IA.',
@@ -741,6 +960,7 @@
 		<nav class="nav-links">
 			<a href="#docs">{t.nav.docs}</a>
 			<a href="#features">{t.nav.features}</a>
+			<a href="#functionVars">{t.nav.utilities}</a>
 			<div class="lang">
 				<button
 					class:active={lang === 'en'}
@@ -769,44 +989,72 @@
 
 	<main>
 		<section class="hero">
-			<span class="hero-badge">
-				<span style="width: 6px; height: 6px; border-radius: 50%; background: var(--accent-1); display: inline-block;" aria-hidden="true"></span>
-				{t.hero.badge}
-			</span>
-			<h1>{t.hero.title}</h1>
-			<p class="hero-sub">{t.hero.subtitle}</p>
+			<div class="hero-grid">
+				<div class="hero-lead">
+					<span class="hero-badge">
+						<span
+							style="width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block;"
+							aria-hidden="true"
+						></span>
+						{t.hero.badge}
+					</span>
+					<h1>{t.hero.title}</h1>
+					<p class="hero-sub">{t.hero.subtitle}</p>
 
-			<div class="hero-cta">
-				<a
-					class="btn btn-primary btn-lg"
-					href={githubUrl}
-					target="_blank"
-					rel="noopener noreferrer"
-				>
-					<svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true">
-						<path
-							d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"
-						/>
-					</svg>
-					{t.hero.ctaPrimary}
-				</a>
-				<a class="btn btn-ghost btn-lg" href={libUrl} target="_blank" rel="noopener noreferrer">
-					{t.hero.ctaSecondary}
-					<svg
-						viewBox="0 0 24 24"
-						width="16"
-						height="16"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						aria-hidden="true"
-					>
-						<path d="M5 12h14" />
-						<path d="m12 5 7 7-7 7" />
-					</svg>
-				</a>
+					<div class="hero-cta">
+						<a
+							class="btn btn-primary btn-lg"
+							href={githubUrl}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							<svg
+								viewBox="0 0 16 16"
+								width="18"
+								height="18"
+								fill="currentColor"
+								aria-hidden="true"
+							>
+								<path
+									d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"
+								/>
+							</svg>
+							{t.hero.ctaPrimary}
+						</a>
+						<a class="btn btn-ghost btn-lg" href={libUrl} target="_blank" rel="noopener noreferrer">
+							{t.hero.ctaSecondary}
+							<svg
+								viewBox="0 0 24 24"
+								width="16"
+								height="16"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								aria-hidden="true"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg
+							>
+						</a>
+					</div>
+				</div>
+
+				<div class="hero-wire" aria-label="API wire trace example">
+					<div class="wire-label">Live endpoint response</div>
+					<div class="wire-method">POST</div>
+					<div class="wire-path">/api/app/dev/orders/v1</div>
+					<div class="wire-body">
+						<pre><code
+								>{`{
+  "status": 200,
+  "handler": "SQL",
+  "elapsed_ms": 12,
+  "data": [
+    { "id": 41, "total": 124.50 }
+  ]
+}`}</code
+							></pre>
+					</div>
+				</div>
 			</div>
 
 			<div class="hero-stats">
@@ -861,12 +1109,15 @@
 				<span class="kicker">{t.features.kicker}</span>
 				<h2>{t.features.title}</h2>
 			</div>
-			<div class="grid">
-				{#each t.features.items as feature (feature)}
-					<article class="card">
-						<h3>{feature.title}</h3>
-						<p>{feature.desc}</p>
-					</article>
+			<div class="feature-ledger">
+				{#each t.features.items as feature, i (feature)}
+					<div class="feature-row">
+						<div class="feature-num">{String(i + 1).padStart(2, '0')}</div>
+						<div>
+							<h3>{feature.title}</h3>
+							<p>{feature.desc}</p>
+						</div>
+					</div>
 				{/each}
 			</div>
 		</section>
@@ -883,6 +1134,29 @@
 						<code>{handler.code}</code>
 						<span>{handler.desc}</span>
 					</div>
+				{/each}
+			</div>
+		</section>
+
+		<section class="section" id="functionVars">
+			<div class="section-head">
+				<span class="kicker">{t.functionVars.kicker}</span>
+				<h2>{t.functionVars.title}</h2>
+				<p>{t.functionVars.text}</p>
+			</div>
+			<div class="fnvar-grid">
+				{#each t.functionVars.groups as group (group)}
+					<article class="fnvar-group">
+						<h3>{group.label}</h3>
+						<div class="fnvar-list">
+							{#each group.items as item (item)}
+								<div class="fnvar-item">
+									<code>{item.name}</code>
+									<span>{item.desc}</span>
+								</div>
+							{/each}
+						</div>
+					</article>
 				{/each}
 			</div>
 		</section>
@@ -1195,28 +1469,23 @@
 
 <style>
 	.landing {
-		--bg: #070b14;
-		--bg-soft: #0e131c;
-		--panel: rgba(255, 255, 255, 0.04);
-		--border: rgba(255, 255, 255, 0.09);
+		--bg: #0b1323;
+		--bg-soft: #0f1930;
+		--panel: rgba(255, 255, 255, 0.03);
+		--border: rgba(255, 255, 255, 0.1);
 		--text: #e8ecf4;
-		--muted: #9aa5bd;
-		--accent-1: #ff6b1a;
-		--accent-2: #ff8c42;
-		--accent-3: #ff3d00;
+		--muted: #8694ad;
+		--accent: #00e6ff;
+		--accent-dim: rgba(0, 230, 255, 0.12);
 
 		background: var(--bg);
 		background-image:
-			linear-gradient(
-				to right,
-				rgba(255, 255, 255, 0.035) 1px,
-				transparent 1px
-			),
-			linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-			radial-gradient(70rem 34rem at 50% -6%, rgba(255, 107, 26, 0.2), transparent 65%);
+			linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+			linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+			radial-gradient(70rem 34rem at 50% -6%, rgba(0, 230, 255, 0.15), transparent 65%);
 		background-size:
-			68px 68px,
-			68px 68px,
+			72px 72px,
+			72px 72px,
 			100% 100%;
 		background-position:
 			center top,
@@ -1250,12 +1519,12 @@
 	}
 
 	::selection {
-		background: rgba(255, 107, 26, 0.45);
+		background: rgba(0, 230, 255, 0.35);
 		color: #fff;
 	}
 
 	:focus-visible {
-		outline: 2px solid var(--accent-2);
+		outline: 2px solid var(--accent);
 		outline-offset: 2px;
 	}
 
@@ -1317,13 +1586,14 @@
 	}
 
 	.lang button.active {
-		background: linear-gradient(135deg, var(--accent-1), var(--accent-3));
-		color: #fff;
+		background: var(--accent);
+		color: #04121c;
+		font-weight: 700;
 	}
 
 	.btn {
 		align-items: center;
-		border-radius: 10px;
+		border-radius: 4px;
 		display: inline-flex;
 		font-size: 0.92rem;
 		font-weight: 600;
@@ -1351,13 +1621,13 @@
 	}
 
 	.btn-primary {
-		background: linear-gradient(135deg, var(--accent-1), var(--accent-3));
-		box-shadow: 0 8px 24px rgba(255, 107, 26, 0.35);
-		color: #fff;
+		background: linear-gradient(135deg, #00e6ff, #00c2db);
+		box-shadow: 0 8px 24px rgba(0, 230, 255, 0.35);
+		color: #04121c;
 	}
 
 	.btn-primary:hover {
-		box-shadow: 0 12px 32px rgba(255, 107, 26, 0.5);
+		box-shadow: 0 12px 32px rgba(0, 230, 255, 0.5);
 	}
 
 	.btn-ghost {
@@ -1383,7 +1653,7 @@
 		inset: 0;
 		padding: 2px;
 		border-radius: inherit;
-		background: linear-gradient(100deg, var(--accent-1), #ffdf4d, var(--accent-3), var(--accent-1));
+		background: linear-gradient(100deg, var(--accent), #8df3ff, var(--accent), var(--accent));
 		background-size: 300% 100%;
 		animation: enterBorderShift 4s linear infinite;
 		-webkit-mask:
@@ -1409,36 +1679,35 @@
 	@keyframes enterGlow {
 		0%,
 		100% {
-			box-shadow: 0 0 0 rgba(255, 107, 26, 0);
+			box-shadow: 0 0 0 rgba(0, 230, 255, 0);
 		}
 		50% {
-			box-shadow: 0 0 18px rgba(255, 107, 26, 0.55);
+			box-shadow: 0 0 18px rgba(0, 230, 255, 0.55);
 		}
 	}
 
 	@media (prefers-reduced-motion: reduce) {
 		.btn-enter::before {
 			animation: none;
-			background: var(--accent-1);
+			background: var(--accent);
 		}
 		.btn-enter {
 			animation: none;
-			box-shadow: 0 0 10px rgba(255, 107, 26, 0.3);
+			box-shadow: 0 0 10px rgba(0, 230, 255, 0.3);
 		}
 	}
 
 	.hero {
 		margin: 0 auto;
 		max-width: 1100px;
-		padding: clamp(3.5rem, 9vw, 7rem) clamp(1rem, 4vw, 3rem) 0;
-		text-align: center;
+		padding: 0 clamp(1rem, 4vw, 3rem);
 	}
 
 	.hero-badge {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.5rem;
-		color: #ffd0a3;
+		color: #9ceeff;
 		font-size: 0.82rem;
 		font-weight: 600;
 		margin-bottom: 1.5rem;
@@ -1481,6 +1750,107 @@
 		justify-content: center;
 	}
 
+	.hero-grid {
+		display: grid;
+		gap: 2.5rem;
+		grid-template-columns: 1fr;
+		max-width: 1100px;
+		margin: 0 auto;
+		padding-top: clamp(2.5rem, 6vw, 5rem);
+	}
+
+	@media (min-width: 900px) {
+		.hero-grid {
+			grid-template-columns: 1.1fr 0.9fr;
+			align-items: start;
+		}
+	}
+
+	.hero-lead {
+		max-width: 520px;
+	}
+
+	.hero-wire {
+		background: #070d1a;
+		border: 1px solid rgba(0, 230, 255, 0.28);
+		border-radius: 4px;
+		box-shadow:
+			0 0 0 1px rgba(0, 230, 255, 0.06),
+			0 24px 70px -20px rgba(0, 230, 255, 0.35);
+		font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+		font-size: 0.82rem;
+		line-height: 1.4;
+		overflow: hidden;
+		position: relative;
+	}
+
+	.hero-wire::after {
+		background: linear-gradient(180deg, var(--accent), transparent 40%);
+		content: '';
+		height: 2px;
+		left: 0;
+		opacity: 0.9;
+		position: absolute;
+		right: 0;
+		top: 0;
+	}
+
+	.hero-wire::before {
+		background: linear-gradient(90deg, rgba(0, 230, 255, 0.08) 0%, rgba(0, 230, 255, 0.02) 100%);
+		content: '';
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+	}
+
+	.wire-label {
+		background: rgba(0, 230, 255, 0.06);
+		border-bottom: 1px solid var(--border);
+		color: var(--muted);
+		font-size: 0.72rem;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		padding: 0.6rem 1.1rem;
+		text-transform: uppercase;
+	}
+
+	.wire-method {
+		background: var(--accent);
+		border-radius: 3px;
+		color: #04121c;
+		display: inline-block;
+		font-size: 0.72rem;
+		font-weight: 800;
+		letter-spacing: 0.08em;
+		margin: 0.9rem 1.1rem 0.2rem;
+		padding: 0.25rem 0.55rem;
+	}
+
+	.wire-path {
+		color: #e8ecf4;
+		font-size: 0.9rem;
+		font-weight: 500;
+		margin: 0 1.1rem 0.6rem;
+		opacity: 0.95;
+	}
+
+	.wire-body {
+		padding: 0 1.1rem 1rem;
+	}
+
+	.wire-body pre {
+		margin: 0;
+		overflow-x: auto;
+	}
+
+	.wire-body code {
+		background: transparent;
+		color: #c8d6e5;
+		font-size: 0.82rem;
+		line-height: 1.5;
+		padding: 0;
+	}
+
 	.hero-stats {
 		border-top: 1px solid var(--border);
 		display: grid;
@@ -1497,7 +1867,7 @@
 	}
 
 	.stat-value {
-		color: #ffb54e;
+		color: #00e6ff;
 		font-family: ui-sans-serif, system-ui, sans-serif;
 		font-size: clamp(1.9rem, 3vw, 2.35rem);
 		font-weight: 850;
@@ -1513,7 +1883,7 @@
 
 	.hero-shot {
 		border: 1px solid var(--border);
-		border-radius: 16px;
+		border-radius: 4px;
 		box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
 		margin: 3rem auto 0;
 		overflow: hidden;
@@ -1560,7 +1930,7 @@
 	}
 
 	.kicker {
-		color: var(--accent-2);
+		color: var(--accent);
 		display: inline-block;
 		font-size: 0.82rem;
 		font-weight: 700;
@@ -1585,13 +1955,13 @@
 	.compare-col {
 		background: var(--panel);
 		border: 1px solid var(--border);
-		border-radius: 16px;
+		border-radius: 4px;
 		padding: 1.6rem;
 	}
 
 	.compare-col.highlight {
-		background: linear-gradient(180deg, rgba(255, 107, 26, 0.12), rgba(255, 140, 66, 0.06));
-		border-color: rgba(255, 107, 26, 0.45);
+		background: linear-gradient(180deg, rgba(0, 230, 255, 0.1), rgba(0, 230, 255, 0.05));
+		border-color: rgba(0, 230, 255, 0.42);
 	}
 
 	.compare-title {
@@ -1621,16 +1991,15 @@
 	}
 
 	.compare-col li::before {
-		border-radius: 50%;
 		content: '';
 		flex: none;
-		height: 0.5rem;
-		margin-top: 0.5rem;
-		width: 0.5rem;
+		height: 1px;
+		margin-top: 0.72rem;
+		width: 0.85rem;
 	}
 
 	.compare-col:not(.highlight) li::before {
-		background: rgba(248, 113, 113, 0.7);
+		background: rgba(248, 113, 113, 0.75);
 	}
 
 	.compare-col.highlight li {
@@ -1638,39 +2007,49 @@
 	}
 
 	.compare-col.highlight li::before {
-		background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+		background: var(--accent);
 	}
 
-	.grid {
-		display: grid;
-		gap: 1.1rem;
-		grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+	.feature-ledger {
+		display: flex;
+		flex-direction: column;
+		gap: 0;
 	}
 
-	.card {
-		background: var(--panel);
-		border: 1px solid var(--border);
-		border-radius: 16px;
-		padding: 1.4rem 1.5rem;
-		transition:
-			border-color 0.2s ease,
-			transform 0.2s ease;
+	.feature-row {
+		align-items: flex-start;
+		border-top: 1px solid var(--border);
+		display: flex;
+		gap: 1.2rem;
+		padding: 1.1rem 0;
 	}
 
-	.card:hover {
-		border-color: rgba(255, 107, 26, 0.5);
-		transform: translateY(-3px);
+	.feature-row:last-child {
+		border-bottom: 1px solid var(--border);
 	}
 
-	.card h3 {
+	.feature-num {
+		color: var(--accent);
+		font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+		font-size: 0.85rem;
+		font-weight: 700;
+		flex: none;
+		line-height: 1.6;
+		min-width: 2.2rem;
+		padding-top: 0.05rem;
+	}
+
+	.feature-row h3 {
 		font-size: 1.05rem;
-		margin: 0 0 0.5rem;
+		margin: 0 0 0.35rem;
+		letter-spacing: -0.01em;
 	}
 
-	.card p {
+	.feature-row p {
 		color: var(--muted);
 		font-size: 0.93rem;
 		margin: 0;
+		line-height: 1.4;
 	}
 
 	.handler-grid {
@@ -1683,22 +2062,73 @@
 		align-items: flex-start;
 		background: var(--panel);
 		border: 1px solid var(--border);
-		border-radius: 14px;
+		border-radius: 4px;
 		display: flex;
 		gap: 1rem;
 		padding: 1.15rem 1.3rem;
 	}
 
 	.handler-chip code {
-		background: rgba(255, 140, 66, 0.12);
-		border: 1px solid rgba(255, 140, 66, 0.35);
-		border-radius: 8px;
-		color: #ffd0a3;
+		background: rgba(0, 230, 255, 0.1);
+		border: 1px solid rgba(0, 230, 255, 0.35);
+		border-radius: 3px;
+		color: #9ceeff;
 		font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
 		font-size: 0.8rem;
 		font-weight: 700;
 		flex: none;
 		padding: 0.25rem 0.5rem;
+	}
+
+	.fnvar-grid {
+		display: grid;
+		gap: 1.2rem;
+		grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+	}
+
+	.fnvar-group {
+		background: var(--panel);
+		border: 1px solid var(--border);
+		border-radius: 4px;
+		padding: 1.3rem 1.4rem;
+	}
+
+	.fnvar-group h3 {
+		font-size: 0.92rem;
+		font-weight: 700;
+		letter-spacing: 0.02em;
+		margin: 0 0 0.9rem;
+		color: var(--accent);
+	}
+
+	.fnvar-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.55rem;
+	}
+
+	.fnvar-item {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.7rem;
+		font-size: 0.88rem;
+	}
+
+	.fnvar-item code {
+		background: rgba(0, 230, 255, 0.08);
+		border: 1px solid rgba(0, 230, 255, 0.25);
+		border-radius: 3px;
+		color: var(--accent);
+		font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+		font-size: 0.78rem;
+		font-weight: 600;
+		flex: none;
+		padding: 0.15rem 0.45rem;
+	}
+
+	.fnvar-item span {
+		color: var(--muted);
+		line-height: 1.35;
 	}
 
 	.handler-chip span {
@@ -1715,12 +2145,12 @@
 	.step {
 		background: var(--panel);
 		border: 1px solid var(--border);
-		border-radius: 16px;
+		border-radius: 4px;
 		padding: 1.6rem;
 	}
 
 	.step-num {
-		background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+		background: linear-gradient(135deg, var(--accent), var(--accent));
 		border-radius: 50%;
 		display: inline-flex;
 		align-items: center;
@@ -1747,9 +2177,9 @@
 
 	.agent {
 		align-items: center;
-		background: linear-gradient(135deg, rgba(255, 61, 0, 0.14), rgba(255, 107, 26, 0.1));
-		border: 1px solid rgba(255, 61, 0, 0.4);
-		border-radius: 16px;
+		background: linear-gradient(135deg, rgba(0, 230, 255, 0.12), rgba(0, 230, 255, 0.08));
+		border: 1px solid rgba(0, 230, 255, 0.4);
+		border-radius: 4px;
 		display: grid;
 		gap: 1.5rem;
 		grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -1769,7 +2199,7 @@
 	}
 
 	.agent-flow {
-		border-left: 1px solid rgba(255, 61, 0, 0.4);
+		border-left: 1px solid rgba(0, 230, 255, 0.4);
 		display: grid;
 		gap: 0.45rem;
 		padding-left: 1.2rem;
@@ -1789,7 +2219,7 @@
 	.eco-card {
 		background: var(--panel);
 		border: 1px solid var(--border);
-		border-radius: 16px;
+		border-radius: 4px;
 		display: flex;
 		flex-direction: column;
 		gap: 0.6rem;
@@ -1797,12 +2227,12 @@
 	}
 
 	.eco-card.highlight {
-		background: linear-gradient(180deg, rgba(255, 107, 26, 0.16), rgba(255, 140, 66, 0.08));
-		border-color: rgba(255, 107, 26, 0.5);
+		background: linear-gradient(180deg, rgba(0, 230, 255, 0.12), rgba(0, 230, 255, 0.06));
+		border-color: rgba(0, 230, 255, 0.5);
 	}
 
 	.eco-role {
-		color: var(--accent-2);
+		color: var(--accent);
 		font-size: 0.82rem;
 		font-weight: 700;
 	}
@@ -1832,7 +2262,7 @@
 	.admin-ui-card {
 		background: var(--panel);
 		border: 1px solid var(--border);
-		border-radius: 16px;
+		border-radius: 4px;
 		padding: 1.6rem;
 	}
 
@@ -1864,7 +2294,7 @@
 	}
 
 	.admin-ui-card li::before {
-		background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+		background: linear-gradient(135deg, var(--accent), var(--accent));
 		border-radius: 50%;
 		content: '';
 		flex: none;
@@ -1889,7 +2319,7 @@
 		position: relative;
 		max-width: 1100px;
 		margin: 0 auto;
-		border-radius: 16px;
+		border-radius: 4px;
 		overflow: hidden;
 		background: var(--panel);
 		border: 1px solid var(--border);
@@ -1907,7 +2337,7 @@
 	.carousel-figure {
 		margin: 0;
 		position: relative;
-		background: var(--panel-dark, #0b0f1a);
+		background: var(--panel-dark, #080f1d);
 	}
 
 	.carousel-figure-btn {
@@ -1921,7 +2351,7 @@
 	}
 
 	.carousel-figure-btn:focus-visible {
-		outline: 2px solid var(--accent-2);
+		outline: 2px solid var(--accent);
 		outline-offset: -2px;
 	}
 
@@ -1967,13 +2397,13 @@
 	}
 
 	.carousel-btn:hover {
-		background: rgba(255, 107, 26, 0.9);
-		border-color: var(--accent-1);
+		background: rgba(0, 230, 255, 0.9);
+		border-color: var(--accent);
 		transform: translateY(-50%) scale(1.1);
 	}
 
 	.carousel-btn:focus-visible {
-		outline: 2px solid var(--accent-2);
+		outline: 2px solid var(--accent);
 		outline-offset: 2px;
 	}
 
@@ -2022,12 +2452,12 @@
 	}
 
 	.carousel-indicator:hover {
-		background: var(--accent-2);
+		background: var(--accent);
 		transform: scale(1.2);
 	}
 
 	.carousel-indicator.active {
-		background: var(--accent-1);
+		background: var(--accent);
 		transform: scale(1.25);
 	}
 
@@ -2080,8 +2510,8 @@
 	}
 
 	.lightbox-close:hover {
-		background: rgba(255, 61, 0, 0.9);
-		border-color: var(--accent-3);
+		background: rgba(0, 230, 255, 0.9);
+		border-color: var(--accent);
 	}
 
 	.lightbox-nav {
@@ -2104,8 +2534,8 @@
 	}
 
 	.lightbox-nav:hover {
-		background: rgba(255, 107, 26, 0.9);
-		border-color: var(--accent-1);
+		background: rgba(0, 230, 255, 0.9);
+		border-color: var(--accent);
 	}
 
 	.lightbox-prev {
@@ -2144,7 +2574,7 @@
 		max-height: 80vh;
 		height: auto;
 		object-fit: contain;
-		border-radius: 8px;
+		border-radius: 3px;
 		box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 	}
 
@@ -2159,7 +2589,7 @@
 	.quickstart {
 		background: rgba(7, 11, 20, 0.6);
 		border: 1px solid var(--border);
-		border-radius: 16px;
+		border-radius: 4px;
 		display: grid;
 		gap: 2rem;
 		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -2181,7 +2611,7 @@
 	.quick-col code,
 	.creds code {
 		background: rgba(255, 255, 255, 0.07);
-		border-radius: 6px;
+		border-radius: 3px;
 		font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
 		font-size: 0.88rem;
 		padding: 0.15rem 0.45rem;
@@ -2198,9 +2628,9 @@
 	}
 
 	.quick-col pre {
-		background: #0a0f1c;
+		background: #070d1a;
 		border: 1px solid var(--border);
-		border-radius: 10px;
+		border-radius: 4px;
 		margin: 0;
 		overflow-x: auto;
 		padding: 1.1rem;
@@ -2208,14 +2638,14 @@
 
 	.quick-col pre code {
 		background: transparent;
-		color: #ffd0a3;
+		color: #9ceeff;
 		font-size: 0.82rem;
 		padding: 0;
 	}
 
 	.cta {
 		background:
-			radial-gradient(40rem 20rem at 50% 120%, rgba(255, 107, 26, 0.35), transparent 70%),
+			radial-gradient(40rem 20rem at 50% 120%, rgba(0, 230, 255, 0.35), transparent 70%),
 			var(--bg-soft);
 		border-top: 1px solid var(--border);
 		padding: clamp(3.5rem, 7vw, 5.5rem) clamp(1rem, 4vw, 3rem);
@@ -2243,7 +2673,7 @@
 	}
 
 	.footer {
-		background: #05080f;
+		background: #070d1a;
 		border-top: 1px solid var(--border);
 		display: grid;
 		gap: 1.2rem;
@@ -2259,7 +2689,7 @@
 	}
 
 	.footer-open a {
-		color: var(--accent-2);
+		color: var(--accent);
 	}
 
 	.footer-links {
@@ -2288,21 +2718,21 @@
 	}
 
 	:global(::-webkit-scrollbar-track) {
-		background: #070b14;
+		background: #0b1323;
 	}
 
 	:global(::-webkit-scrollbar-thumb) {
 		background: rgba(255, 255, 255, 0.14);
-		border: 2px solid #070b14;
+		border: 2px solid #0b1323;
 		border-radius: 999px;
 	}
 
 	:global(::-webkit-scrollbar-thumb:hover) {
-		background: rgba(255, 107, 26, 0.5);
+		background: rgba(0, 230, 255, 0.5);
 	}
 
 	:global(html) {
-		scrollbar-color: rgba(255, 255, 255, 0.22) #070b14;
+		scrollbar-color: rgba(255, 255, 255, 0.22) #0b1323;
 	}
 
 	@media (max-width: 760px) {

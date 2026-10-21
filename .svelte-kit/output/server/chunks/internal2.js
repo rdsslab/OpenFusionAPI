@@ -12,15 +12,13 @@ function set_private_env(environment) {}
 function set_public_env(environment) {
 	public_env = environment;
 }
-//#endregion
-//#region \0virtual:__sveltekit/server
+// \0virtual:__sveltekit/server
 var read_implementation = null;
 function set_read_implementation(fn) {
 	read_implementation = fn;
 }
 function set_manifest(_) {}
-//#endregion
-//#region node_modules/svelte/src/internal/client/dom/elements/events.js
+// node_modules/svelte/src/internal/client/dom/elements/events.js
 /**
 * Used on elements, as a map of event type -> event handler,
 * and on events themselves to track which element handled an event
@@ -111,8 +109,7 @@ function handle_event_propagation(event) {
 	}
 }
 globalThis?.window?.trustedTypes;
-//#endregion
-//#region node_modules/svelte/src/internal/client/dom/template.js
+// node_modules/svelte/src/internal/client/dom/template.js
 /**
 * @param {TemplateNode} start
 * @param {TemplateNode | null} end
@@ -126,8 +123,7 @@ function assign_nodes(start, end) {
 		t: null
 	};
 }
-//#endregion
-//#region node_modules/svelte/src/reactivity/create-subscriber.js
+// node_modules/svelte/src/reactivity/create-subscriber.js
 /**
 * Returns a `subscribe` function that integrates external event-based systems with Svelte's reactivity.
 * It's particularly useful for integrating with web APIs like `MediaQuery`, `IntersectionObserver`, or `WebSocket`.
@@ -199,8 +195,7 @@ function createSubscriber(start) {
 		}
 	};
 }
-//#endregion
-//#region node_modules/svelte/src/internal/client/dom/blocks/boundary.js
+// node_modules/svelte/src/internal/client/dom/blocks/boundary.js
 /** @import { Effect, Source, TemplateNode, } from '#client' */
 /**
 * @typedef {{
@@ -755,8 +750,7 @@ function unmount(component, options) {
 	}
 	return Promise.resolve();
 }
-//#endregion
-//#region node_modules/svelte/src/legacy/legacy-client.js
+// node_modules/svelte/src/legacy/legacy-client.js
 /** @import { ComponentConstructorOptions, ComponentType, SvelteComponent, Component } from 'svelte' */
 /**
 * Takes the component function and returns a Svelte 4 compatible component constructor.
@@ -880,8 +874,7 @@ var Svelte4Component = class {
 		this.#instance.$destroy();
 	}
 };
-//#endregion
-//#region node_modules/svelte/src/legacy/legacy-server.js
+// node_modules/svelte/src/legacy/legacy-server.js
 /** @import { SvelteComponent } from '../index.js' */
 /** @import { Csp } from '../server/public.js' */
 /** @typedef {{ head: string, html: string, css: { code: string, map: null }; hashes?: { script: `sha256-${string}`[] } }} LegacyRenderResult */
@@ -948,8 +941,7 @@ value: (onfulfilled, onrejected) => {
 	component_constructor.render = _render;
 	return component_constructor;
 }
-//#endregion
-//#region .svelte-kit/generated/root.svelte
+// .svelte-kit/generated/root.svelte
 function Root($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { stores, page, constructors, components = [], form, data_0 = null, data_1 = null } = $$props;
@@ -1007,14 +999,11 @@ function Root($$renderer, $$props) {
 		$$renderer.push(`<!--]-->`);
 	});
 }
-//#endregion
-//#region .svelte-kit/generated/root.js
+// .svelte-kit/generated/root.js
 var root_default = asClassComponent(Root);
-//#endregion
-//#region .svelte-kit/generated/shared/error-template.js
+// .svelte-kit/generated/shared/error-template.js
 var error_template_default = ({ status, message }) => "<!doctype html>\n<html lang=\"en\">\n	<head>\n		<meta charset=\"utf-8\" />\n		<title>" + message + "</title>\n\n		<style>\n			body {\n				--bg: white;\n				--fg: #222;\n				--divider: #ccc;\n				background: var(--bg);\n				color: var(--fg);\n				font-family:\n					system-ui,\n					-apple-system,\n					BlinkMacSystemFont,\n					'Segoe UI',\n					Roboto,\n					Oxygen,\n					Ubuntu,\n					Cantarell,\n					'Open Sans',\n					'Helvetica Neue',\n					sans-serif;\n				display: flex;\n				align-items: center;\n				justify-content: center;\n				height: 100vh;\n				margin: 0;\n			}\n\n			.error {\n				display: flex;\n				align-items: center;\n				max-width: 32rem;\n				margin: 0 1rem;\n			}\n\n			.status {\n				font-weight: 200;\n				font-size: 3rem;\n				line-height: 1;\n				position: relative;\n				top: -0.05rem;\n			}\n\n			.message {\n				border-left: 1px solid var(--divider);\n				padding: 0 0 0 1rem;\n				margin: 0 0 0 1rem;\n				min-height: 2.5rem;\n				display: flex;\n				align-items: center;\n			}\n\n			.message h1 {\n				font-weight: 400;\n				font-size: 1em;\n				margin: 0;\n			}\n\n			@media (prefers-color-scheme: dark) {\n				body {\n					--bg: #222;\n					--fg: #ddd;\n					--divider: #666;\n				}\n			}\n		</style>\n	</head>\n	<body>\n		<div class=\"error\">\n			<span class=\"status\">" + status + "</span>\n			<div class=\"message\">\n				<h1>" + message + "</h1>\n			</div>\n		</div>\n	</body>\n</html>\n";
-//#endregion
-//#region .svelte-kit/generated/server/internal.js
+// .svelte-kit/generated/server/internal.js
 var options = {
 	app_template_contains_nonce: false,
 	async: false,
@@ -1045,7 +1034,7 @@ var options = {
 		app: ({ head, body, assets, nonce, env }) => "<!doctype html>\n<html lang=\"en\">\n	<head>\n		<title>OpenFusion API | Low-Code, AI-Friendly API Platform</title>\n		<meta charset=\"utf-8\" />\n		<link rel=\"icon\" href=\"" + assets + "/favicon.png\" />\n		<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n		<meta\n			name=\"description\"\n			content=\"OpenFusion API is a production-ready, low-code API platform to build, govern, and deploy endpoints fast for humans and AI agents with MCP support.\"\n		/>\n		<meta\n			name=\"keywords\"\n			content=\"OpenFusion API, low-code API platform, MCP, AI agents, API gateway, SOAP to REST, SQL API, integration platform, universal-fetch\"\n		/>\n		<meta name=\"robots\" content=\"index, follow\" />\n		<meta name=\"author\" content=\"OpenFusion API\" />\n\n		<meta property=\"og:type\" content=\"website\" />\n		<meta\n			property=\"og:title\"\n			content=\"OpenFusion API | Production-Ready APIs for Humans and AI Agents\"\n		/>\n		<meta\n			property=\"og:description\"\n			content=\"Build and deploy API endpoints in minutes with reusable handlers, JSON Schema, environment isolation, and MCP-ready tooling.\"\n		/>\n		<meta property=\"og:site_name\" content=\"OpenFusion API\" />\n\n		<meta name=\"twitter:card\" content=\"summary_large_image\" />\n		<meta name=\"twitter:title\" content=\"OpenFusion API | Low-Code API Platform\" />\n		<meta\n			name=\"twitter:description\"\n			content=\"A production-tested platform to create integration APIs faster, including AI-agent workflows and MCP tooling.\"\n		/>\n\n		<script type=\"application/ld+json\">\n			{\n				\"@context\": \"https://schema.org\",\n				\"@type\": \"SoftwareApplication\",\n				\"name\": \"OpenFusion API\",\n				\"applicationCategory\": \"DeveloperApplication\",\n				\"operatingSystem\": \"Linux, Windows, Docker\",\n				\"description\": \"Low-code and AI-friendly platform to create, manage, and deploy API endpoints with built-in handlers, schema validation, and MCP integration.\",\n				\"url\": \"https://www.openfusionapi.com\",\n				\"softwareVersion\": \"1\"\n			}\n		<\/script>\n		" + head + "\n	</head>\n	<body data-sveltekit-preload-data=\"hover\">\n		<div style=\"display: contents\">" + body + "</div>\n	</body>\n</html>\n",
 		error: error_template_default
 	},
-	version_hash: "okstru"
+	version_hash: "q1wlfa"
 };
 async function get_hooks() {
 	let handle;
@@ -1065,7 +1054,6 @@ async function get_hooks() {
 		transport
 	};
 }
-//#endregion
 export { set_read_implementation as a, set_public_env as c, set_manifest as i, options as n, public_env as o, read_implementation as r, set_private_env as s, get_hooks as t };
 
 //# sourceMappingURL=internal2.js.map

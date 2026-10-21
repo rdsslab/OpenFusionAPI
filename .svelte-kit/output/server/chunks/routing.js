@@ -1,4 +1,4 @@
-//#region node_modules/@sveltejs/kit/src/runtime/pathname.js
+// node_modules/@sveltejs/kit/src/runtime/pathname.js
 var DATA_SUFFIX = "/__data.json";
 var HTML_DATA_SUFFIX = ".html__data.json";
 /** @param {string} pathname */
@@ -38,8 +38,7 @@ function add_resolution_suffix(pathname) {
 function strip_resolution_suffix(pathname) {
 	return pathname.slice(0, -11);
 }
-//#endregion
-//#region node_modules/@sveltejs/kit/src/utils/url.js
+// node_modules/@sveltejs/kit/src/utils/url.js
 /**
 * Matches a URI scheme. See https://www.rfc-editor.org/rfc/rfc3986#section-3.1
 * @type {RegExp}
@@ -158,8 +157,7 @@ function allow_nodejs_console_log(url) {
 		return inspect(new URL(url), opts);
 	};
 }
-//#endregion
-//#region node_modules/@sveltejs/kit/src/utils/routing.js
+// node_modules/@sveltejs/kit/src/utils/routing.js
 /**
 * Returns `false` for `(group)` segments
 * @param {string} segment
@@ -267,7 +265,6 @@ function find_route(path, routes, matchers) {
 	}
 	return null;
 }
-//#endregion
 export { disable_search as a, resolve as c, has_data_suffix as d, has_resolution_suffix as f, decode_pathname as i, add_data_suffix as l, strip_resolution_suffix as m, resolve_route as n, make_trackable as o, strip_data_suffix as p, SCHEME as r, normalize_path as s, find_route as t, add_resolution_suffix as u };
 
 //# sourceMappingURL=routing.js.map

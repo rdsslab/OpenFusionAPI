@@ -1,5 +1,5 @@
 import { Pt as safe_not_equal, Rt as noop, k as subscribe_to_store } from "./server.js";
-//#region node_modules/svelte/src/store/shared/index.js
+// node_modules/svelte/src/store/shared/index.js
 /** @import { Readable, StartStopNotifier, Subscriber, Unsubscriber, Updater, Writable } from '../public.js' */
 /** @import { Stores, StoresValues, SubscribeInvalidateTuple } from '../private.js' */
 /**
@@ -94,7 +94,6 @@ function get(store) {
 	subscribe_to_store(store, (_) => value = _)();
 	return value;
 }
-//#endregion
 export { readable as n, writable as r, get as t };
 
 //# sourceMappingURL=index-server2.js.map

@@ -1,4 +1,4 @@
-//#region node_modules/@sveltejs/kit/src/runtime/app/paths/internal/server.js
+// node_modules/@sveltejs/kit/src/runtime/app/paths/internal/server.js
 var base = "";
 var assets = base;
 var app_dir = "_app";
@@ -31,7 +31,6 @@ function set_building() {}
 function set_prerendering() {
 	prerendering = true;
 }
-//#endregion
 export { assets as a, override as c, app_dir as i, reset as l, set_building as n, base as o, set_prerendering as r, initial_base as s, prerendering as t, set_assets as u };
 
 //# sourceMappingURL=internal.js.map
