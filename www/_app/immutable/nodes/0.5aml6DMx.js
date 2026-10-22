@@ -1,0 +1,2 @@
+import{n as e}from"../chunks/COiEfhsA.js";import{B as t,P as n,at as r,z as i}from"../chunks/g-mQpThN.js";var a=e({prerender:()=>!0,trailingSlash:()=>o}),o=`always`;function s(e,a){var o=t(),s=r(o);n(s,()=>a.children),i(e,o)}export{s as component,a as universal};
+//# sourceMappingURL=0.5aml6DMx.js.map

@@ -1,6 +1,6 @@
-import { r as onDestroy } from "../../chunks/index-server.js";
-import { D as escape_html, T as attr, a as derived, d as stringify, n as attr_style, o as ensure_array_like, s as head, t as attr_class } from "../../chunks/server.js";
-import { t as resolve } from "../../chunks/paths.js";
+import { bt as resolve } from "../../chunks/internal.js";
+import { C as escape_html, a as derived, d as stringify, n as attr_style, o as ensure_array_like, s as head, t as attr_class, v as attr } from "../../chunks/server.js";
+import { n as onDestroy } from "../../chunks/index-server.js";
 // src/routes/+page.svelte
 function _page($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {

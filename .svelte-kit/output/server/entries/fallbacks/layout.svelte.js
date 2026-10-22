@@ -1,7 +1,7 @@
 import "../../chunks/server.js";
-// node_modules/@sveltejs/kit/src/runtime/components/svelte-5/layout.svelte
+// node_modules/@sveltejs/kit/src/runtime/components/layout.svelte
 function Layout($$renderer, $$props) {
-	let { children } = $$props;
+	const { children } = $$props;
 	children($$renderer);
 	$$renderer.push(`<!---->`);
 }

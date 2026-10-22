@@ -1,6 +1,5 @@
-import { r as onDestroy, t as createEventDispatcher } from "../../../chunks/index-server.js";
-import { D as escape_html, E as clsx, Lt as fallback, T as attr, a as derived, d as stringify, f as unsubscribe_stores, ft as snapshot, i as bind_props, l as spread_props, m as html, n as attr_style, o as ensure_array_like, r as attributes, s as head, t as attr_class, u as store_get, zt as run } from "../../../chunks/server.js";
-import { r as writable, t as get } from "../../../chunks/index-server2.js";
+import { C as escape_html, S as run, _ as snapshot, a as derived, b as fallback, d as stringify, f as unsubscribe_stores, g as subscribe_to_store, i as bind_props, l as spread_props, n as attr_style, o as ensure_array_like, p as html, r as attributes, s as head, t as attr_class, u as store_get, v as attr, x as noop, y as clsx } from "../../../chunks/server.js";
+import { n as onDestroy, t as createEventDispatcher } from "../../../chunks/index-server.js";
 import uFetch from "@rdsslab/uFetch";
 import { DateTime } from "luxon";
 import "events";
@@ -18,6 +17,15 @@ import prettierPluginHtml from "prettier/plugins/html.mjs";
 import prettierPluginSql from "prettier-plugin-sql";
 import { Renderer, marked } from "marked";
 import "echarts";
+// node_modules/svelte/src/internal/client/reactivity/equality.js
+/**
+* @param {unknown} a
+* @param {unknown} b
+* @returns {boolean}
+*/
+function safe_not_equal(a, b) {
+	return a != a ? b == b : a !== b || a !== null && typeof a === "object" || typeof a === "function";
+}
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/paths.js
 var url_paths = {
 	app: "/api/system/api/app/prd",
@@ -84,6 +92,90 @@ var url_paths = {
 	auditLogStats: "/api/system/system/audit/log/stats/prd",
 	auditLogPrune: "/api/system/audit/log/prune/prd"
 };
+// node_modules/svelte/src/store/shared/index.js
+/** @import { Readable, StartStopNotifier, Subscriber, Unsubscriber, Updater, Writable } from '../public.js' */
+/** @import { Stores, StoresValues, SubscribeInvalidateTuple } from '../private.js' */
+/**
+* @type {Array<SubscribeInvalidateTuple<any> | any>}
+*/
+var subscriber_queue = [];
+/**
+* Create a `Writable` store that allows both updating and reading by subscription.
+*
+* @template T
+* @param {T} [value] initial value
+* @param {StartStopNotifier<T>} [start]
+* @returns {Writable<T>}
+*/
+function writable(value, start = noop) {
+	/** @type {Unsubscriber | null} */
+	let stop = null;
+	/** @type {Set<SubscribeInvalidateTuple<T>>} */
+	const subscribers = /* @__PURE__ */ new Set();
+	/**
+	* @param {T} new_value
+	* @returns {void}
+	*/
+	function set(new_value) {
+		if (safe_not_equal(value, new_value)) {
+			value = new_value;
+			if (stop) {
+				const run_queue = !subscriber_queue.length;
+				for (const subscriber of subscribers) {
+					subscriber[1]();
+					subscriber_queue.push(subscriber, value);
+				}
+				if (run_queue) {
+					for (let i = 0; i < subscriber_queue.length; i += 2) subscriber_queue[i][0](subscriber_queue[i + 1]);
+					subscriber_queue.length = 0;
+				}
+			}
+		}
+	}
+	/**
+	* @param {Updater<T>} fn
+	* @returns {void}
+	*/
+	function update(fn) {
+		set(fn(value));
+	}
+	/**
+	* @param {Subscriber<T>} run
+	* @param {() => void} [invalidate]
+	* @returns {Unsubscriber}
+	*/
+	function subscribe(run, invalidate = noop) {
+		/** @type {SubscribeInvalidateTuple<T>} */
+		const subscriber = [run, invalidate];
+		subscribers.add(subscriber);
+		if (subscribers.size === 1) stop = start(set, update) || noop;
+		run(value);
+		return () => {
+			subscribers.delete(subscriber);
+			if (subscribers.size === 0 && stop) {
+				stop();
+				stop = null;
+			}
+		};
+	}
+	return {
+		set,
+		update,
+		subscribe
+	};
+}
+/**
+* Get the current value from a store by subscribing and immediately unsubscribing.
+*
+* @template T
+* @param {Readable<T>} store
+* @returns {T}
+*/
+function get(store) {
+	let value;
+	subscribe_to_store(store, (_) => value = _)();
+	return value;
+}
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/stores.js
 /**
 * Emite eventos de autenticación globales.
@@ -106,9 +198,6 @@ var storeUsersList = writable({});
 var storeCountResponseStatusCode = writable({});
 var storeEndpointOnStart = writable({});
 var storeEndpointOnComplete = writable({});
-writable({});
-writable({});
-writable(null);
 /**
 * Cambio de estado runtime de un bot (bot_status_changed).
 * Contiene { idbot, idapp, runtime_status, failure_count, ... } para que la tabla
@@ -120,7 +209,6 @@ var storeBotStatusChanged = writable(null);
 * Contiene { idbot, idapp, action } para que la lista se recargue.
 */
 var storeBotChanged = writable(null);
-writable([]);
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/utils.js
 /**
 * Normaliza un `data_test` a la forma canónica que espera el `RESTTester` y que
@@ -726,7 +814,6 @@ function Auto($$renderer, $$props) {
 		});
 	});
 }
-writable({});
 // node_modules/@rdsslab/svelte-components/dist/class/utils.js
 /**
 * Global store for managing active notifications.

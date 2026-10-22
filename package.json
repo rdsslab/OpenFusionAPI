@@ -1,6 +1,6 @@
 {
 	"name": "openfusionapi",
-	"version": "15.5.0",
+	"version": "15.6.0",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "node --max-old-space-size=6144 ./node_modules/vite/bin/vite.js build",
@@ -18,9 +18,9 @@
 		"@eslint/js": "^10.0.1",
 		"@fontsource/fira-mono": "^5.3.0",
 		"@neoconfetti/svelte": "^2.2.2",
-		"@sveltejs/adapter-static": "^3.0.10",
-		"@sveltejs/kit": "^2.70.3",
-		"@sveltejs/vite-plugin-svelte": "^7.3.0",
+		"@sveltejs/adapter-static": "^4.0.0",
+		"@sveltejs/kit": "^3.1.0",
+		"@sveltejs/vite-plugin-svelte": "^7.3.1",
 		"eslint": "^10.11.0",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.23.0",
@@ -28,7 +28,7 @@
 		"prettier": "^3.9.8",
 		"prettier-plugin-svelte": "^4.1.1",
 		"svelte": "^5.57.1",
-		"svelte-check": "^4.7.6",
+		"svelte-check": "^4.7.7",
 		"typescript": "^6.0.3",
 		"vite": "^8.3.0"
 	},
@@ -37,12 +37,13 @@
 		"@azure/identity": "^4.2.1",
 		"@xmldom/xmldom": "^0.9.8",
 		"minimatch": "^10.2.1",
-		"tar": "^7.5.8"
+		"tar": "^7.5.8",
+		"uuid": "^14.0.3"
 	},
 	"dependencies": {
 		"@rdsslab/libopenfusionapi": "https://github.com/rdsslab/libOpenFusionAPI.git",
 		"@rdsslab/libopenfusionapigui": "https://github.com/rdsslab/libOpenFusionAPIGUI.git",
-		"cookie": "^0.6.0",
+		"cookie": "^2.0.1",
 		"jsonwebtoken": "^9.0.3"
 	}
 }

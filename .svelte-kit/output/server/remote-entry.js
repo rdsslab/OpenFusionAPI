@@ -1,13 +1,11 @@
-import { _ as noop, i as parse_remote_arg, o as stringify, r as create_remote_key, s as stringify_remote_arg } from "./chunks/shared.js";
-import { i as app_dir, o as base, t as prerendering } from "./chunks/internal.js";
-import { C as set_nested_value, E as MUTATIVE_METHODS, S as normalize_issue, s as handle_error_and_jsonify, v as create_field_proxy, x as flatten_issues, y as deep_set } from "./chunks/utils.js";
-import { error, json } from "@sveltejs/kit";
-import { HttpError, SvelteKitError, ValidationError } from "@sveltejs/kit/internal";
+import { $ as parse_remote_arg, Gt as prerendering, I as handle_error_and_jsonify, M as MUTATIVE_METHODS, Vt as app_dir, Z as create_remote_key, dt as create_field_proxy, et as stringify_remote_arg, ft as deep_set, gt as split_path, ht as parse_form_key, mt as normalize_issue, ot as parse, pt as flatten_issues, st as stringify, vt as noop } from "./chunks/internal.js";
+import { A as remote_cookie_forbidden, B as remote_requested_context, D as remote_command_method, F as remote_query_live_no_value, H as remote_requested_invalid_query, I as remote_query_live_not_iterable, L as remote_query_prerender, N as remote_headers_forbidden, O as remote_command_readonly, P as remote_invalid_validator, R as remote_request_property, U as remote_requested_wrong_method, V as remote_requested_invalid_limit, W as server_api_unavailable, j as remote_cookie_path_relative, k as remote_command_render, z as remote_requested_async_validator } from "./chunks/server-errors.js";
+import { error } from "@sveltejs/kit";
+import { HandledHttpError, ValidationError } from "@sveltejs/kit/internal";
 import { get_request_store, with_request_store } from "@sveltejs/kit/internal/server";
-import { parse } from "devalue";
 // node_modules/@sveltejs/kit/src/runtime/app/server/remote/shared.js
 /** @import { RequestEvent } from '@sveltejs/kit' */
-/** @import { ServerHooks, MaybePromise, RequestState, RemoteInternals, RequestStore, RemoteLiveQueryUserFunctionReturnType } from 'types' */
+/** @import { MaybePromise, RequestState, RemoteInternals, RequestStore, RemoteLiveQueryUserFunctionReturnType } from 'types' */
 /**
 * @param {any} validate_or_fn
 * @param {((arg?: any) => any) | undefined} [maybe_fn]
@@ -19,15 +17,11 @@ function create_validator(validate_or_fn, maybe_fn) {
 	};
 	if (validate_or_fn === "unchecked") return (arg) => arg;
 	if ("~standard" in validate_or_fn) return async (arg) => {
-		const { event, state } = get_request_store();
 		const result = await validate_or_fn["~standard"].validate(arg);
-		if (result.issues) error(400, await state.handleValidationError({
-			issues: result.issues,
-			event
-		}));
+		if (result.issues) throw new ValidationError(result.issues);
 		return result.value;
 	};
-	throw new Error("Invalid validator passed to remote function. Expected \"unchecked\" or a Standard Schema (https://standardschema.dev)");
+	remote_invalid_validator();
 }
 /**
 * In case of a single remote function call, just returns the result.
@@ -50,42 +44,44 @@ async function get_response(internals, payload, state, get_result) {
 	return cache[payload] ??= get_result();
 }
 /**
-* @param {any} data
-* @param {ServerHooks['transport']} transport
-*/
-function parse_remote_response(data, transport) {
-	/** @type {Record<string, any>} */
-	const revivers = {};
-	for (const key in transport) revivers[key] = transport[key].decode;
-	return parse(data, revivers);
-}
-/**
 * @param {RequestEvent} event
 * @param {RequestState} state
 * @param {boolean} allow_cookies
 * @returns {RequestStore}
 */
 function derive_remote_function_event(event, state, allow_cookies) {
-	return {
-		event: {
-			...event,
-			setHeaders: () => {
-				throw new Error("setHeaders is not allowed in remote functions");
-			},
-			cookies: {
-				...event.cookies,
-				set: (name, value, opts) => {
-					if (!allow_cookies) throw new Error("Cannot set cookies in `query` or `prerender` functions");
-					if (opts.path && !opts.path.startsWith("/")) throw new Error("Cookies set in remote functions must have an absolute path");
-					return event.cookies.set(name, value, opts);
-				},
-				delete: (name, opts) => {
-					if (!allow_cookies) throw new Error("Cannot delete cookies in `query` or `prerender` functions");
-					if (opts.path && !opts.path.startsWith("/")) throw new Error("Cookies deleted in remote functions must have an absolute path");
-					return event.cookies.delete(name, opts);
-				}
-			}
+	/** @type {RequestEvent} */
+	const derived = {
+		...event,
+		setHeaders: () => {
+			remote_headers_forbidden();
 		},
+		cookies: {
+			...event.cookies,
+			set: (name, value, opts) => {
+				if (!allow_cookies) remote_cookie_forbidden({ operation: "set" });
+				if (opts?.path && !opts.path.startsWith("/")) remote_cookie_path_relative({ operation: "set" });
+				return event.cookies.set(name, value, opts);
+			},
+			delete: (name, opts) => {
+				if (!allow_cookies) remote_cookie_forbidden({ operation: "delete" });
+				if (opts?.path && !opts.path.startsWith("/")) remote_cookie_path_relative({ operation: "deleted" });
+				return event.cookies.delete(name, opts);
+			}
+		}
+	};
+	if (state.is_in_remote_query) for (const property of [
+		"url",
+		"params",
+		"route"
+	]) Object.defineProperty(derived, property, {
+		enumerable: false,
+		get() {
+			return remote_request_property({ property });
+		}
+	});
+	return {
+		event: derived,
 		state: {
 			...state,
 			is_in_remote_function: true
@@ -144,7 +140,7 @@ function to_iterator(source, name) {
 	if ("next" in source && typeof source.next === "function") return source;
 	if (Symbol.asyncIterator in source && typeof source[Symbol.asyncIterator] === "function") return source[Symbol.asyncIterator]();
 	if (Symbol.iterator in source && typeof source[Symbol.iterator] === "function") return source[Symbol.iterator]();
-	throw new Error(`query.live '${name}' must return an Iterator, Iterable, AsyncIterator or AsyncIterable`);
+	remote_query_live_not_iterable({ name });
 }
 /**
 * Note that `state` is deliberately not optional: resources that capture the request
@@ -176,7 +172,7 @@ function get_implicit_lookup(internals, state) {
 	return cache;
 }
 // node_modules/@sveltejs/kit/src/runtime/app/server/remote/command.js
-/** @import { RemoteCommand } from '@sveltejs/kit' */
+/** @import { RemoteCommand } from '$app/server' */
 /** @import { MaybePromise, RemoteCommandInternals } from 'types' */
 /** @import { StandardSchemaV1 } from '@standard-schema/spec' */
 /**
@@ -239,11 +235,17 @@ function command(validate_or_fn, maybe_fn) {
 	/** @type {RemoteCommand<Input, Output> & { __: RemoteCommandInternals }} */
 	const wrapper = (arg) => {
 		const { event, state } = get_request_store();
-		if (!MUTATIVE_METHODS.includes(event.request.method)) throw new Error(`Cannot call a command (\`${__.name}(${maybe_fn ? "..." : ""})\`) from a ${event.request.method} handler`);
-		if (state.is_in_render) throw new Error(`Cannot call a command (\`${__.name}(${maybe_fn ? "..." : ""})\`) during server-side rendering`);
+		if (!MUTATIVE_METHODS.includes(event.request.method) || state.is_in_remote_query || state.is_in_remote_prerender) {
+			if (state.is_in_remote_query || state.is_in_remote_prerender) remote_command_readonly({ name: __.name });
+			remote_command_method({
+				name: __.name,
+				method: event.request.method
+			});
+		}
+		if (state.is_in_render) remote_command_render({ name: __.name });
 		const promise = Promise.resolve(run_remote_function(event, state, true, () => validate(arg), fn));
 		promise.updates = () => {
-			throw new Error(`Cannot call '${__.name}(...).updates(...)' on the server`);
+			server_api_unavailable({ name: `${__.name}(...).updates(...)` });
 		};
 		return promise;
 	};
@@ -252,7 +254,7 @@ function command(validate_or_fn, maybe_fn) {
 	return wrapper;
 }
 // node_modules/@sveltejs/kit/src/runtime/app/server/remote/form.js
-/** @import { RemoteFormInput, RemoteForm, InvalidField } from '@sveltejs/kit' */
+/** @import { RemoteFormInput, RemoteForm, RemoteFormInvalidField } from '$app/server' */
 /** @import { InternalRemoteFormIssue, MaybePromise, HasNonOptionalBoolean, RemoteFormInternals } from 'types' */
 /** @import { StandardSchemaV1 } from '@standard-schema/spec' */
 /**
@@ -275,7 +277,7 @@ function command(validate_or_fn, maybe_fn) {
 * @template Output
 * @overload
 * @param {'unchecked'} validate
-* @param {(data: Input, issue: InvalidField<Input>) => MaybePromise<Output>} fn
+* @param {(data: Input, issue: RemoteFormInvalidField<Input>) => MaybePromise<Output>} fn
 * @returns {RemoteForm<Input, Output>}
 * @since 2.27
 */
@@ -288,7 +290,7 @@ function command(validate_or_fn, maybe_fn) {
 * @template Output
 * @overload
 * @param {true extends HasNonOptionalBoolean<StandardSchemaV1.InferInput<Schema>> ? 'Error: All booleans in form schemas must be optional (e.g. `v.optional(v.boolean(), false)`) because checkbox inputs do not send a false value when unchecked.' : Schema} validate
-* @param {(data: StandardSchemaV1.InferOutput<Schema>, issue: InvalidField<StandardSchemaV1.InferInput<Schema>>) => MaybePromise<Output>} fn
+* @param {(data: StandardSchemaV1.InferOutput<Schema>, issue: RemoteFormInvalidField<StandardSchemaV1.InferInput<Schema>>) => MaybePromise<Output>} fn
 * @returns {RemoteForm<StandardSchemaV1.InferInput<Schema>, Output>}
 * @since 2.27
 */
@@ -310,7 +312,6 @@ function form(validate_or_fn, maybe_fn) {
 	* @param {string | number | boolean} [key]
 	*/
 	function create_instance(key) {
-		/** @type {RemoteForm<Input, Output>} */
 		const instance = {};
 		instance.method = "POST";
 		Object.defineProperty(instance, "enhance", { value: () => {
@@ -325,49 +326,62 @@ function form(validate_or_fn, maybe_fn) {
 			name: "",
 			id: "",
 			fn: async (data, meta, form_data) => {
-				/** @type {{ submission: true, input?: Record<string, any>, issues?: InternalRemoteFormIssue[], result: Output }} */
 				const output = {};
 				output.submission = true;
 				const { event, state } = get_request_store();
 				const validated = await schema?.["~standard"].validate(data);
 				if (meta.validate_only) return validated?.issues?.map((issue) => normalize_issue(issue, true)) ?? [];
-				if (validated?.issues !== void 0) handle_issues(output, validated.issues, form_data);
+				if (validated?.issues !== void 0) handle_issues(output, validated.issues, form_data, __.id);
 				else {
 					if (validated !== void 0) data = validated.value;
 					const issue = create_issues();
 					try {
 						output.result = await run_remote_function(event, state, true, () => data, (data) => !maybe_fn ? fn() : fn(data, issue));
-					} catch (e) {
-						if (e instanceof ValidationError) handle_issues(output, e.issues, form_data);
-						else throw e;
+					} catch (error) {
+						if (error instanceof ValidationError) handle_issues(output, error.issues, form_data, __.id);
+						else throw error;
 					}
 				}
 				if (!event.isRemoteRequest) {
 					const cache = get_cache(__, state);
 					cache[""] ??= output;
-					get_implicit_lookup(__, state)[__.action_id ?? __.id] = () => cache[""];
+					get_implicit_lookup(__, state)[__.key ? `${__.id}/${__.key}` : __.id] = () => cache[""];
 				}
 				return output;
 			}
 		};
 		Object.defineProperty(instance, "__", { value: __ });
 		Object.defineProperty(instance, "action", {
-			get: () => `?/remote=${__.id}`,
+			get: () => {
+				const { event, state } = get_request_store();
+				const search = new URLSearchParams(state.prerendering ? "" : event.url.search);
+				search.delete("/remote");
+				const query = search.toString();
+				const action_id = __.key ? `${__.id}/${encodeURIComponent(__.key)}` : __.id;
+				return `?${query ? `${query}&` : ""}/remote=${action_id}`;
+			},
 			enumerable: true
 		});
 		Object.defineProperty(instance, "fields", { get() {
-			return create_field_proxy({}, () => get_cache(__, get_request_store().state)?.[""]?.input ?? {}, (path, value) => {
-				const cache = get_cache(__, get_request_store().state);
-				const entry = cache[""];
-				if (entry?.submission) return;
-				if (path.length === 0) {
-					(cache[""] ??= {}).input = value;
-					return;
-				}
-				const input = entry?.input ?? {};
-				deep_set(input, path.map(String), value);
-				(cache[""] ??= {}).input = input;
-			}, () => flatten_issues(get_cache(__, get_request_store().state)?.[""]?.issues ?? []));
+			return create_field_proxy({
+				form_id: __.id,
+				get: () => get_cache(__, get_request_store().state)?.[""]?.input ?? {},
+				set: (path, value) => {
+					const cache = get_cache(__, get_request_store().state);
+					const entry = cache[""];
+					if (entry?.submission) return;
+					if (path.length === 0) {
+						(cache[""] ??= {}).input = value;
+						return;
+					}
+					const input = entry?.input ?? {};
+					deep_set(input, path.map(String), value);
+					(cache[""] ??= {}).input = input;
+				},
+				get_issues: () => flatten_issues(get_cache(__, get_request_store().state)?.[""]?.issues ?? []),
+				get_touched: () => ({}),
+				get_dirty: () => ({})
+			});
 		} });
 		Object.defineProperty(instance, "result", { get() {
 			try {
@@ -380,10 +394,10 @@ function form(validate_or_fn, maybe_fn) {
 		Object.defineProperty(instance, "submitted", { get: () => false });
 		Object.defineProperty(instance, "preflight", { value: () => instance });
 		Object.defineProperty(instance, "validate", { value: () => {
-			throw new Error("Cannot call validate() on the server");
+			server_api_unavailable({ name: "form.validate()" });
 		} });
 		Object.defineProperty(instance, "submit", { value: () => {
-			throw new Error("Cannot call submit() on the server");
+			server_api_unavailable({ name: "form.submit()" });
 		} });
 		Object.defineProperty(instance, "element", { get: () => null });
 		if (key == void 0) Object.defineProperty(instance, "for", { 
@@ -391,11 +405,12 @@ function form(validate_or_fn, maybe_fn) {
 value: (key) => {
 			const { state } = get_request_store();
 			const cache_key = __.id + "|" + JSON.stringify(key);
+			/** @type {RemoteForm<Input, Output> & { __: RemoteFormInternals }} */
 			let instance = (state.remote.forms ??= /* @__PURE__ */ new Map()).get(cache_key);
 			if (!instance) {
 				instance = create_instance(key);
-				instance.__.id = `${__.id}/${encodeURIComponent(JSON.stringify(key))}`;
-				instance.__.action_id = `${__.id}/${JSON.stringify(key)}`;
+				instance.__.id = __.id;
+				instance.__.key = JSON.stringify(key);
 				instance.__.name = __.name;
 				state.remote.forms.set(cache_key, instance);
 			}
@@ -409,29 +424,29 @@ value: (key) => {
 * @param {{ issues?: InternalRemoteFormIssue[], input?: Record<string, any>, result: any }} output
 * @param {readonly StandardSchemaV1.Issue[]} issues
 * @param {FormData | null} form_data - null if the form is progressively enhanced
+* @param {string} form_id - hash/name of the form
 */
-function handle_issues(output, issues, form_data) {
+function handle_issues(output, issues, form_data, form_id) {
 	output.issues = issues.map((issue) => normalize_issue(issue, true));
 	if (form_data) {
 		output.input = {};
-		for (let key of form_data.keys()) {
-			if (/^[.\]]?_/.test(key)) continue;
-			const is_array = key.endsWith("[]");
-			const values = form_data.getAll(key).filter((value) => typeof value === "string");
-			if (is_array) key = key.slice(0, -2);
-			set_nested_value(output.input, key, is_array ? values : values[0]);
+		for (const field_name of form_data.keys()) {
+			const field = parse_form_key(form_id, field_name);
+			const path = split_path(field.name);
+			if (path.some((part) => part.startsWith("_"))) continue;
+			const values = form_data.getAll(field_name).filter((value) => typeof value === "string");
+			deep_set(output.input, path, field.is_array ? values : values[0]);
 		}
 	}
 }
 /**
 * Creates an invalid function that can be used to imperatively mark form fields as invalid
-* @returns {InvalidField<any>}
+* @returns {RemoteFormInvalidField<any>}
 */
 function create_issues() {
 	return new Proxy(
 		/** @param {string} message */
 		(message) => {
-			if (typeof message !== "string") throw new Error("`invalid` should now be imported from `@sveltejs/kit` to throw validation issues. The second parameter provided to the form function (renamed to `issue`) is still used to construct issues, e.g. `invalid(issue.field('message'))`. For more info see https://github.com/sveltejs/kit/pulls/14768");
 			return create_issue(message);
 		},
 		{ get(target, prop) {
@@ -470,8 +485,8 @@ function create_issues() {
 	}
 }
 // node_modules/@sveltejs/kit/src/runtime/app/server/remote/prerender.js
-/** @import { RemoteResource, RemotePrerenderFunction } from '@sveltejs/kit' */
-/** @import { RemotePrerenderInputsGenerator, RemotePrerenderInternals, MaybePromise } from 'types' */
+/** @import { RemoteResource, RemotePrerenderFunction } from '$app/server' */
+/** @import { RemoteFunctionResponse, RemotePrerenderInputsGenerator, RemotePrerenderInternals, MaybePromise } from 'types' */
 /** @import { StandardSchemaV1 } from '@standard-schema/spec' */
 /**
 * Creates a remote prerender function. When called from the browser, the function will be invoked on the server via a `fetch` call.
@@ -543,30 +558,38 @@ function prerender(validate_or_fn, fn_or_options, maybe_options) {
 	/** @type {RemotePrerenderFunction<Input, Output> & { __: RemotePrerenderInternals }} */
 	const wrapper = (arg) => {
 		const { event, state } = get_request_store();
-		const payload = stringify_remote_arg(arg, state.transport);
+		const payload = stringify_remote_arg(arg);
 		/** @type {Promise<Output> & Partial<RemoteResource<Output>>} */
 		const promise = get_response(__, payload, state, async () => {
 			const id = __.id;
-			const url = `${base}/${app_dir}/remote/${id}${payload ? `/${payload}` : ""}`;
-			if (!state.prerendering && !event.isRemoteRequest) try {
-				const response = await fetch(new URL(url, event.url.origin).href);
-				if (!response.ok) throw new Error("Prerendered response not found");
-				const prerendered = await response.json();
-				if (prerendered.type === "error") error(prerendered.status, prerendered.error);
-				return parse_remote_response(prerendered.data, state.transport)._;
-			} catch {}
+			const url = `/${app_dir}/remote/${id}${payload ? `/${payload}` : ""}`;
+			if (!state.prerendering && !event.isRemoteRequest) {
+				/** @type {RemoteFunctionResponse | undefined} */
+				let prerendered;
+				try {
+					const response = await fetch(new URL(url, event.request.url).href, { redirect: "manual" });
+					if (response.ok) prerendered = await response.json();
+				} catch {}
+				if (prerendered) {
+					if (prerendered.type === "error") throw new HandledHttpError(prerendered.error);
+					return parse(prerendered.data)._;
+				}
+			}
 			if (state.prerendering?.remote_responses.has(url)) return state.prerendering.remote_responses.get(url);
-			const promise = run_remote_function(event, state, false, () => validate(arg), fn);
+			const promise = run_remote_function(event, {
+				...state,
+				is_in_remote_prerender: true
+			}, false, () => validate(arg), fn);
 			if (state.prerendering) state.prerendering.remote_responses.set(url, promise);
 			const result = await promise;
 			if (state.prerendering) {
 				const body = {
 					type: "result",
-					data: stringify({ _: result }, state.transport)
+					data: stringify({ _: result })
 				};
 				state.prerendering.dependencies.set(url, {
 					body: JSON.stringify(body),
-					response: json(body)
+					response: Response.json(body)
 				});
 			}
 			return result;
@@ -773,13 +796,15 @@ var SharedIterator = class {
 			},
 			[Symbol.asyncIterator]() {
 				return iterator;
-			}
+			},
+			async [Symbol.asyncDispose]() {}
 		};
 		return iterator;
 	}
 };
 // node_modules/@sveltejs/kit/src/runtime/app/server/remote/query.js
-/** @import { RemoteLiveQuery, RemoteLiveQueryFunction, RemoteQuery, RemoteQueryFunction, RequestEvent } from '@sveltejs/kit' */
+/** @import { RemoteLiveQuery, RemoteLiveQueryFunction, RemoteQuery, RemoteQueryFunction } from '$app/server' */
+/** @import { RequestEvent } from '@sveltejs/kit' */
 /** @import { RemoteInternals, MaybePromise, RequestState, RemoteQueryLiveInternals, RemoteQueryBatchInternals, RemoteQueryInternals, RemoteLiveQueryUserFunctionReturnType } from 'types' */
 /** @import { StandardSchemaV1 } from '@standard-schema/spec' */
 /**
@@ -849,9 +874,12 @@ function query(validate_or_fn, maybe_fn) {
 	};
 	/** @type {RemoteQueryFunction<Input, Output> & { __: RemoteQueryInternals }} */
 	const wrapper = (arg) => {
-		if (prerendering) throw new Error(`Cannot call query '${__.name}' while prerendering, as prerendered pages need static data. Use 'prerender' from $app/server instead`);
+		if (prerendering) remote_query_prerender({
+			type: "query",
+			name: __.name
+		});
 		const { event, state } = get_request_store();
-		const payload = stringify_remote_arg(arg, state.transport);
+		const payload = stringify_remote_arg(arg);
 		return create_query_resource(__, payload, event, state, () => run_remote_function(event, {
 			...state,
 			is_in_remote_query: true
@@ -922,9 +950,12 @@ function live(validate_or_fn, maybe_fn) {
 	};
 	/** @type {RemoteLiveQueryFunction<Input, Output> & { __: RemoteQueryLiveInternals }} */
 	const wrapper = (arg) => {
-		if (prerendering) throw new Error(`Cannot call query.live '${__.name}' while prerendering, as prerendered pages need static data. Use 'prerender' from $app/server instead`);
+		if (prerendering) remote_query_prerender({
+			type: "query.live",
+			name: __.name
+		});
 		const { event, state } = get_request_store();
-		const payload = stringify_remote_arg(arg, state.transport);
+		const payload = stringify_remote_arg(arg);
 		return create_live_query_resource(__, payload, event, state, () => run(event, state, () => validate(arg)));
 	};
 	Object.defineProperty(wrapper, "__", { value: __ });
@@ -1031,7 +1062,7 @@ function batch(validate_or_fn, maybe_fn) {
 		id: "",
 		name: "",
 		validate,
-		run: async (args, options) => {
+		run: async (args) => {
 			const { event, state } = get_request_store();
 			return run_remote_function(event, {
 				...state,
@@ -1047,8 +1078,7 @@ function batch(validate_or_fn, maybe_fn) {
 					} catch (error) {
 						return {
 							type: "error",
-							error: await handle_error_and_jsonify(event, state, options, error),
-							status: error instanceof HttpError || error instanceof SvelteKitError ? error.status : 500
+							error: await handle_error_and_jsonify(event, state, error)
 						};
 					}
 				}));
@@ -1061,9 +1091,12 @@ function batch(validate_or_fn, maybe_fn) {
 	};
 	/** @type {RemoteQueryFunction<Input, Output> & { __: RemoteQueryBatchInternals }} */
 	const wrapper = (arg) => {
-		if (prerendering) throw new Error(`Cannot call query.batch '${__.name}' while prerendering, as prerendered pages need static data. Use 'prerender' from $app/server instead`);
+		if (prerendering) remote_query_prerender({
+			type: "query.batch",
+			name: __.name
+		});
 		const { event, state } = get_request_store();
-		const payload = stringify_remote_arg(arg, state.transport);
+		const payload = stringify_remote_arg(arg);
 		return create_query_resource(__, payload, event, state, () => enqueue(payload, () => validate(arg)));
 	};
 	Object.defineProperty(wrapper, "__", { value: __ });
@@ -1079,13 +1112,11 @@ function batch(validate_or_fn, maybe_fn) {
 */
 function refresh(event, state, internals, payload, fn) {
 	if (!internals.id) return;
-	if (!event.isRemoteRequest) return;
+	if (!event.isRemoteRequest && state.is_in_remote_form_or_command) return;
 	const key = create_remote_key(internals.id, payload);
-	const promise = fn();
-	promise.catch(() => {});
 	(state.remote.explicit ??= /* @__PURE__ */ new Map()).set(key, {
 		internals,
-		promise
+		fn
 	});
 }
 /**
@@ -1140,15 +1171,12 @@ function create_query_resource(__, payload, event, state, fn) {
 			get_cache(__, state)[payload] = p;
 			refresh(event, state, __, payload, () => p);
 		},
-		run() {
-			throw new Error(`\`myQuery().run()\` has been removed — please replace it with \`myQuery()\`. See https://github.com/sveltejs/kit/pull/15779 for more details`);
-		},
 		/** @type {Promise<any>['then']} */
 		then(onfulfilled, onrejected) {
 			return get_promise().then(onfulfilled, onrejected);
 		},
 		withOverride() {
-			throw new Error(`Cannot call '${__.name}.withOverride()' on the server`);
+			server_api_unavailable({ name: `${__.name}.withOverride()` });
 		},
 		get [Symbol.toStringTag]() {
 			return "QueryResource";
@@ -1168,7 +1196,7 @@ function create_live_query_resource(__, payload, event, state, get_generator) {
 	let promise = null;
 	const get_first_value = async () => {
 		for await (const value of get_generator()) return value;
-		throw new Error(`query.live '${__.name}' did not yield a value`);
+		remote_query_live_no_value({ name: __.name });
 	};
 	const get_promise = () => {
 		return promise ??= get_response(__, payload, state, get_first_value);
@@ -1212,10 +1240,6 @@ function create_live_query_resource(__, payload, event, state, get_generator) {
 			delete get_cache(__, state)[payload];
 			refresh(event, state, __, payload, get_promise);
 			return Promise.resolve();
-		},
-		/** @ts-expect-error This method no longer exists */
-		run() {
-			throw new Error("`.run()` has been removed from live queries. Use `for await (const value of liveQuery())` instead.");
 		},
 		/** @type {Promise<any>['then']} */
 		then(onfulfilled, onrejected) {
@@ -1292,7 +1316,7 @@ Object.defineProperty(query, "live", {
 	enumerable: true
 });
 // node_modules/@sveltejs/kit/src/runtime/app/server/remote/requested.js
-/** @import { RemoteLiveQuery, RemoteLiveQueryFunction, RemoteQuery, RemoteQueryFunction, RequestedResult, QueryRequestedResult, LiveQueryRequestedResult } from '@sveltejs/kit' */
+/** @import { RemoteLiveQuery, RemoteLiveQueryFunction, RemoteQuery, RemoteQueryFunction, RequestedResult, RemoteQueryRequestedResult, RemoteLiveQueryRequestedResult } from '$app/server' */
 /** @import { MaybePromise, RemoteAnyQueryInternals } from 'types' */
 /**
 * Inside a remote `command` or `form` callback, returns an iterable
@@ -1340,7 +1364,7 @@ Object.defineProperty(query, "live", {
 * @overload
 * @param {RemoteQueryFunction<Input, Output, Validated>} query
 * @param {number} limit
-* @returns {QueryRequestedResult<Validated, Output>}
+* @returns {RemoteQueryRequestedResult<Validated, Output>}
 */
 /**
 * Inside a remote `command` or `form` callback, returns an iterable
@@ -1378,7 +1402,7 @@ Object.defineProperty(query, "live", {
 * @overload
 * @param {RemoteLiveQueryFunction<Input, Output, Validated>} query
 * @param {number} limit
-* @returns {LiveQueryRequestedResult<Validated, Output>}
+* @returns {RemoteLiveQueryRequestedResult<Validated, Output>}
 */
 /**
 * @template Input
@@ -1391,11 +1415,22 @@ Object.defineProperty(query, "live", {
 function requested(query, limit) {
 	const { event, state } = get_request_store();
 	const internals = query.__;
-	if (internals?.type !== "query" && internals?.type !== "query_batch" && internals?.type !== "query_live") throw new Error("requested(...) expects a query function created with query(...), query.batch(...), or query.live(...)");
+	if (internals?.type !== "query" && internals?.type !== "query_batch" && internals?.type !== "query_live") remote_requested_invalid_query();
 	const __ = internals;
-	const payloads = state.remote.requested?.get(__.id) ?? [];
-	if (!state.is_in_remote_form_or_command) throw new Error("requested(...) can only be called in the context of a command/form remote function");
-	const [selected, skipped] = split_limit(payloads, limit);
+	const requested = state.remote.requested;
+	const payloads = requested?.get(__.id) ?? /* @__PURE__ */ new Set();
+	const ignored = state.remote.ignored ??= /* @__PURE__ */ new Set();
+	/** @param {string} payload */
+	const consume = (payload) => {
+		payloads.delete(payload);
+		if (payloads.size === 0) requested?.delete(__.id);
+	};
+	/** @param {string} payload */
+	const create_ignore = (payload) => () => {
+		ignored.add(create_remote_key(__.id, payload));
+	};
+	if (!state.is_in_remote_form_or_command) remote_requested_context();
+	const [selected, skipped] = split_limit([...payloads], limit);
 	/**
 	* Registers the failure exactly like `.set()` registers a value: the error record
 	* is serialized to the client (putting the query there into a failed state), and
@@ -1409,30 +1444,39 @@ function requested(query, limit) {
 		get_cache(__, state)[payload] = promise;
 		refresh(event, state, __, payload, () => promise);
 	};
-	for (const payload of skipped) record_failure(payload, new HttpError(400, `Requested refresh was rejected because it exceeded requested(${__.name}, ${limit}) limit`));
+	for (const payload of skipped) consume(payload);
 	const result = {
 		*[Symbol.iterator]() {
-			for (const payload of selected) try {
-				const parsed = parse_remote_arg(payload, state.transport);
-				const validated = __.validate(parsed);
-				if (is_thenable(validated)) throw new Error(`requested(${__.name}, ${limit}) cannot be used with synchronous iteration because the query validator is async. Use \`for await ... of\` instead`);
-				yield {
-					arg: validated,
-					query: __.bind(payload, validated)
-				};
-			} catch (error) {
-				record_failure(payload, error);
-				continue;
+			for (const payload of selected) {
+				consume(payload);
+				try {
+					const parsed = parse_remote_arg(payload);
+					const validated = __.validate(parsed);
+					if (is_thenable(validated)) remote_requested_async_validator({
+						name: __.name,
+						limit: String(limit)
+					});
+					yield {
+						arg: validated,
+						query: __.bind(payload, validated),
+						ignore: create_ignore(payload)
+					};
+				} catch (error) {
+					record_failure(payload, error);
+					continue;
+				}
 			}
 		},
 		async *[Symbol.asyncIterator]() {
 			yield* race_all(selected, async (payload) => {
+				consume(payload);
 				try {
-					const parsed = parse_remote_arg(payload, state.transport);
+					const parsed = parse_remote_arg(payload);
 					const validated = await __.validate(parsed);
 					return {
 						arg: validated,
-						query: __.bind(payload, validated)
+						query: __.bind(payload, validated),
+						ignore: create_ignore(payload)
 					};
 				} catch (error) {
 					record_failure(payload, error);
@@ -1441,12 +1485,23 @@ function requested(query, limit) {
 			});
 		},
 		async refreshAll() {
-			if (__.type === "query_live") throw new Error("refreshAll() is invalid for live queries. Use reconnectAll() instead.");
+			if (__.type === "query_live") remote_requested_wrong_method({
+				method: "refreshAll",
+				type: "live",
+				replacement: "reconnectAll"
+			});
 			for await (const { query } of result) query.refresh();
 		},
 		async reconnectAll() {
-			if (__.type !== "query_live") throw new Error("reconnectAll() is invalid for regular queries. Use refreshAll() instead.");
+			if (__.type !== "query_live") remote_requested_wrong_method({
+				method: "reconnectAll",
+				type: "regular",
+				replacement: "refreshAll"
+			});
 			for await (const { query } of result) query.reconnect();
+		},
+		async ignoreAll() {
+			for await (const { ignore } of result) ignore();
 		}
 	};
 	return result;
@@ -1459,7 +1514,7 @@ function requested(query, limit) {
 */
 function split_limit(array, limit) {
 	if (limit === Infinity) return [array, []];
-	if (!Number.isInteger(limit) || limit < 0) throw new Error("Limit must be a non-negative integer or Infinity");
+	if (!Number.isInteger(limit) || limit < 0) remote_requested_invalid_limit();
 	return [array.slice(0, limit), array.slice(limit)];
 }
 /**

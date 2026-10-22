@@ -1,17 +1,8 @@
-import 'bulma/css/bulma.min.css';
-import '@fortawesome/fontawesome-free/css/all.min.css';
+/// <reference types="@sveltejs/kit" />
 
-// See https://kit.svelte.dev/docs/types#app
-// for information about these interfaces
-declare global {
-	namespace App {
-		// interface Error {}
-		// interface Locals {}
-		// interface PageData {}
-		// interface PageState {}
-		// interface Platform {}
-	}
+declare module '$app/environment' {
+	export const browser: boolean;
+	export const dev: boolean;
+	export const building: boolean;
+	export const version: string;
 }
-
-export {};
-//export const prerender = true
