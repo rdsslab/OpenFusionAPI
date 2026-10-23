@@ -393,4 +393,13 @@ curl -X POST https://your-server.com/api/myapp/groups/update_billing_cycle_day/q
 
 ---
 
+<details>
+<summary>Troubleshooting: Non-SOAP response (502)</summary>
+
+When the upstream SOAP service responds with HTML or text instead of a SOAP Envelope, the handler returns `502 Bad Gateway` with an English error message (see `libOpenFusionAPI/src/lib/handler/soapFunction.js`). The message includes the URL called, its source, HTTP status/content-type, a sanitized preview (~200 chars), and a hint to check endpoint/WSDL `soap:address`. Network errors (`ECONNREFUSED`, `ETIMEDOUT`) are also reported as 502.
+
+</details>
+
+---
+
 © 2025 – OpenFusionAPI · Created and maintained by **edwinspire**
