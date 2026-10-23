@@ -2515,9 +2515,20 @@ function Tab($$renderer, $$props) {
 		* @property {boolean} [disabled=false] - Whether the tab is disabled.
 		* @property {import('svelte').Snippet} [component] - Snippet rendered as tab content.
 		* @property {string} [alias] - Optional alias passed to the onselect callback.
+		* @property {boolean} [keepAlive=false] - Keep the content mounted (hidden) after its first activation. Useful for tabs with in-flight state (requests, timers, form drafts) that must survive tab switches.
 		*/
 		/** @type {{ classSize?: string, onselect?: (e: {label: string, index: number, alias?: string}) => void, tabs?: TabItem[], active?: number, children?: import('svelte').Snippet }} & Record<string, any> */
 		let { classSize = "is-small", onselect = (e) => {}, tabs = [], active = 0, children } = $$props;
+		/**
+		* Tabs `keepAlive` que ya se mostraron alguna vez. Se guardan por clave
+		* estable (alias/label) y no por índice: el consumidor puede filtrar o
+		* reordenar `tabs` y los índices cambiarían. Así el contenido nunca visitado
+		* sigue siendo lazy y el ya montado conserva su estado.
+		*/
+		let visitedTabs = {};
+		function keepAliveKey(tab, index) {
+			return tab.alias ?? tab.label ?? String(index);
+		}
 		$$renderer.push(`<div${attr_class(`tabs is-boxed ${stringify(classSize)} tab-margin`)} role="tablist" aria-label="Tabs"><ul><!--[-->`);
 		const each_array = ensure_array_like(tabs);
 		for (let i = 0, $$length = each_array.length; i < $$length; i++) {
@@ -2532,8 +2543,8 @@ function Tab($$renderer, $$props) {
 		const each_array_1 = ensure_array_like(tabs);
 		for (let i = 0, $$length = each_array_1.length; i < $$length; i++) {
 			let tab = each_array_1[i];
-			if (tab.component && active === i && !tab.disabled) {
-				$$renderer.push(`<!--[0--><div${attr("id", `tabpanel-${stringify(i)}`)} role="tabpanel"${attr("aria-labelledby", `tab-${stringify(i)}`)}>`);
+			if (tab.component && !tab.disabled && (active === i || tab.keepAlive && visitedTabs[keepAliveKey(tab, i)])) {
+				$$renderer.push(`<!--[0--><div${attr("id", `tabpanel-${stringify(i)}`)} role="tabpanel"${attr("aria-labelledby", `tab-${stringify(i)}`)}${attr("aria-hidden", active !== i)}${attr_style("", { display: active === i ? "block" : "none" })}>`);
 				tab.component($$renderer);
 				$$renderer.push(`<!----></div>`);
 			} else $$renderer.push("<!--[-1-->");
@@ -6349,12 +6360,31 @@ function RESTTester($$renderer, $$props) {
 			if (type.includes("application/") || type.includes("octet-stream")) return "bin";
 			return "";
 		}
+		/**
+		* Un resultado vacío no debe pisar el último guardado: al remontar el
+		* componente (o al cambiar de pestaña en el editor) se emitía
+		* `{data:'', sizeKBResponse:-1}` y el editor lo persistía como respuesta
+		* válida. Solo se considera utilizable si hay cuerpo o tamaño real.
+		*/
+		function hasUsableResult(result) {
+			if (!result) return false;
+			if (result.error) return true;
+			const hasData = result.data !== void 0 && result.data !== null && result.data !== "";
+			const size = Number(result.sizeKBResponse);
+			return hasData || Number.isFinite(size) && size > 0;
+		}
 		function internalOnChange() {
+			const resultToEmit = hasUsableResult(data_result) ? {
+				...data_result,
+				MimeType: data_result.contentType ?? data_result.MimeType ?? "",
+				status: data_result.status ?? null,
+				statusText: data_result.statusText ?? ""
+			} : data?.last_response ?? null;
 			const data_to_emit = {
 				data: { ...data },
 				url: snapshot(url),
 				method: snapshot(method),
-				last_response: data_result
+				last_response: resultToEmit
 			};
 			let new_data = JSON.stringify(data_to_emit);
 			if (new_data !== last_data) {
@@ -7402,7 +7432,7 @@ var ChartWidgets = {
 	TimeSeries
 };
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/version.js
-var version = "9.5.14";
+var version = "9.5.15";
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/login/index.svelte
 function Login($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
