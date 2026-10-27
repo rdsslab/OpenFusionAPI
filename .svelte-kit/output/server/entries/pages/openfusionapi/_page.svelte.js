@@ -347,6 +347,13 @@ var migrateAppVars = async (data) => {
 		data
 	})).json();
 };
+var DeleteEndpoint = async (idendpoint) => {
+	if (!idendpoint) return {};
+	return await checkStatus(await new uFetch().DELETE({
+		url: url_paths.endpoint,
+		data: { idendpoint }
+	})).json();
+};
 var EndpointSave = async (endpoint) => {
 	if (endpoint.handler == "TEXT" && endpoint.File) {
 		let uf = new uFetch();
@@ -7432,7 +7439,7 @@ var ChartWidgets = {
 	TimeSeries
 };
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/version.js
-var version = "9.5.16";
+var version = "9.5.36";
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/login/index.svelte
 function Login($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -8199,7 +8206,7 @@ function SaveDeploy($$renderer, $$props) {
 			show: false,
 			error: false,
 			message: ""
-		} } = $$props;
+		}, dirty = false } = $$props;
 		let $$settled = true;
 		let $$inner_renderer;
 		function $$render_inner($$renderer) {
@@ -8248,7 +8255,8 @@ function SaveDeploy($$renderer, $$props) {
 		$$renderer.subsume($$inner_renderer);
 		bind_props($$props, {
 			left,
-			deploying
+			deploying,
+			dirty
 		});
 	});
 }
@@ -9930,7 +9938,12 @@ function Fetch($$renderer, $$props) {
 		function getData() {
 			return {
 				code: endpoint.code,
-				data_test: snapshot(endpoint.data_test)
+				custom_data: snapshot(endpoint.custom_data),
+				data_test: snapshot(endpoint.data_test),
+				resource: endpoint.resource,
+				method: endpoint.method,
+				environment: endpoint.environment,
+				endpoint: endpoint.endpoint
 			};
 		}
 		function fnOnChange() {
@@ -9997,7 +10010,12 @@ function Js($$renderer, $$props) {
 		function getData() {
 			return {
 				code: internal_code,
-				data_test: snapshot(endpoint.data_test)
+				custom_data: snapshot(endpoint.custom_data),
+				data_test: snapshot(endpoint.data_test),
+				resource: endpoint.resource,
+				method: endpoint.method,
+				environment: endpoint.environment,
+				endpoint: endpoint.endpoint
 			};
 		}
 		function fnOnChange() {
@@ -10126,7 +10144,15 @@ function Soap($$renderer, $$props) {
 			RequestArgs: { dNum: 236.08 }
 		};
 		function fnOnChange() {
-			onchange({ code: endpoint.code });
+			onchange({
+				code: endpoint.code,
+				custom_data: snapshot(endpoint.custom_data),
+				data_test: snapshot(endpoint.data_test),
+				resource: endpoint.resource,
+				method: endpoint.method,
+				environment: endpoint.environment,
+				endpoint: endpoint.endpoint
+			});
 		}
 		function tab_parameters($$renderer) {
 			$$renderer.push(`<div><div><div>Service connection parameters.</div></div> `);
@@ -10260,7 +10286,11 @@ function Sql($$renderer, $$props) {
 			let data = {
 				code: query_code,
 				custom_data: cnx_appvar && typeof cnx_appvar === "string" && cnx_appvar.trim().length > 0 ? cnx_appvar : cnx_custom,
-				data_test: snapshot(endpoint.data_test)
+				data_test: snapshot(endpoint.data_test),
+				resource: endpoint.resource,
+				method: endpoint.method,
+				environment: endpoint.environment,
+				endpoint: endpoint.endpoint
 			};
 			console.log(data);
 			return data;
@@ -10429,7 +10459,11 @@ function SqlBulkInsert($$renderer, $$props) {
 				code: table_name,
 				custom_data: cnx_appvar && typeof cnx_appvar === "string" && cnx_appvar.trim().length > 0 ? cnx_appvar : cnx_custom,
 				ignoreDuplicates: endpoint.custom_data?.ignoreDuplicates ?? false,
-				data_test: snapshot(endpoint.data_test)
+				data_test: snapshot(endpoint.data_test),
+				resource: endpoint.resource,
+				method: endpoint.method,
+				environment: endpoint.environment,
+				endpoint: endpoint.endpoint
 			};
 		}
 		function tab_tablename($$renderer) {
@@ -10556,7 +10590,11 @@ function SqlHana($$renderer, $$props) {
 			let data = {
 				code: query_code,
 				custom_data: cnx_appvar && typeof cnx_appvar === "string" && cnx_appvar.trim().length > 0 ? cnx_appvar : cnx_custom,
-				data_test: snapshot(endpoint.data_test)
+				data_test: snapshot(endpoint.data_test),
+				resource: endpoint.resource,
+				method: endpoint.method,
+				environment: endpoint.environment,
+				endpoint: endpoint.endpoint
 			};
 			console.log(data);
 			return data;
@@ -10727,7 +10765,11 @@ function HiveDriver($$renderer, $$props) {
 			return {
 				code: query_code,
 				custom_data: cnx_appvar && typeof cnx_appvar === "string" && cnx_appvar.trim().length > 0 ? cnx_appvar : cnx_custom,
-				data_test: snapshot(endpoint.data_test)
+				data_test: snapshot(endpoint.data_test),
+				resource: endpoint.resource,
+				method: endpoint.method,
+				environment: endpoint.environment,
+				endpoint: endpoint.endpoint
 			};
 		}
 		function tab_query($$renderer) {
@@ -10825,6 +10867,166 @@ function HiveDriver($$renderer, $$props) {
 		} while (!$$settled);
 		$$renderer.subsume($$inner_renderer);
 		bind_props($$props, { endpoint });
+	});
+}
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/asyncWrapper.svelte
+function AsyncWrapper($$renderer, $$props) {
+	$$renderer.component(($$renderer) => {
+		/**
+		* @type {{endpoint: any, onchange: Function, app: any}}
+		*/
+		let { endpoint = {}, onchange = () => {}, app = {} } = $$props;
+		let endpointOptions = derived(() => {
+			return (app?.endpoints || []).filter((e) => {
+				if (!e || !e.idendpoint) return false;
+				if (e.handler === "MCP") return false;
+				if (e.handler === "ASYNC_WRAPPER") return false;
+				if (e.handler === "TELEGRAM_BOT") return false;
+				return true;
+			}).map((e) => ({
+				name: (() => {
+					const method = e.method || "";
+					const appName = app?.app || e.app || "";
+					const resource = e.resource || e.endpoint || "";
+					const env = e.environment || "";
+					return `[${method}] ${method == "WS" ? "/ws/" : "/api/"}${appName}${resource}/${env}`.trim();
+				})() || `[${e.method || ""}] ${e.idendpoint}`,
+				value: e.idendpoint
+			}));
+		});
+		function applyBaseEndpoint(baseId) {
+			if (!baseId) return;
+			const base = (app?.endpoints || []).find((x) => x && x.idendpoint === baseId);
+			if (base) {
+				endpoint.code = base.idendpoint;
+				if (base.method) endpoint.method = base.method;
+				const baseResource = base.resource || "";
+				const env = base.environment || endpoint.environment || base.environment;
+				if (env) endpoint.environment = env;
+				if (baseResource.endsWith("/async")) endpoint.resource = baseResource;
+				else if (baseResource) {
+					if (env && baseResource.endsWith("/" + env)) {
+						if (baseResource.slice(0, -env.length - 1).endsWith("/async")) endpoint.resource = baseResource;
+						else endpoint.resource = baseResource.replace("/" + env, "/async/" + env);
+					} else endpoint.resource = baseResource + "/async";
+				}
+				endpoint.endpoint = createEndpoint(endpoint.method || "", app?.app || "", endpoint.resource || "", endpoint.environment || "");
+			}
+			update();
+		}
+		function update() {
+			onchange({
+				code: endpoint.code,
+				custom_data: endpoint.custom_data,
+				data_test: endpoint.data_test,
+				resource: endpoint.resource,
+				method: endpoint.method,
+				environment: endpoint.environment,
+				endpoint: endpoint.endpoint
+			});
+		}
+		let $$settled = true;
+		let $$inner_renderer;
+		function $$render_inner($$renderer) {
+			$$renderer.push(`<div class="block">`);
+			Predictive($$renderer, {
+				label: "Base endpoint",
+				placeholder: "Select the base endpoint this async wrapper will call",
+				classLabel: "is-small",
+				classInput: "is-small",
+				optionValueKey: "value",
+				optionLabelKey: "name",
+				displayValue: (val) => {
+					if (!val) return "";
+					const found = endpointOptions().find((o) => o.value === val);
+					if (found) return found.name;
+					const e = (app?.endpoints || []).find((x) => x && x.idendpoint === val);
+					if (e) {
+						const method = e.method || "";
+						const appName = app?.app || e.app || "";
+						const resource = e.resource || e.endpoint || "";
+						const env = e.environment || "";
+						return `[${method}] ${`${method == "WS" ? "/ws/" : "/api/"}${appName}${resource}/${env}`}`.trim();
+					}
+					return val;
+				},
+				onselect: (val) => {
+					applyBaseEndpoint(val);
+				},
+				onchange: (val) => {
+					applyBaseEndpoint(val);
+				},
+				get options() {
+					return endpointOptions();
+				},
+				set options($$value) {
+					endpointOptions($$value);
+					$$settled = false;
+				},
+				get selectedValue() {
+					return endpoint.code;
+				},
+				set selectedValue($$value) {
+					endpoint.code = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----> `);
+			Basic$1($$renderer, {
+				label: "Base endpoint ID (code)",
+				placeholder: "e.g. c80415fa-1d7b-48c2-93aa-2607fd0f3804",
+				readonly: true,
+				disabled: true,
+				get value() {
+					return endpoint.code;
+				},
+				set value($$value) {
+					endpoint.code = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----> <div class="columns"><div class="column">`);
+			Basic$1($$renderer, {
+				label: "TTL (ms)",
+				type: "number",
+				min: "1000",
+				step: "1000",
+				onchange: update,
+				get value() {
+					return endpoint.custom_data.async.ttl_ms;
+				},
+				set value($$value) {
+					endpoint.custom_data.async.ttl_ms = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----></div> <div class="column">`);
+			Basic$1($$renderer, {
+				label: "Max consumes",
+				type: "number",
+				min: "1",
+				step: "1",
+				onchange: update,
+				get value() {
+					return endpoint.custom_data.async.max_consumes;
+				},
+				set value($$value) {
+					endpoint.custom_data.async.max_consumes = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----></div> <div class="column" style="display: flex; align-items: flex-end; padding-bottom: 0.75rem;"><label class="checkbox"><input type="checkbox"${attr("checked", endpoint.custom_data.async.notify_ws, true)}/> <span>Notify via WebSocket</span></label></div></div></div>`);
+		}
+		do {
+			$$settled = true;
+			$$inner_renderer = $$renderer.copy();
+			$$render_inner($$inner_renderer);
+		} while (!$$settled);
+		$$renderer.subsume($$inner_renderer);
+		bind_props($$props, {
+			endpoint,
+			app
+		});
 	});
 }
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/handler/text.svelte
@@ -11222,7 +11424,11 @@ function Mongodb($$renderer, $$props) {
 			return {
 				code: js_code,
 				custom_data: cnx_appvar && typeof cnx_appvar === "string" && cnx_appvar.trim().length > 0 ? cnx_appvar : cnx_custom,
-				data_test: snapshot(endpoint.data_test)
+				data_test: snapshot(endpoint.data_test),
+				resource: endpoint.resource,
+				method: endpoint.method,
+				environment: endpoint.environment,
+				endpoint: endpoint.endpoint
 			};
 		}
 		function tab_code($$renderer) {
@@ -11326,7 +11532,12 @@ function CustomFunction($$renderer, $$props) {
 		function getData() {
 			return {
 				code: endpoint.code,
-				data_test: snapshot(endpoint.data_test)
+				custom_data: snapshot(endpoint.custom_data),
+				data_test: snapshot(endpoint.data_test),
+				resource: endpoint.resource,
+				method: endpoint.method,
+				environment: endpoint.environment,
+				endpoint: endpoint.endpoint
 			};
 		}
 		function fnOnChange() {
@@ -11506,7 +11717,7 @@ function Endpoint($$renderer, $$props) {
 					}
 				});
 			}
-			$$renderer.push(`<!----> <input class="input" type="hidden" placeholder="Name"${attr("value", endpoint.idendpoint)}/> <div class="field is-expanded"><div class="field has-addons"><p class="control"><a class="button is-small is-static">API Resource:</a></p> <p class="control"><a class="button is-small is-static">${escape_html(endpoint.method == "WS" ? "/ws/" : "/api/")}${escape_html(app.app)}</a></p> <p class="control is-expanded"><input class="input is-small" type="text" placeholder="Resourse"${attr("disabled", endpoint.handler == "MCP", true)}${attr("value", endpoint.resource)}/></p> <p class="control"><a class="button is-small is-static">/</a></p> <p class="control">`);
+			$$renderer.push(`<!----> <input class="input" type="hidden" placeholder="Name"${attr("value", endpoint.idendpoint)}/> <div class="field is-expanded"><div class="field has-addons"><p class="control"><a class="button is-small is-static">API Resource:</a></p> <p class="control"><a class="button is-small is-static">${escape_html(endpoint.method == "WS" ? "/ws/" : "/api/")}${escape_html(app.app)}</a></p> <p class="control is-expanded"><input class="input is-small" type="text" placeholder="Resourse"${attr("disabled", endpoint.handler == "MCP" || endpoint.handler == "ASYNC_WRAPPER", true)}${attr("value", endpoint.resource)}/></p> <p class="control"><a class="button is-small is-static">/</a></p> <p class="control">`);
 			if (endpoint && endpoint.environment) {
 				$$renderer.push("<!--[0-->");
 				Select($$renderer, {
@@ -12238,7 +12449,7 @@ function TelegramBot($$renderer, $$props) {
 					placeholder: "Telegram Bot Token",
 					onchange: (v) => {
 						endpoint.custom_data.token = v;
-						onchange(endpoint);
+						fnOnChange();
 					},
 					get value() {
 						return endpoint.custom_data.token;
@@ -12383,6 +12594,7 @@ function Editor($$renderer, $$props) {
 			message: "",
 			error: false
 		};
+		let dirty = false;
 		function setData(data) {
 			app = data.app || {};
 			idendpoint = data.idendpoint || void 0;
@@ -12521,7 +12733,8 @@ function Editor($$renderer, $$props) {
 				name: "config",
 				label: "Configuration",
 				component: tab_config,
-				classIcon: " fa-solid fa-screwdriver-wrench "
+				classIcon: " fa-solid fa-screwdriver-wrench ",
+				keepAlive: true
 			},
 			{
 				name: "app_vars",
@@ -12568,7 +12781,8 @@ function Editor($$renderer, $$props) {
 				name: "tester",
 				label: "Tester",
 				component: tab_tester,
-				classIcon: " fa-solid fa-microscope "
+				classIcon: " fa-solid fa-microscope ",
+				keepAlive: true
 			},
 			{
 				name: "backups",
@@ -12687,6 +12901,20 @@ function Editor($$renderer, $$props) {
 				"json_schema",
 				"app_vars",
 				"mcp"
+			]),
+			ASYNC_WRAPPER: /* @__PURE__ */ new Set([
+				"endpoint",
+				"config",
+				"docs",
+				"auth",
+				"cors",
+				"price",
+				"tester",
+				"backups",
+				"logs",
+				"json_schema",
+				"app_vars",
+				"mcp"
 			])
 		};
 		let derivedtabList = derived(() => {
@@ -12703,11 +12931,16 @@ function Editor($$renderer, $$props) {
 		function onChangeValueHandler(v) {
 			console.trace("onChangeValueHandler", v);
 			if (v) {
+				dirty = true;
 				endpoint.data_test = v.data_test;
 				endpoint.code = v.code;
 				endpoint.docs = v.docs;
 				endpoint.File = v.File;
 				if (v.custom_data) endpoint.custom_data = v.custom_data;
+				if (v.resource !== void 0) endpoint.resource = v.resource;
+				if (v.method !== void 0) endpoint.method = v.method;
+				if (v.environment !== void 0) endpoint.environment = v.environment;
+				if (v.endpoint !== void 0) endpoint.endpoint = v.endpoint;
 			}
 		}
 		/**
@@ -13022,8 +13255,27 @@ function Editor($$renderer, $$props) {
 							$$settled = false;
 						}
 					});
-				} else if (endpoint?.handler == "SQL_BULK_I") {
+				} else if (endpoint?.handler == "ASYNC_WRAPPER") {
 					$$renderer.push("<!--[6-->");
+					AsyncWrapper($$renderer, {
+						onchange: onChangeValueHandler,
+						get endpoint() {
+							return endpoint;
+						},
+						set endpoint($$value) {
+							endpoint = $$value;
+							$$settled = false;
+						},
+						get app() {
+							return app;
+						},
+						set app($$value) {
+							app = $$value;
+							$$settled = false;
+						}
+					});
+				} else if (endpoint?.handler == "SQL_BULK_I") {
+					$$renderer.push("<!--[7-->");
 					SqlBulkInsert($$renderer, {
 						onchange: onChangeValueHandler,
 						get endpoint() {
@@ -13035,7 +13287,7 @@ function Editor($$renderer, $$props) {
 						}
 					});
 				} else if (endpoint?.handler == "FETCH") {
-					$$renderer.push("<!--[7-->");
+					$$renderer.push("<!--[8-->");
 					Fetch($$renderer, {
 						onchange: onChangeValueHandler,
 						get endpoint() {
@@ -13047,7 +13299,7 @@ function Editor($$renderer, $$props) {
 						}
 					});
 				} else if (endpoint?.handler == "FUNCTION") {
-					$$renderer.push("<!--[8-->");
+					$$renderer.push("<!--[9-->");
 					CustomFunction($$renderer, {
 						onchange: onChangeValueHandler,
 						get endpoint() {
@@ -13059,7 +13311,7 @@ function Editor($$renderer, $$props) {
 						}
 					});
 				} else if (endpoint?.handler == "TEXT") {
-					$$renderer.push("<!--[9-->");
+					$$renderer.push("<!--[10-->");
 					Text($$renderer, {
 						onchange: onChangeValueHandler,
 						get endpoint() {
@@ -13071,7 +13323,7 @@ function Editor($$renderer, $$props) {
 						}
 					});
 				} else if (endpoint?.handler == "MONGODB") {
-					$$renderer.push("<!--[10-->");
+					$$renderer.push("<!--[11-->");
 					Mongodb($$renderer, {
 						onchange: onChangeValueHandler,
 						get endpoint() {
@@ -13082,7 +13334,7 @@ function Editor($$renderer, $$props) {
 							$$settled = false;
 						}
 					});
-				} else if (endpoint?.handler == "NOAPPLY" || endpoint?.handler == "No Handler" || endpoint?.handler == "NA") $$renderer.push(`<!--[11--><div>No Handler</div>`);
+				} else if (endpoint?.handler == "NOAPPLY" || endpoint?.handler == "No Handler" || endpoint?.handler == "NA") $$renderer.push(`<!--[12--><div>No Handler</div>`);
 				else $$renderer.push(`<!--[-1--><div>No Handler</div>`);
 				$$renderer.push(`<!--]--></div>`);
 			} else $$renderer.push("<!--[-1-->");
@@ -13233,11 +13485,17 @@ function Editor($$renderer, $$props) {
 				methodDisabled: true,
 				onchange: (d) => {
 					endpoint.data_test = ensureDataTestShape(d.data);
-					if (d.last_response) endpoint.data_test.last_response = {
-						data: getResultLimited(d.last_response.data),
-						sizeKBResponse: d.last_response.sizeKBResponse,
-						MimeType: d.last_response.MimeType
-					};
+					if (d.last_response) {
+						const last = d.last_response;
+						endpoint.data_test.last_response = {
+							data: getResultLimited(last.data),
+							sizeKBResponse: last.sizeKBResponse,
+							MimeType: last.MimeType ?? last.contentType ?? "",
+							status: last.status ?? null,
+							statusText: last.statusText ?? "",
+							fileName: last.fileName ?? null
+						};
+					}
 				},
 				get data() {
 					return endpoint.data_test;
@@ -13264,6 +13522,7 @@ function Editor($$renderer, $$props) {
 					SaveDeploy($$renderer, {
 						left: [endpoint_path],
 						onsavedeploy: async () => {
+							dirty = false;
 							if (!validateResource) {
 								deploying.show = true;
 								deploying.error = true;
@@ -13279,6 +13538,7 @@ function Editor($$renderer, $$props) {
 							} else await saveEndpoint();
 						},
 						oncancel: () => {
+							dirty = false;
 							idendpoint = void 0;
 							showEditor = false;
 						},
@@ -13287,6 +13547,13 @@ function Editor($$renderer, $$props) {
 						},
 						set deploying($$value) {
 							deploying = $$value;
+							$$settled = false;
+						},
+						get dirty() {
+							return dirty;
+						},
+						set dirty($$value) {
+							dirty = $$value;
 							$$settled = false;
 						}
 					});
@@ -13404,9 +13671,19 @@ function Endpoints($$renderer, $$props) {
 						rt1
 					],
 					ondeleterow: (data) => {
-						if (confirm("Do you want to delete the endpoints selected? - NO IMPLEMENTED")) app.endpoints = app.endpoints.filter((item) => {
-							return !data.rows.some((element) => element.idendpoint == item.idendpoint);
-						});
+						if (confirm("Do you want to delete the endpoints selected?")) {
+							const rows = data.rows || [];
+							Promise.all(rows.map((element) => DeleteEndpoint(element.idendpoint).then((result) => {
+								if (!result || result.result?.idapp !== app?.idapp) notify.push({
+									message: `Error deleting endpoint ${element.idendpoint}`,
+									color: "danger"
+								});
+							}))).finally(() => {
+								app.endpoints = app.endpoints.filter((item) => {
+									return !rows.some((element) => element.idendpoint == item.idendpoint);
+								});
+							});
+						}
 					},
 					onnewrow: () => {
 						if (idapp && idapp.length > 5) {
@@ -13843,7 +14120,7 @@ function Interval_tasks($$renderer, $$props) {
 			max_failed_attempts: {
 				label: "Max fails",
 				decorator: {
-					component: void 0,
+					component: TextLimit,
 					props: { suffix: (row) => row?.disabled_by === "system" ? " ⚠ Suspended by errors" : "" }
 				}
 			},
