@@ -7432,7 +7432,7 @@ var ChartWidgets = {
 	TimeSeries
 };
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/version.js
-var version = "9.5.15";
+var version = "9.5.16";
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/login/index.svelte
 function Login($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
