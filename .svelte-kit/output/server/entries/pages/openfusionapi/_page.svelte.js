@@ -178,38 +178,77 @@ function get(store) {
 }
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/stores.js
 /**
+* @typedef {import('../../types/models.js').SessionState} SessionState
+* @typedef {import('../../types/models.js').SystemEndpointsStatus} SystemEndpointsStatus
+* @typedef {import('../../types/models.js').ServerModelChangedEvent} ServerModelChangedEvent
+* @typedef {import('../../types/models.js').IntervalTaskEvent} IntervalTaskEvent
+* @typedef {import('../../types/models.js').BotStatusChangedEvent} BotStatusChangedEvent
+* @typedef {import('../../types/models.js').BotChangedEvent} BotChangedEvent
+* @typedef {import('../../types/models.js').SelectOption} SelectOption
+* @typedef {import('../../types/models.js').AppVarRow} AppVarRow
+*/
+/**
 * Emite eventos de autenticación globales.
 * Valores posibles:
 *   null
 *   { type: 'unauthorized' }
 *   { type: 'token_expiring', minutesLeft: number }
+* @type {import('svelte/store').Writable<{type: string, minutesLeft?: number}|null>}
 */
 var authEventStore = writable(null);
+/** @type {import('svelte/store').Writable<SessionState>} */
 var userStore = writable({});
+/** @type {import('svelte/store').Writable<SystemEndpointsStatus>} */
 var statusSystemEndpointsStore = writable({});
-var listMethodStore = writable({});
+/** @type {import('svelte/store').Writable<Array<{id: string, value: string, enabled?: boolean, description?: string}>>} */
+var listMethodStore = writable([]);
+/** @type {import('svelte/store').Writable<Array<{id: string, value: string|number, enabled?: boolean, description?: string, css_class?: string, css_icon?: string, modules?: unknown}>>} */
 var listHandlerStore = writable([]);
-var listFunctionStoreDev = writable({});
-var listFunctionStoreQA = writable({});
-var listFunctionStorePRD = writable({});
-var listAppVars = writable({});
+/** @type {import('svelte/store').Writable<Array<{id: string, value: string|number}>>} */
+var listFunctionStoreDev = writable([]);
+/** @type {import('svelte/store').Writable<Array<{id: string, value: string|number}>>} */
+var listFunctionStoreQA = writable([]);
+/** @type {import('svelte/store').Writable<Array<{id: string, value: string|number}>>} */
+var listFunctionStorePRD = writable([]);
+/** @type {import('svelte/store').Writable<Array<AppVarRow>>} */
+var listAppVars = writable([]);
+/** @type {import('svelte/store').Writable<Record<string, number>>} */
 var storeCacheSize = writable({});
-var storeUsersList = writable({});
+/** @type {import('svelte/store').Writable<Array<Record<string, unknown>>>} */
+var storeUsersList = writable([]);
+/** @type {import('svelte/store').Writable<Record<string, Record<string, number>>>} */
 var storeCountResponseStatusCode = writable({});
+/** @type {import('svelte/store').Writable<Record<string, unknown>>} */
 var storeEndpointOnStart = writable({});
+/** @type {import('svelte/store').Writable<Record<string, unknown>>} */
 var storeEndpointOnComplete = writable({});
 /**
 * Cambio de estado runtime de un bot (bot_status_changed).
 * Contiene { idbot, idapp, runtime_status, failure_count, ... } para que la tabla
 * y el editor de bots actualicen sin recarga.
+* @type {import('svelte/store').Writable<BotStatusChangedEvent|null>}
 */
 var storeBotStatusChanged = writable(null);
 /**
 * Cambio estructural en la tabla de bots (bot_changed): alta, edición o borrado.
 * Contiene { idbot, idapp, action } para que la lista se recargue.
+* @type {import('svelte/store').Writable<BotChangedEvent|null>}
 */
 var storeBotChanged = writable(null);
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/utils.js
+/**
+* @typedef {import('../../types/models.js').DataTest} DataTest
+* @typedef {import('../../types/models.js').EndpointRow} EndpointRow
+* @typedef {object} HandlerParam
+* @property {string} [id]
+* @property {string} [label]
+* @property {string|number} [value]
+* @property {boolean} [enabled]
+* @property {string} [description]
+* @property {string} [css_class]
+* @property {string} [css_icon]
+* @property {unknown} [modules]
+*/
 /**
 * Normaliza un `data_test` a la forma canónica que espera el `RESTTester` y que
 * el backend reconoce como suya: `query`/`headers` como arrays y `body`/`auth`
@@ -220,6 +259,8 @@ var storeBotChanged = writable(null);
 * traiga ninguna señal del Tester, y un `body`/`auth` vacío sin `selection` era
 * justo el disparador de que la configuración de query/headers acabara dentro
 * del Body como JSON.
+* @param {Partial<DataTest>|null|undefined} data_test
+* @returns {DataTest}
 */
 var ensureDataTestShape = (data_test) => {
 	const dt = data_test && typeof data_test === "object" && !Array.isArray(data_test) ? data_test : {};
@@ -231,32 +272,87 @@ var ensureDataTestShape = (data_test) => {
 	if (typeof dt.auth.selection !== "number") dt.auth.selection = 0;
 	return dt;
 };
+/**
+* @param {string} handler
+* @returns {HandlerParam|undefined}
+*/
 var getHandlerParams = (handler) => {
 	const list = get(listHandlerStore);
 	return Array.isArray(list) ? list.find((item) => item.id == handler) : {};
 };
+/**
+* @param {unknown} value
+* @param {unknown} new_value
+* @returns {boolean}
+*/
 var equalObjs = (value, new_value) => {
 	return (typeof new_value == "object" ? JSON.stringify(new_value) : new_value) == (typeof value == "object" ? JSON.stringify(value) : value);
 };
+/**
+* @param {string} method
+* @param {string} app
+* @param {string} resource
+* @param {string} environment
+* @returns {string}
+*/
 function createEndpoint(method, app, resource, environment) {
 	return `${method == "WS" ? "/ws/" : "/api/"}${app}${resource}/${environment}`;
 }
+/**
+* @template {object} T
+* @param {T} target
+* @param {unknown} source
+* @returns {T}
+*/
 var mergeSourceOverwrite = (target, source) => {
 	if (target === source) return target;
 	if (source == null || typeof source !== "object") return target;
 	if (target == null || typeof target !== "object") return source;
+	/**
+	* @param {unknown} val
+	* @returns {val is Record<string, unknown>}
+	*/
 	const isPlainObject = (val) => val !== null && typeof val === "object" && !Array.isArray(val);
+	/** @type {Record<string, unknown>} */
 	const result = { ...target };
-	for (const key of Object.keys(source)) {
-		const srcVal = source[key];
-		const tarVal = target[key];
+	const targetRecord = target;
+	const sourceRecord = source;
+	for (const key of Object.keys(sourceRecord)) {
+		const srcVal = sourceRecord[key];
+		const tarVal = targetRecord[key];
 		if (key === "data_test" && isPlainObject(srcVal)) result[key] = ensureDataTestShape(mergeSourceOverwrite(tarVal || {}, srcVal));
 		else if (isPlainObject(tarVal) && isPlainObject(srcVal)) result[key] = mergeSourceOverwrite(tarVal, srcVal);
 		else result[key] = srcVal;
 	}
 	return result;
 };
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/errors.js
+/**
+* Normaliza los errores capturados en `catch` (que TypeScript tipa como `unknown`).
+*/
+/**
+* Devuelve un mensaje legible para cualquier valor lanzado.
+* @param {unknown} error
+* @returns {string}
+*/
+function getErrorMessage(error) {
+	if (error instanceof Error) return error.message;
+	if (typeof error === "string") return error;
+	if (error && typeof error === "object" && "message" in error) {
+		const message = error.message;
+		if (typeof message === "string") return message;
+		if (message != null) return String(message);
+	}
+	return String(error);
+}
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/request.js
+/**
+* @typedef {import('../../types/models.js').EndpointRow} EndpointRow
+*/
+/**
+* Cuerpo/consulta JSON que la GUI reenvía tal cual al backend.
+* @typedef {Record<string, unknown>|Array<unknown>} JsonBody
+*/
 /**
 * Verifica el status HTTP de una respuesta.
 * Si es 401, emite el evento `unauthorized` al authEventStore y lanza un error.
@@ -290,16 +386,25 @@ var ConfirmResetPassword = async (data) => {
 		data
 	})).json();
 };
+/**
+* @param {number|string} idapp
+*/
 var GetAPIKeys = async (idapp) => {
 	let apiKeys = [];
 	apiKeys = await checkStatus(await new uFetch(url_paths.APIKeys).get({ data: { idapp } })).json();
 	return apiKeys;
 };
+/**
+* @param {JsonBody} data
+*/
 var GetAPIClients = async (data) => {
 	let apiKeys = [];
 	apiKeys = await checkStatus(await new uFetch(url_paths.APIClients).get({ data })).json();
 	return apiKeys;
 };
+/**
+* @param {JsonBody} data
+*/
 var ChangeAPIClientPassword = async (data) => {
 	return await checkStatus(await new uFetch(url_paths.APIClientChangePassword).post({ data })).json();
 };
@@ -334,6 +439,10 @@ var getListMethods = async (token) => {
 		listMethodStore.set(data);
 	}
 };
+/**
+* @param {string} handler
+* @param {string} [token]
+*/
 var getHandlerDocs = async (handler, token) => {
 	if (handler) return await checkStatus(await new uFetch().get({
 		url: url_paths.apiDoc,
@@ -341,12 +450,18 @@ var getHandlerDocs = async (handler, token) => {
 	})).json();
 	else return {};
 };
+/**
+* @param {JsonBody} data
+*/
 var migrateAppVars = async (data) => {
 	return await checkStatus(await new uFetch().post({
 		url: url_paths.migrateAppVars,
 		data
 	})).json();
 };
+/**
+* @param {number|string} [idendpoint]
+*/
 var DeleteEndpoint = async (idendpoint) => {
 	if (!idendpoint) return {};
 	return await checkStatus(await new uFetch().DELETE({
@@ -354,15 +469,19 @@ var DeleteEndpoint = async (idendpoint) => {
 		data: { idendpoint }
 	})).json();
 };
+/**
+* @param {EndpointRow} endpoint
+*/
 var EndpointSave = async (endpoint) => {
 	if (endpoint.handler == "TEXT" && endpoint.File) {
 		let uf = new uFetch();
 		let formData = new FormData();
 		formData.append("file", endpoint.File);
-		for (const key in endpoint) if (key !== "File") {
-			let value = endpoint[key];
+		const fields = endpoint;
+		for (const key in fields) if (key !== "File") {
+			let value = fields[key];
 			if (typeof value === "object" && value !== null) formData.append(key, JSON.stringify(value));
-			else formData.append(key, value);
+			else formData.append(key, String(value));
 		}
 		return await checkStatus(await uf.post({
 			url: url_paths.endpoint,
@@ -373,6 +492,10 @@ var EndpointSave = async (endpoint) => {
 		data: endpoint
 	})).json();
 };
+/**
+* @param {Record<string, unknown>} options
+* @param {string} [token]
+*/
 var getLogs = async (options, token) => {
 	let uf = new uFetch();
 	if (options) return await checkStatus(await uf.get({
@@ -380,6 +503,10 @@ var getLogs = async (options, token) => {
 		data: options
 	})).json();
 };
+/**
+* @param {number|string} idapp
+* @param {boolean} [setStoreListAppVars]
+*/
 var GetAppVars = async (idapp, setStoreListAppVars = false) => {
 	let resp = await checkStatus(await new uFetch().get({
 		url: url_paths.appvarsbyidapp,
@@ -391,18 +518,30 @@ var GetAppVars = async (idapp, setStoreListAppVars = false) => {
 var getListApps = async () => {
 	return await checkStatus(await new uFetch().get({ url: url_paths.apps_get_list })).json();
 };
+/**
+* @param {JsonBody} data
+* @param {string} [token]
+*/
 var changeUserPassword = async (data, token) => {
 	return await checkStatus(await new uFetch().post({
 		url: url_paths.changeUserPassword,
 		data
 	})).json();
 };
+/**
+* @param {boolean} restore
+* @returns {Promise<import('../../types/models.js').SystemEndpointsStatus>}
+*/
 var restoreSystemEndpoints = async (restore) => {
 	return await checkStatus(await new uFetch().put({
 		url: url_paths.restoreSystemEndpoints,
 		data: { restore }
 	})).json();
 };
+/**
+* @param {JsonBody} data
+* @param {string} [token]
+*/
 var ChangeSystemUserPassword = async (data, token) => {
 	let uf = new uFetch();
 	if (token) uf.setBearerAuthorization(token);
@@ -411,6 +550,9 @@ var ChangeSystemUserPassword = async (data, token) => {
 		data
 	})).json();
 };
+/**
+* @param {JsonBody} data
+*/
 var ResetSystemUserPassword = async (data) => {
 	return await checkStatus(await new uFetch().post({
 		url: url_paths.systemUserResetPassword,
@@ -544,8 +686,11 @@ function logJwtExpiration(token) {
 * Mirrors the backend permissions.js logic.
 */
 /**
+* @typedef {import('../../types/models.js').UserCtrl} UserCtrl
+*/
+/**
 * Core permission check.
-* @param {object|null} userCtrl - User.ctrl value
+* @param {UserCtrl|null|undefined} userCtrl - User.ctrl value
 * @param {string} environment - dev|qa|prd
 * @param {string} resource - resource name (users, apiclients, endpoints, etc.)
 * @param {string} action - read|create|edit|delete
@@ -564,7 +709,7 @@ function hasPermission(userCtrl, environment, resource, action) {
 }
 /**
 * Checks permission using the current user from the store.
-* @param {object} user - userStore.user (contains ctrl)
+* @param {{ctrl?: UserCtrl}|null|undefined} user - userStore.user (contains ctrl)
 * @param {string} environment
 * @param {string} resource
 * @param {string} action
@@ -688,7 +833,7 @@ function TreeNode_1($$renderer, $$props) {
 					let item = each_array[index];
 					$$renderer.push(`<li class="svelte-nx9cj5">`);
 					TreeNode_1($$renderer, {
-						key: index,
+						key: String(index),
 						value: item
 					});
 					$$renderer.push(`<!----></li>`);
@@ -701,7 +846,7 @@ function TreeNode_1($$renderer, $$props) {
 					let [childKey, childValue] = each_array_1[$$index_1];
 					$$renderer.push(`<li class="svelte-nx9cj5">`);
 					TreeNode_1($$renderer, {
-						key: childKey,
+						key: String(childKey),
 						value: childValue
 					});
 					$$renderer.push(`<!----></li>`);
@@ -742,7 +887,7 @@ function TreeView($$renderer, $$props) {
 // node_modules/@rdsslab/svelte-components/dist/Table/Column/Auto.svelte
 function Auto($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
-		let { value = void 0, onclick_cell, row = void 0, editInline = false, css_cell, onchangecell } = $$props;
+		let { value = void 0, onclick_cell, row = void 0, editInline = false, css_cell, onchangecell, custom } = $$props;
 		let $$settled = true;
 		let $$inner_renderer;
 		function $$render_inner($$renderer) {
@@ -752,6 +897,7 @@ function Auto($$renderer, $$props) {
 					editInline,
 					css_cell,
 					onclick_cell,
+					custom,
 					get value() {
 						return value;
 					},
@@ -785,7 +931,6 @@ function Auto($$renderer, $$props) {
 			} else if (value && (typeof value === "object" || Array.isArray(value))) {
 				$$renderer.push("<!--[2-->");
 				TreeView($$renderer, {
-					editInline,
 					css_cell,
 					onclick_cell,
 					get value() {
@@ -841,13 +986,16 @@ var Notifications$1 = class {
 	}
 	/**
 	* Adds a new notification to the global store and automatically schedules its removal.
-	* 
+	*
 	* @param {Object} new_notify - The notification object to add.
 	* @param {string} [new_notify.id] - Optional ID. One will be generated if not provided.
 	* @param {number} [new_notify.timeout=5000] - Duration in milliseconds before the notification is automatically removed.
 	* @param {string} [new_notify.message] - The message text of the notification.
 	* @param {string} [new_notify.title] - The title of the notification.
 	* @param {string} [new_notify.color] - The color type: 'success', 'danger', 'warning', 'info'.
+	* @param {number} [new_notify._remaining] - Remaining time in milliseconds.
+	* @param {number} [new_notify._lastTick] - Last tick timestamp.
+	* @param {boolean} [new_notify.paused] - Paused state.
 	*/
 	push(new_notify) {
 		new_notify.id = `${Date.now()}-${Math.floor(Math.random() * 1e3)}`;
@@ -893,7 +1041,7 @@ var Notifications$1 = class {
 	}
 	/**
 	* Removes a notification from the global notifications store by its ID.
-	* 
+	*
 	* @param {string} id - The unique identifier of the notification to be removed.
 	*/
 	removeNotify(id) {
@@ -910,7 +1058,11 @@ var Notifications$1 = class {
 };
 // node_modules/@rdsslab/svelte-components/dist/Level/Level.svelte
 function Level($$renderer, $$props) {
-	let { left, right } = $$props;
+	/**
+	* @param {Array<() => import('svelte').Snippet> | null} left - Snippets para la columna izquierda.
+	* @param {Array<() => import('svelte').Snippet> | null} right - Snippets para la columna derecha.
+	*/
+	let { left = null, right = null } = $$props;
 	$$renderer.push(`<nav class="nav_margin svelte-6urat2"><div class="responsive-columns svelte-6urat2"><div class="responsive-column-left svelte-6urat2"><div class="container_left svelte-6urat2">`);
 	if (Array.isArray(left)) {
 		$$renderer.push(`<!--[0--><!--[-->`);
@@ -1475,12 +1627,11 @@ function sha256(s) {
 	function core_sha256(m, l) {
 		var K = new Array(1116352408, 1899447441, 3049323471, 3921009573, 961987163, 1508970993, 2453635748, 2870763221, 3624381080, 310598401, 607225278, 1426881987, 1925078388, 2162078206, 2614888103, 3248222580, 3835390401, 4022224774, 264347078, 604807628, 770255983, 1249150122, 1555081692, 1996064986, 2554220882, 2821834349, 2952996808, 3210313671, 3336571891, 3584528711, 113926993, 338241895, 666307205, 773529912, 1294757372, 1396182291, 1695183700, 1986661051, 2177026350, 2456956037, 2730485921, 2820302411, 3259730800, 3345764771, 3516065817, 3600352804, 4094571909, 275423344, 430227734, 506948616, 659060556, 883997877, 958139571, 1322822218, 1537002063, 1747873779, 1955562222, 2024104815, 2227730452, 2361852424, 2428436474, 2756734187, 3204031479, 3329325298);
 		var HASH = new Array(1779033703, 3144134277, 1013904242, 2773480762, 1359893119, 2600822924, 528734635, 1541459225);
-		var W = new Array(64);
-		var a, b, c, d, e, f, g, h, i, j;
+		var W = new Array(64), a, b, c, d, e, f, g, h;
 		var T1, T2;
 		m[l >> 5] |= 128 << 24 - l % 32;
 		m[(l + 64 >> 9 << 4) + 15] = l;
-		for (var i = 0; i < m.length; i += 16) {
+		for (let i = 0; i < m.length; i += 16) {
 			a = HASH[0];
 			b = HASH[1];
 			c = HASH[2];
@@ -1489,7 +1640,7 @@ function sha256(s) {
 			f = HASH[5];
 			g = HASH[6];
 			h = HASH[7];
-			for (var j = 0; j < 64; j++) {
+			for (let j = 0; j < 64; j++) {
 				if (j < 16) W[j] = m[j + i];
 				else W[j] = safe_add(safe_add(safe_add(Gamma1256(W[j - 2]), W[j - 7]), Gamma0256(W[j - 15])), W[j - 16]);
 				T1 = safe_add(safe_add(safe_add(safe_add(h, Sigma1256(e)), Ch(e, f, g)), K[j]), W[j]);
@@ -1517,7 +1668,7 @@ function sha256(s) {
 	function str2binb(str) {
 		var bin = Array();
 		var mask = (1 << chrsz) - 1;
-		for (var i = 0; i < str.length * chrsz; i += chrsz) bin[i >> 5] |= (str.charCodeAt(i / chrsz) & mask) << 24 - i % 32;
+		for (let i = 0; i < str.length * chrsz; i += chrsz) bin[i >> 5] |= (str.charCodeAt(i / chrsz) & mask) << 24 - i % 32;
 		return bin;
 	}
 	function Utf8Encode(string) {
@@ -1540,7 +1691,7 @@ function sha256(s) {
 	function binb2hex(binarray) {
 		var hex_tab = "0123456789abcdef";
 		var str = "";
-		for (var i = 0; i < binarray.length * 4; i++) str += hex_tab.charAt(binarray[i >> 2] >> (3 - i % 4) * 8 + 4 & 15) + hex_tab.charAt(binarray[i >> 2] >> (3 - i % 4) * 8 & 15);
+		for (let i = 0; i < binarray.length * 4; i++) str += hex_tab.charAt(binarray[i >> 2] >> (3 - i % 4) * 8 + 4 & 15) + hex_tab.charAt(binarray[i >> 2] >> (3 - i % 4) * 8 & 15);
 		return str;
 	}
 	s = Utf8Encode(s);
@@ -2329,7 +2480,7 @@ function Basic$1($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		/**
 		* Represents the parameters supported by the basic Input component.
-		* 
+		*
 		* @typedef {Object} InputProps
 		* @property {string} [placeholder=''] - Text that appears in the input element when it has no value set.
 		* @property {string} [type='text'] - The type of input to render ('text', 'number', 'date', 'datetime-local', 'file', 'checkbox', 'boolean').
@@ -2384,6 +2535,8 @@ function Basic$1($$renderer, $$props) {
 				$$renderer.push("<!--[0-->");
 				FileUpload($$renderer, spread_props([
 					{
+						url,
+						multiple,
 						onchange,
 						onselect,
 						onupload
@@ -2402,20 +2555,6 @@ function Basic$1($$renderer, $$props) {
 						},
 						set accept($$value) {
 							accept = $$value;
-							$$settled = false;
-						},
-						get url() {
-							return url;
-						},
-						set url($$value) {
-							url = $$value;
-							$$settled = false;
-						},
-						get multiple() {
-							return multiple;
-						},
-						set multiple($$value) {
-							multiple = $$value;
 							$$settled = false;
 						},
 						get showUploadButton() {
@@ -2575,6 +2714,7 @@ function Tab($$renderer, $$props) {
 function EditorCode($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		const dispatch = createEventDispatcher();
+		/** @type {any} */
 		let code = fallback($$props["code"], "");
 		let left = fallback($$props["left"], null);
 		let right = fallback($$props["right"], null);
@@ -2864,13 +3004,14 @@ function BasicSelect($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		/**
 		* Represents the parameters supported by the BasicSelect component.
-		* 
+		*
 		* @typedef {Object} BasicSelectProps
 		* @property {string|null} [label=''] - The static text label rendered as an addon before the select dropdown.
 		* @property {boolean} [isExpanded=false] - Whether the control should expand to fill the available width.
 		* @property {string|number|any} [option=''] - The currently selected option value. Bound bidirectionally.
 		* @property {Array<{id: string|number, value: string, enabled?: boolean}>} [options=[{ id: 'TEST', value: 'TEST', enabled: true }]] - An array of objects representing the select options.
 		* @property {string} [css_class=' is-small '] - CSS class to apply for styling, specifically related to sizing in Bulma (e.g., 'is-small', 'is-normal').
+		* @property {boolean} [disabled=false] - Disables the select control.
 		* @property {function({value: any}): void} [onselect] - Callback triggered when the user selection changes, receives the selected value.
 		*/
 		/** @type {BasicSelectProps & Record<string, any>} */
@@ -2878,7 +3019,7 @@ function BasicSelect($$renderer, $$props) {
 			id: "TEST",
 			value: `TEST`,
 			enabled: true
-		}], css_class = " is-small ", onselect = (s) => {} } = $$props;
+		}], css_class = " is-small ", disabled = false, onselect = (s) => {} } = $$props;
 		function handleClick() {
 			onselect({ value: option });
 		}
@@ -2888,7 +3029,8 @@ function BasicSelect($$renderer, $$props) {
 		$$renderer.push(`<!--]--> <p${attr_class(`control ${isExpanded ? "is-expanded" : ""}`)}><span${attr_class(`select ${stringify(css_class)}`)}>`);
 		$$renderer.select({
 			value: option,
-			onchange: handleClick
+			onchange: handleClick,
+			disabled
 		}, ($$renderer) => {
 			if (options && Array.isArray(options)) {
 				$$renderer.push(`<!--[0--><!--[-->`);
@@ -2909,7 +3051,8 @@ function BasicSelect($$renderer, $$props) {
 			isExpanded,
 			option,
 			options,
-			css_class
+			css_class,
+			disabled
 		});
 	});
 }
@@ -2947,7 +3090,10 @@ function Kv($$renderer, $$props) {
 		function add_item($$renderer) {
 			$$renderer.push(`<div class="field has-addons"><p class="control"><button class="button is-small"><span class="icon"><i class="fa-solid fa-plus"></i></span> <span>Add Parameter</span></button></p></div>`);
 		}
-		Level($$renderer, { right: [add_item] });
+		Level($$renderer, {
+			left: [],
+			right: [add_item]
+		});
 		$$renderer.push(`<!----> `);
 		if (Array.isArray(data)) {
 			$$renderer.push(`<!--[0--><!--[-->`);
@@ -3156,7 +3302,7 @@ function Body($$renderer, $$props) {
 				$$renderer.push("<!--[0-->");
 				{
 					function failed($$renderer, error) {
-						$$renderer.push(`<div><span class="icon-text"><span class="icon has-text-warning"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>${escape_html(error.message)}</span></span></div>`);
+						$$renderer.push(`<div><span class="icon-text"><span class="icon has-text-warning"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>${escape_html(error instanceof Error ? error.message : String(error))}</span></span></div>`);
 					}
 					$$renderer.boundary({ failed }, ($$renderer) => {
 						$$renderer.push(`<!--[-->`);
@@ -3185,7 +3331,7 @@ function Body($$renderer, $$props) {
 				$$renderer.push("<!--[0-->");
 				{
 					function failed($$renderer, error) {
-						$$renderer.push(`<div><span class="icon-text"><span class="icon has-text-warning"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>${escape_html(error.message)}</span></span></div>`);
+						$$renderer.push(`<div><span class="icon-text"><span class="icon has-text-warning"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>${escape_html(error instanceof Error ? error.message : String(error))}</span></span></div>`);
 					}
 					$$renderer.boundary({ failed }, ($$renderer) => {
 						$$renderer.push(`<!--[-->`);
@@ -3245,7 +3391,7 @@ function Body($$renderer, $$props) {
 				$$renderer.push("<!--[0-->");
 				{
 					function failed($$renderer, error) {
-						$$renderer.push(`<div><span class="icon-text"><span class="icon has-text-warning"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>${escape_html(error.message)}</span></span></div>`);
+						$$renderer.push(`<div><span class="icon-text"><span class="icon has-text-warning"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>${escape_html(error instanceof Error ? error.message : String(error))}</span></span></div>`);
 					}
 					$$renderer.boundary({ failed }, ($$renderer) => {
 						$$renderer.push(`<!--[-->`);
@@ -3441,7 +3587,7 @@ var MIME_MULTIPART$1 = "multipart/form-data";
 * @property {{key: string, value: string}[]} query
 * @property {{key: string, value: string}[]} headers  Headers efectivos (sin Authorization)
 * @property {{type: 'none'|'basic'|'bearer', username: string, password: string, token: string, configured: boolean}} auth
-* @property {{type: string, text: string|null, runtime: any, mime: string|null, fields: RestField[], hasFiles: boolean}} body
+* @property {{type: string, text: string|null, runtime: any, mime: string|null, fields: RestField[], hasFiles: boolean, hasBody?: boolean}} body
 * @property {string[]} warnings
 * @property {string[]} notices
 */
@@ -3622,9 +3768,7 @@ function buildRuntimeFormData(fields) {
 /**
 * Construye el modelo de solicitud a partir del estado actual de RESTTester.
 *
-* @param {{url?: string, method?: string, data?: Record<string, any>, baseUrl?: string}} options
-* @param {string} [options.baseUrl]  Base para absolutizar una URL relativa. Si no se
-*   pasa, la URL se queda como está (y se avisa) porque no hay forma de saber el host.
+* @param {{url?: string, method?: string, data?: Record<string, any>, baseUrl?: string}} options  Base para absolutizar una URL relativa. Si no se pasa, la URL se queda como está.
 * @returns {RestRequest}
 */
 function normalizeRequest({ url = "", method = "GET", data = {}, baseUrl = "" } = {}) {
@@ -4896,6 +5040,10 @@ function buildBody({ contentType, text, formFields, urlencodedParams, forcedType
 *
 * @returns {{method: string, url: string, data: object, warnings: string[], notices: string[]}}
 */
+/**
+* Arma el modelo de solicitud a partir de las partes parseadas.
+* @returns {{method: string, url: string, data: object, warnings: string[], notices: string[], name: string, format?: string}}
+*/
 function assemble({ method, url, headers = [], bodyText = "", formFields = null, urlencodedParams = null, extraQuery = [], forcedBodyType = null, auth: authOverride = null, warnings = [], notices = [], name = "", format = void 0 }) {
 	const wantedMethod = toText(method).toUpperCase();
 	const safeMethod = HTTP_METHODS.includes(wantedMethod) ? wantedMethod : "GET";
@@ -5241,8 +5389,8 @@ function unwrapCat(value) {
 	return match ? match[1].replace(/^\n/, "").replace(/\n$/, "") : value;
 }
 /**
-* Resuelve el valor de una opción de datos de curl, incluidos los heredocs
-* (`--data-binary @- <<'EOF'` y `--data-binary "$(cat <<'EOF' ...)"`).
+* Resuelve el valor de una opcion de datos de curl, incluidos los heredocs.
+* Maneja casos como data-binary y substitution.
 */
 function resolveCurlData(rawValue, peekValue, bodies, context) {
 	const peek = heredocIndexOf(peekValue);
@@ -6220,7 +6368,8 @@ function parseRequestFile(text, { fileName = "", format } = {}) {
 	return {
 		...PARSERS[detected](source, { fileName }),
 		format: detected,
-		fileName
+		fileName,
+		name: ""
 	};
 }
 // node_modules/@rdsslab/svelte-components/dist/RESTTester/index.svelte
@@ -6310,6 +6459,7 @@ function RESTTester($$renderer, $$props) {
 		}, onchange = () => {} } = $$props;
 		let response_as = "json";
 		let active_tab = 0;
+		/** @type {{ data: any; sizeKBResponse: number; contentType?: string; fileExtension?: string; fileName?: string; error?: string; MimeType?: string; status?: number; statusText?: string; }} */
 		let data_result = {
 			data: "",
 			sizeKBResponse: -1
@@ -6494,7 +6644,7 @@ function RESTTester($$renderer, $$props) {
 				$$renderer.push("<!--[0-->");
 				{
 					function failed($$renderer, error) {
-						$$renderer.push(`<div><span class="icon-text"><span class="icon has-text-warning"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>${escape_html(error.message)}</span></span></div>`);
+						$$renderer.push(`<div><span class="icon-text"><span class="icon has-text-warning"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>${escape_html(error instanceof Error ? error.message : String(error))}</span></span></div>`);
 					}
 					$$renderer.boundary({ failed }, ($$renderer) => {
 						$$renderer.push(`<!--[-->`);
@@ -6521,7 +6671,7 @@ function RESTTester($$renderer, $$props) {
 				$$renderer.push("<!--[0-->");
 				{
 					function failed($$renderer, error) {
-						$$renderer.push(`<div><span class="icon-text"><span class="icon has-text-warning"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>${escape_html(error.message)}</span></span></div>`);
+						$$renderer.push(`<div><span class="icon-text"><span class="icon has-text-warning"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>${escape_html(error instanceof Error ? error.message : String(error))}</span></span></div>`);
 					}
 					$$renderer.boundary({ failed }, ($$renderer) => {
 						$$renderer.push(`<!--[-->`);
@@ -6548,7 +6698,7 @@ function RESTTester($$renderer, $$props) {
 				$$renderer.push("<!--[0-->");
 				{
 					function failed($$renderer, error) {
-						$$renderer.push(`<div><span class="icon-text"><span class="icon has-text-warning"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>${escape_html(error.message)}</span></span></div>`);
+						$$renderer.push(`<div><span class="icon-text"><span class="icon has-text-warning"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>${escape_html(error instanceof Error ? error.message : String(error))}</span></span></div>`);
 					}
 					$$renderer.boundary({ failed }, ($$renderer) => {
 						$$renderer.push(`<!--[-->`);
@@ -6575,7 +6725,7 @@ function RESTTester($$renderer, $$props) {
 				$$renderer.push("<!--[0-->");
 				{
 					function failed($$renderer, error) {
-						$$renderer.push(`<div><span class="icon-text"><span class="icon has-text-warning"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>${escape_html(error.message)}</span></span></div>`);
+						$$renderer.push(`<div><span class="icon-text"><span class="icon has-text-warning"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>${escape_html(error instanceof Error ? error.message : String(error))}</span></span></div>`);
 					}
 					$$renderer.boundary({ failed }, ($$renderer) => {
 						$$renderer.push(`<!--[-->`);
@@ -6828,7 +6978,7 @@ function TextArea$1($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		/**
 		* Represents the properties available for the custom TextArea component.
-		* 
+		*
 		* @typedef {Object} TextAreaProps
 		* @property {string} [value=''] - Bound active text string content inside the text area.
 		* @property {string|null} [label] - Optional descriptive label rendered as a static add-on style above the text field.
@@ -7019,13 +7169,9 @@ function Viewer($$renderer, $$props) {
 			else if (!is_empty()) $$renderer.push(`<!--[1--><div${attr_class(`content ${stringify(content_class)}`)}>${html(html_string())}</div>`);
 			else $$renderer.push("<!--[-1-->");
 			$$renderer.push(`<!--]--></div>`);
-		} else {
-			$$renderer.push("<!--[-1-->");
-			if (is_empty() && empty_message) $$renderer.push(`<!--[0--><p class="has-text-grey">${escape_html(empty_message)}</p>`);
-			else if (!is_empty()) $$renderer.push(`<!--[1--><div${attr_class(`content ${stringify(content_class)}`)}>${html(html_string())}</div>`);
-			else $$renderer.push("<!--[-1-->");
-			$$renderer.push(`<!--]-->`);
-		}
+		} else if (is_empty() && empty_message) $$renderer.push(`<!--[1--><p class="has-text-grey">${escape_html(empty_message)}</p>`);
+		else if (!is_empty()) $$renderer.push(`<!--[2--><div${attr_class(`content ${stringify(content_class)}`)}>${html(html_string())}</div>`);
+		else $$renderer.push("<!--[-1-->");
 		$$renderer.push(`<!--]-->`);
 		bind_props($$props, {
 			markdown,
@@ -7045,7 +7191,7 @@ var MAX_RECONNECT_DELAY = 3e4;
 var OpenFusionWebsocketClient = class extends EventTarget {
 	/**
 	* Creates an instance of OpenFusionWebsocketClient.
-	* 
+	*
 	* @param {string} url - The WebSocket URL to connect to (e.g., 'wss://example.com/socket').
 	* @param {Object} [headers={}] - Optional headers. Note: standard browser WebSockets do not support custom headers natively.
 	*/
@@ -7062,7 +7208,7 @@ var OpenFusionWebsocketClient = class extends EventTarget {
 	}
 	/**
 	* Emits a custom event on this EventTarget instance.
-	* 
+	*
 	* @param {string} type - The name of the event to emit.
 	* @param {any} [detail] - Optional data payload attached to the event detail property.
 	*/
@@ -7071,7 +7217,7 @@ var OpenFusionWebsocketClient = class extends EventTarget {
 	}
 	/**
 	* Subscribes to an event emitted by this client (Node.js EventEmitter pattern style).
-	* 
+	*
 	* @param {string} eventName - The name of the event to listen for ('message', 'open', etc.).
 	* @param {function(any): void} callback - The callback function executed when the event is emitted. Receives the event `detail` as argument.
 	*/
@@ -7080,7 +7226,7 @@ var OpenFusionWebsocketClient = class extends EventTarget {
 	}
 	/**
 	* Unsubscribes from an event.
-	* 
+	*
 	* @param {string} eventName - The name of the event.
 	* @param {EventListener} callback - The original callback function to remove.
 	*/
@@ -7114,7 +7260,7 @@ var OpenFusionWebsocketClient = class extends EventTarget {
 			this.reconnect();
 		};
 		ws.onerror = (error) => {
-			console.error("❌ Error en WebSocket:", error.message);
+			console.error("❌ Error en WebSocket:", error instanceof Error ? error.message : String(error));
 		};
 	}
 	/**
@@ -7144,7 +7290,7 @@ var OpenFusionWebsocketClient = class extends EventTarget {
 	}
 	/**
 	* Sends a JSON stringified message through the WebSocket if it is open.
-	* 
+	*
 	* @param {Object} message - The message object to be stringified and sent.
 	*/
 	send(message) {
@@ -7153,7 +7299,7 @@ var OpenFusionWebsocketClient = class extends EventTarget {
 	}
 	/**
 	* Subscribes to a specific channel by sending a `/subscribe` message.
-	* 
+	*
 	* @param {string} channel - The name of the channel to subscribe to.
 	*/
 	subscribe(channel) {
@@ -7166,7 +7312,7 @@ var OpenFusionWebsocketClient = class extends EventTarget {
 	* Internal handler for parsing received WebSocket messages.
 	* Clears pong timeouts if a `/pong` message is received.
 	* Emits a 'message' event for all other data.
-	* 
+	*
 	* @param {Object} data - The parsed message data from the WebSocket.
 	* @param {string} [data.channel] - The channel of the message.
 	*/
@@ -7197,6 +7343,62 @@ var OpenFusionWebsocketClient = class extends EventTarget {
 // node_modules/@rdsslab/svelte-components/dist/Chart/index.svelte
 function Chart($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
+		/**
+		* Un ítem de serie de ECharts. El consumidor puede enviar cualquier
+		* configuración de serie (type, data, itemStyle, lineStyle, etc.) y el
+		* componente le añade los valores por defecto (line, smooth, large).
+		* @typedef {Object} EChartSeriesItem
+		* @property {string} [type]
+		* @property {string} [name]
+		* @property {boolean} [showSymbol]
+		* @property {boolean} [smooth]
+		* @property {boolean} [large]
+		* @property {Array<{value: Array, name?: string}>} [data]
+		* @property {Record<string, unknown>} [itemStyle]
+		* @property {Record<string, unknown>} [lineStyle]
+		* @property {Record<string, unknown>} [emphasis]
+		* @property {Record<string, unknown>} [encode]
+		* @property {Record<string, unknown>} [markPoint]
+		* @property {Record<string, unknown>} [markLine]
+		* @property {Record<string, unknown>} [markArea]
+		* @property {Record<string, unknown>} [z]
+		* @property {Record<string, unknown>} [zlevel]
+		* @property {Record<string, unknown>} [extra] Cualquier otra propiedad válida de ECharts.
+		*/
+		/**
+		* Opción de configuración de ECharts (`option`).
+		* @typedef {Object} EChartOption
+		* @property {Record<string, unknown>} [title]
+		* @property {Array<EChartSeriesItem>} [series]
+		* @property {Record<string, unknown>} [tooltip]
+		* @property {Record<string, unknown>} [legend]
+		* @property {Record<string, unknown>} [grid]
+		* @property {Record<string, unknown>} [xAxis]
+		* @property {Record<string, unknown>} [yAxis]
+		* @property {Array<Record<string, unknown>>} [dataZoom]
+		* @property {Array<string|number>} [color]
+		* @property {Record<string, unknown>} [toolbox]
+		* @property {Record<string, unknown>} [backgroundColor]
+		* @property {Record<string, unknown>} [extra] Cualquier otra propiedad válida de ECharts.
+		*/
+		/**
+		* Instancia de ECharts. Expone los métodos que usa el componente.
+		* @typedef {Object} EChartInstance
+		* @property {(option: Record<string, unknown>, opts?: Record<string, unknown>) => void} setOption
+		* @property {() => void} resize
+		* @property {() => void} dispose
+		* @property {(type: string, listener: Function) => void} on
+		* @property {(type: string, listener?: Function) => void} off
+		*/
+		/**
+		* @type {{
+		*   title?: string,
+		*   data?: Array<unknown>,
+		*   series?: Array<EChartSeriesItem>,
+		*   option?: Record<string, unknown>,
+		*   chart?: EChartInstance | null
+		* }}
+		*/
 		let { title = "Title", data = [], series = [], option = {}, chart = null } = $$props;
 		function handleResize() {}
 		onDestroy(() => {
@@ -7215,6 +7417,64 @@ function Chart($$renderer, $$props) {
 // node_modules/@rdsslab/svelte-components/dist/Chart/TimeSeries/index.svelte
 function TimeSeries($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
+		/**
+		* Un ítem de serie de ECharts.
+		* @typedef {Object} EChartSeriesItem
+		* @property {string} [type]
+		* @property {string} [name]
+		* @property {boolean} [showSymbol]
+		* @property {boolean} [smooth]
+		* @property {boolean} [large]
+		* @property {Array<{value: Array, name?: string}>} [data]
+		* @property {Record<string, unknown>} [itemStyle]
+		* @property {Record<string, unknown>} [lineStyle]
+		* @property {Record<string, unknown>} [extra]
+		*/
+		/**
+		* Opción de configuración de ECharts (`option`).
+		* @typedef {Object} EChartOption
+		* @property {Record<string, unknown>} [title]
+		* @property {Array<EChartSeriesItem>} [series]
+		* @property {Record<string, unknown>} [tooltip]
+		* @property {Record<string, unknown>} [legend]
+		* @property {Record<string, unknown>} [grid]
+		* @property {Record<string, unknown>} [xAxis]
+		* @property {Record<string, unknown>} [yAxis]
+		* @property {Array<Record<string, unknown>>} [dataZoom]
+		* @property {Array<string|number>} [color]
+		* @property {Record<string, unknown>} [toolbox]
+		* @property {Record<string, unknown>} [backgroundColor]
+		* @property {Record<string, unknown>} [extra]
+		*/
+		/**
+		* Instancia de ECharts.
+		* @typedef {Object} EChartInstance
+		* @property {(option: Record<string, unknown>, opts?: Record<string, unknown>) => void} setOption
+		* @property {() => void} resize
+		* @property {() => void} dispose
+		* @property {(type: string, listener: Function) => void} on
+		* @property {(type: string, listener?: Function) => void} off
+		*/
+		/**
+		* Parámetros que recibe el formateador de tooltip de ECharts.
+		* @typedef {Object} EChartTooltipParams
+		* @property {string} [seriesName]
+		* @property {Array} [value]
+		* @property {number} [dataIndex]
+		* @property {number} [seriesIndex]
+		* @property {Record<string, unknown>} [data]
+		* @property {string} [color]
+		*/
+		/**
+		* @type {{
+		*   title?: string,
+		*   data?: Array<unknown>,
+		*   series?: Array<EChartSeriesItem>,
+		*   chart?: EChartInstance | null,
+		*   tooltipFormatter?: (params: EChartTooltipParams | Array<EChartTooltipParams>) => string,
+		*   option?: EChartOption
+		* }}
+		*/
 		let { title = "Title", data = [], series = [], chart = null, tooltipFormatter = void 0, option = {
 			title: {
 				text: title,
@@ -7336,7 +7596,7 @@ function App($$renderer, $$props) {
 		/**
 		* Main wrapper component for the Application layout.
 		* Provides a responsive Sidebar, dynamic Top Nav, and a Main Content area.
-		* 
+		*
 		* @typedef {Object} AppBaseProps
 		* @property {string} [logoText='LOGO TEXT'] - The text displayed on the sidebar logo.
 		* @property {import('svelte').Snippet} [logoIcon] - A snippet providing the icon for the logo.
@@ -7398,13 +7658,7 @@ function App($$renderer, $$props) {
 			})}>`);
 			Level($$renderer, {
 				left: left_items_tnv(),
-				get right() {
-					return topRightNavBar;
-				},
-				set right($$value) {
-					topRightNavBar = $$value;
-					$$settled = false;
-				}
+				right: topRightNavBar
 			});
 			$$renderer.push(`<!----></span> <main${attr_class("main-content svelte-azjspp", void 0, {
 				"icons-only": sidebarState === "icons-only",
@@ -7439,8 +7693,14 @@ var ChartWidgets = {
 	TimeSeries
 };
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/version.js
-var version = "9.5.38";
+var version = "9.5.41";
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/login/index.svelte
+function recoveryTitle($$renderer) {
+	$$renderer.push(`<span class="has-text-info svelte-imjmcm"><i class="fa-solid fa-key svelte-imjmcm"></i> Password recovery</span>`);
+}
+function forcedChangeTitle($$renderer) {
+	$$renderer.push(`<span class="has-text-warning svelte-imjmcm"><i class="fa-solid fa-key svelte-imjmcm"></i> Password change required</span>`);
+}
 function Login($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let noty = new Notifications$1();
@@ -7449,7 +7709,7 @@ function Login($$renderer, $$props) {
 		let password = "";
 		let processing = {
 			waiting: false,
-			error: null
+			error: ""
 		};
 		let rateLimit = {
 			active: false,
@@ -7468,6 +7728,10 @@ function Login($$renderer, $$props) {
 		};
 		let changePwdMatch = derived(() => changePwd.newPassword.length > 0 && changePwd.newPassword === changePwd.repeat);
 		const environment = getDefaultEnvironment();
+		/**
+		* Canales de recuperación que reporta el backend.
+		* @typedef {{email?: {enabled?: boolean}, telegram?: {enabled?: boolean}}} RecoveryOptions
+		*/
 		let recoveryOptions = null;
 		let showRecovery = false;
 		let recoveryStep = "request";
@@ -7486,6 +7750,10 @@ function Login($$renderer, $$props) {
 			return [];
 		});
 		const recoveryPwdMatch = derived(() => recovery.newPassword.length > 0 && recovery.newPassword === recovery.repeat);
+		/**
+		* @param {number} seconds
+		* @returns {string}
+		*/
 		function formatRetryTime(seconds) {
 			const total = Math.max(0, Math.round(seconds || 0));
 			const mins = Math.floor(total / 60);
@@ -7520,7 +7788,7 @@ function Login($$renderer, $$props) {
 				recoveryStep = "code";
 			} catch (error) {
 				console.error(error);
-				recoveryError = error.message || "The code could not be sent. Try again later.";
+				recoveryError = getErrorMessage(error) || "The code could not be sent. Try again later.";
 			} finally {
 				recoveryBusy = false;
 			}
@@ -7567,7 +7835,7 @@ function Login($$renderer, $$props) {
 				} else recoveryError = data?.error || data?.message || "The code is invalid or has expired.";
 			} catch (error) {
 				console.error(error);
-				recoveryError = error.message || "The password could not be updated.";
+				recoveryError = getErrorMessage(error) || "The password could not be updated.";
 			} finally {
 				recoveryBusy = false;
 			}
@@ -7627,7 +7895,7 @@ function Login($$renderer, $$props) {
 				} else forcedChangeError = result?.error || result?.message || "Password could not be changed.";
 			} catch (error) {
 				console.error(error);
-				forcedChangeError = error.message || "Password could not be changed.";
+				forcedChangeError = getErrorMessage(error) || "Password could not be changed.";
 			}
 		}
 		function cancelForcedChange() {
@@ -7643,6 +7911,144 @@ function Login($$renderer, $$props) {
 				message: "You must change your password to continue.",
 				color: "warning"
 			});
+		}
+		function recoveryBody($$renderer) {
+			if (recoveryStep === "request") {
+				$$renderer.push(`<!--[0--><p class="mb-2 svelte-imjmcm">Enter your username and we will send a one-time verification code to your registered email or
+			Telegram.</p> `);
+				Basic$1($$renderer, {
+					label: "Username:",
+					get value() {
+						return recovery.username;
+					},
+					set value($$value) {
+						recovery.username = $$value;
+						$$settled = false;
+					}
+				});
+				$$renderer.push(`<!----> `);
+				if (recoveryChannels().length > 1) {
+					$$renderer.push(`<!--[0--><div class="mt-2 svelte-imjmcm">`);
+					BasicSelect($$renderer, {
+						label: "Delivery channel",
+						options: recoveryChannels(),
+						isExpanded: true,
+						get option() {
+							return recovery.channel;
+						},
+						set option($$value) {
+							recovery.channel = $$value;
+							$$settled = false;
+						}
+					});
+					$$renderer.push(`<!----></div>`);
+				} else $$renderer.push("<!--[-1-->");
+				$$renderer.push(`<!--]-->`);
+			} else {
+				$$renderer.push(`<!--[-1--><p class="mb-2 svelte-imjmcm">Enter the 6-digit code you received and choose your new password (minimum 8 characters).</p> `);
+				Basic$1($$renderer, {
+					label: "Username:",
+					disabled: true,
+					get value() {
+						return recovery.username;
+					},
+					set value($$value) {
+						recovery.username = $$value;
+						$$settled = false;
+					}
+				});
+				$$renderer.push(`<!----> `);
+				Basic$1($$renderer, {
+					label: "Verification code:",
+					type: "text",
+					maxlength: "6",
+					placeholder: "123456",
+					get value() {
+						return recovery.otp;
+					},
+					set value($$value) {
+						recovery.otp = $$value;
+						$$settled = false;
+					}
+				});
+				$$renderer.push(`<!----> `);
+				Basic$1($$renderer, {
+					label: "New password:",
+					type: "password",
+					get value() {
+						return recovery.newPassword;
+					},
+					set value($$value) {
+						recovery.newPassword = $$value;
+						$$settled = false;
+					}
+				});
+				$$renderer.push(`<!----> `);
+				Basic$1($$renderer, {
+					label: "Repeat new password:",
+					type: "password",
+					get value() {
+						return recovery.repeat;
+					},
+					set value($$value) {
+						recovery.repeat = $$value;
+						$$settled = false;
+					}
+				});
+				$$renderer.push(`<!----> `);
+				if (recovery.newPassword && !recoveryPwdMatch()) $$renderer.push(`<!--[0--><div class="notification is-danger is-light py-2 px-3 mt-2 svelte-imjmcm"><span class="icon-text svelte-imjmcm"><span class="icon svelte-imjmcm"><i class="fa-solid fa-triangle-exclamation svelte-imjmcm"></i></span> <span class="svelte-imjmcm">Passwords do not match.</span></span></div>`);
+				else $$renderer.push("<!--[-1-->");
+				$$renderer.push(`<!--]-->`);
+			}
+			$$renderer.push(`<!--]--> `);
+			if (recoveryInfo) $$renderer.push(`<!--[0--><div class="notification is-info is-light py-2 px-3 mt-2 svelte-imjmcm"><span class="icon-text svelte-imjmcm"><span class="icon svelte-imjmcm"><i class="fa-solid fa-circle-info svelte-imjmcm"></i></span> <span class="svelte-imjmcm">${escape_html(recoveryInfo)}</span></span></div>`);
+			else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--> `);
+			if (recoveryError) $$renderer.push(`<!--[0--><div class="notification is-danger is-light py-2 px-3 mt-2 svelte-imjmcm"><span class="icon-text svelte-imjmcm"><span class="icon svelte-imjmcm"><i class="fa-solid fa-triangle-exclamation svelte-imjmcm"></i></span> <span class="svelte-imjmcm">${escape_html(recoveryError)}</span></span></div>`);
+			else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]-->`);
+		}
+		function forcedChangeBody($$renderer) {
+			$$renderer.push(`<div class="notification is-warning is-light svelte-imjmcm"><span class="icon-text svelte-imjmcm"><span class="icon svelte-imjmcm"><i class="fa-solid fa-triangle-exclamation svelte-imjmcm"></i></span> <span class="svelte-imjmcm">For security reasons you must change your password before continuing.</span></span></div> `);
+			Basic$1($$renderer, {
+				label: "Current password:",
+				get value() {
+					return changePwd.current;
+				},
+				set value($$value) {
+					changePwd.current = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----> `);
+			Basic$1($$renderer, {
+				label: "New password:",
+				get value() {
+					return changePwd.newPassword;
+				},
+				set value($$value) {
+					changePwd.newPassword = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----> `);
+			Basic$1($$renderer, {
+				label: "Repeat new password:",
+				get value() {
+					return changePwd.repeat;
+				},
+				set value($$value) {
+					changePwd.repeat = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----> `);
+			if (changePwd.newPassword && !changePwdMatch()) $$renderer.push(`<!--[0--><div class="notification is-danger is-light py-2 px-3 mt-2 svelte-imjmcm"><span class="icon-text svelte-imjmcm"><span class="icon svelte-imjmcm"><i class="fa-solid fa-triangle-exclamation svelte-imjmcm"></i></span> <span class="svelte-imjmcm">Passwords do not match.</span></span></div>`);
+			else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--> `);
+			if (forcedChangeError) $$renderer.push(`<!--[0--><div class="notification is-danger is-light py-2 px-3 mt-2 svelte-imjmcm"><span class="icon-text svelte-imjmcm"><span class="icon svelte-imjmcm"><i class="fa-solid fa-triangle-exclamation svelte-imjmcm"></i></span> <span class="svelte-imjmcm">${escape_html(forcedChangeError)}</span></span></div>`);
+			else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]-->`);
 		}
 		let $$settled = true;
 		let $$inner_renderer;
@@ -7673,206 +8079,46 @@ function Login($$renderer, $$props) {
 				},
 				$$slots: { default: true }
 			});
-			$$renderer.push(`<!----> `);
-			{
-				function recoveryTitle($$renderer) {
-					$$renderer.push(`<span class="has-text-info svelte-imjmcm"><i class="fa-solid fa-key svelte-imjmcm"></i> Password recovery</span>`);
+			$$renderer.push(`<!---->  `);
+			Modal_1($$renderer, {
+				title: recoveryTitle,
+				body: recoveryBody,
+				closeOnEscape: !recoveryBusy,
+				closeOnBackground: !recoveryBusy,
+				label_accept: recoveryStep === "request" ? "Send code" : "Update password",
+				onaccept: async () => {
+					if (recoveryStep === "request") await submitRecoveryRequest();
+					else await submitRecoveryConfirm();
+				},
+				oncancel: closeRecovery,
+				get show() {
+					return showRecovery;
+				},
+				set show($$value) {
+					showRecovery = $$value;
+					$$settled = false;
 				}
-				function recoveryBody($$renderer) {
-					if (recoveryStep === "request") {
-						$$renderer.push(`<!--[0--><p class="mb-2 svelte-imjmcm">Enter your username and we will send a one-time verification code to your registered email
-				or Telegram.</p> `);
-						Basic$1($$renderer, {
-							label: "Username:",
-							get value() {
-								return recovery.username;
-							},
-							set value($$value) {
-								recovery.username = $$value;
-								$$settled = false;
-							}
-						});
-						$$renderer.push(`<!----> `);
-						if (recoveryChannels().length > 1) {
-							$$renderer.push(`<!--[0--><div class="mt-2 svelte-imjmcm">`);
-							BasicSelect($$renderer, {
-								label: "Delivery channel",
-								options: recoveryChannels(),
-								isExpanded: true,
-								get option() {
-									return recovery.channel;
-								},
-								set option($$value) {
-									recovery.channel = $$value;
-									$$settled = false;
-								}
-							});
-							$$renderer.push(`<!----></div>`);
-						} else $$renderer.push("<!--[-1-->");
-						$$renderer.push(`<!--]-->`);
-					} else {
-						$$renderer.push(`<!--[-1--><p class="mb-2 svelte-imjmcm">Enter the 6-digit code you received and choose your new password (minimum 8 characters).</p> `);
-						Basic$1($$renderer, {
-							label: "Username:",
-							disabled: true,
-							get value() {
-								return recovery.username;
-							},
-							set value($$value) {
-								recovery.username = $$value;
-								$$settled = false;
-							}
-						});
-						$$renderer.push(`<!----> `);
-						Basic$1($$renderer, {
-							label: "Verification code:",
-							type: "text",
-							maxlength: "6",
-							placeholder: "123456",
-							get value() {
-								return recovery.otp;
-							},
-							set value($$value) {
-								recovery.otp = $$value;
-								$$settled = false;
-							}
-						});
-						$$renderer.push(`<!----> `);
-						Basic$1($$renderer, {
-							label: "New password:",
-							type: "password",
-							get value() {
-								return recovery.newPassword;
-							},
-							set value($$value) {
-								recovery.newPassword = $$value;
-								$$settled = false;
-							}
-						});
-						$$renderer.push(`<!----> `);
-						Basic$1($$renderer, {
-							label: "Repeat new password:",
-							type: "password",
-							get value() {
-								return recovery.repeat;
-							},
-							set value($$value) {
-								recovery.repeat = $$value;
-								$$settled = false;
-							}
-						});
-						$$renderer.push(`<!----> `);
-						if (recovery.newPassword && !recoveryPwdMatch()) $$renderer.push(`<!--[0--><div class="notification is-danger is-light py-2 px-3 mt-2 svelte-imjmcm"><span class="icon-text svelte-imjmcm"><span class="icon svelte-imjmcm"><i class="fa-solid fa-triangle-exclamation svelte-imjmcm"></i></span> <span class="svelte-imjmcm">Passwords do not match.</span></span></div>`);
-						else $$renderer.push("<!--[-1-->");
-						$$renderer.push(`<!--]-->`);
-					}
-					$$renderer.push(`<!--]--> `);
-					if (recoveryInfo) $$renderer.push(`<!--[0--><div class="notification is-info is-light py-2 px-3 mt-2 svelte-imjmcm"><span class="icon-text svelte-imjmcm"><span class="icon svelte-imjmcm"><i class="fa-solid fa-circle-info svelte-imjmcm"></i></span> <span class="svelte-imjmcm">${escape_html(recoveryInfo)}</span></span></div>`);
-					else $$renderer.push("<!--[-1-->");
-					$$renderer.push(`<!--]--> `);
-					if (recoveryError) $$renderer.push(`<!--[0--><div class="notification is-danger is-light py-2 px-3 mt-2 svelte-imjmcm"><span class="icon-text svelte-imjmcm"><span class="icon svelte-imjmcm"><i class="fa-solid fa-triangle-exclamation svelte-imjmcm"></i></span> <span class="svelte-imjmcm">${escape_html(recoveryError)}</span></span></div>`);
-					else $$renderer.push("<!--[-1-->");
-					$$renderer.push(`<!--]-->`);
+			});
+			$$renderer.push(`<!---->  `);
+			Modal_1($$renderer, {
+				title: forcedChangeTitle,
+				body: forcedChangeBody,
+				closeOnEscape: false,
+				closeOnBackground: false,
+				onaccept: async () => {
+					await submitForcedChange();
+				},
+				oncancel: () => {
+					cancelForcedChange();
+				},
+				get show() {
+					return mustChangePassword;
+				},
+				set show($$value) {
+					mustChangePassword = $$value;
+					$$settled = false;
 				}
-				Modal_1($$renderer, {
-					title: recoveryTitle,
-					body: recoveryBody,
-					closeOnEscape: !recoveryBusy,
-					closeOnBackground: !recoveryBusy,
-					label_accept: recoveryStep === "request" ? "Send code" : "Update password",
-					onaccept: async () => {
-						if (recoveryStep === "request") await submitRecoveryRequest();
-						else await submitRecoveryConfirm();
-					},
-					oncancel: closeRecovery,
-					get show() {
-						return showRecovery;
-					},
-					set show($$value) {
-						showRecovery = $$value;
-						$$settled = false;
-					},
-					recoveryTitle,
-					recoveryBody,
-					$$slots: {
-						recoveryTitle: true,
-						recoveryBody: true
-					}
-				});
-			}
-			$$renderer.push(`<!----> `);
-			{
-				function forcedChangeTitle($$renderer) {
-					$$renderer.push(`<span class="has-text-warning svelte-imjmcm"><i class="fa-solid fa-key svelte-imjmcm"></i> Password change required</span>`);
-				}
-				function forcedChangeBody($$renderer) {
-					$$renderer.push(`<div class="notification is-warning is-light svelte-imjmcm"><span class="icon-text svelte-imjmcm"><span class="icon svelte-imjmcm"><i class="fa-solid fa-triangle-exclamation svelte-imjmcm"></i></span> <span class="svelte-imjmcm">For security reasons you must change your password before continuing.</span></span></div> `);
-					Basic$1($$renderer, {
-						label: "Current password:",
-						get value() {
-							return changePwd.current;
-						},
-						set value($$value) {
-							changePwd.current = $$value;
-							$$settled = false;
-						}
-					});
-					$$renderer.push(`<!----> `);
-					Basic$1($$renderer, {
-						label: "New password:",
-						get value() {
-							return changePwd.newPassword;
-						},
-						set value($$value) {
-							changePwd.newPassword = $$value;
-							$$settled = false;
-						}
-					});
-					$$renderer.push(`<!----> `);
-					Basic$1($$renderer, {
-						label: "Repeat new password:",
-						get value() {
-							return changePwd.repeat;
-						},
-						set value($$value) {
-							changePwd.repeat = $$value;
-							$$settled = false;
-						}
-					});
-					$$renderer.push(`<!----> `);
-					if (changePwd.newPassword && !changePwdMatch()) $$renderer.push(`<!--[0--><div class="notification is-danger is-light py-2 px-3 mt-2 svelte-imjmcm"><span class="icon-text svelte-imjmcm"><span class="icon svelte-imjmcm"><i class="fa-solid fa-triangle-exclamation svelte-imjmcm"></i></span> <span class="svelte-imjmcm">Passwords do not match.</span></span></div>`);
-					else $$renderer.push("<!--[-1-->");
-					$$renderer.push(`<!--]--> `);
-					if (forcedChangeError) $$renderer.push(`<!--[0--><div class="notification is-danger is-light py-2 px-3 mt-2 svelte-imjmcm"><span class="icon-text svelte-imjmcm"><span class="icon svelte-imjmcm"><i class="fa-solid fa-triangle-exclamation svelte-imjmcm"></i></span> <span class="svelte-imjmcm">${escape_html(forcedChangeError)}</span></span></div>`);
-					else $$renderer.push("<!--[-1-->");
-					$$renderer.push(`<!--]-->`);
-				}
-				Modal_1($$renderer, {
-					title: forcedChangeTitle,
-					body: forcedChangeBody,
-					closeOnEscape: false,
-					closeOnBackground: false,
-					onaccept: async () => {
-						await submitForcedChange();
-					},
-					oncancel: () => {
-						cancelForcedChange();
-					},
-					get show() {
-						return mustChangePassword;
-					},
-					set show($$value) {
-						mustChangePassword = $$value;
-						$$settled = false;
-					},
-					forcedChangeTitle,
-					forcedChangeBody,
-					$$slots: {
-						forcedChangeTitle: true,
-						forcedChangeBody: true
-					}
-				});
-			}
+			});
 			$$renderer.push(`<!---->`);
 		}
 		do {
@@ -7884,6 +8130,12 @@ function Login($$renderer, $$props) {
 	});
 }
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/static_values.js
+/**
+* @typedef {import('../../types/models.js').IntervalTaskRow} IntervalTaskRow
+* @typedef {import('../../types/models.js').BotRow} BotRow
+* @typedef {{label: string, background: string, icon: string, description: string}} StatusMeta
+*/
+/** @type {Array<{value: string, id: number}>} */
 var listAccessMethod = [
 	{
 		value: "Public",
@@ -7902,6 +8154,7 @@ var listAccessMethod = [
 		id: 3
 	}
 ];
+/** @type {Record<string, {color: string, icon: string}>} */
 var listHTTPMethods = {
 	GET: {
 		color: "primary",
@@ -7962,9 +8215,9 @@ var defaultEndpoint = {
 	},
 	resource: "",
 	code: "",
-	idapp: 0,
+	idapp: "",
 	description: "",
-	idendpoint: 0,
+	idendpoint: "",
 	cors: {},
 	headers_test: {},
 	data_test: {
@@ -7995,9 +8248,21 @@ var defaultEndpoint = {
 				properties: {},
 				additionalProperties: true
 			}
-		}
+		},
+		custom_data: {},
+		docs: "",
+		title: "",
+		keywords: "",
+		timeout: 0,
+		price_by_request: 0,
+		price_kb_request: 0,
+		price_kb_response: 0
 	}
 };
+/**
+* @param {Partial<IntervalTaskRow>|null|undefined} task
+* @returns {IntervalTaskRow}
+*/
 var defaultValuesIntervalTask = (task) => {
 	const baseTask = {
 		idtask: null,
@@ -8041,6 +8306,7 @@ var defaultValuesIntervalTask = (task) => {
 * Estados que el planificador escribe en `status`. La tabla y el editor muestran la
 * etiqueta, nunca el número: un "3" no le dice nada a quien administra las tareas.
 */
+/** @type {Record<number, StatusMeta>} */
 var IntervalTaskStatus = {
 	0: {
 		label: "Waiting",
@@ -8079,6 +8345,7 @@ var IntervalTaskStatus = {
 		description: "The run was stopped by an operator. It does not count as a failure and the task stays scheduled."
 	}
 };
+/** @type {StatusMeta} */
 var IntervalTaskStatusFallback = {
 	label: "Unknown",
 	background: "light",
@@ -8089,6 +8356,10 @@ var IntervalTaskStatusFallback = {
 * `status` conserva el resultado de la última corrida cuando esta termina. Para mostrar
 * el estado operativo actual, toda tarea que no esté ejecutándose vuelve a Waiting.
 */
+/**
+* @param {number|string|null|undefined} value
+* @returns {StatusMeta}
+*/
 function getIntervalTaskRuntimeStatus(value) {
 	return Number(value) === 1 ? IntervalTaskStatus[1] : IntervalTaskStatus[0];
 }
@@ -8096,9 +8367,15 @@ function getIntervalTaskRuntimeStatus(value) {
 * Resultado de la última ejecución, separado del estado operativo actual. El payload
 * permite corregir corridas antiguas que se guardaron como OK pese a `success: false`.
 */
+/**
+* @param {number|string|null|undefined} value
+* @param {unknown} response
+* @returns {StatusMeta|null}
+*/
 function getIntervalTaskLastResultStatus(value, response) {
 	const numericStatus = Number(value);
-	if (numericStatus === 2 && response && typeof response === "object" && !Array.isArray(response) && response.success === false) return IntervalTaskStatus[3];
+	const payload = response;
+	if (numericStatus === 2 && payload && typeof payload === "object" && !Array.isArray(payload) && payload.success === false) return IntervalTaskStatus[3];
 	return numericStatus >= 2 && numericStatus <= 5 ? IntervalTaskStatus[numericStatus] : null;
 }
 /**
@@ -8108,6 +8385,7 @@ function getIntervalTaskLastResultStatus(value, response) {
 * distinto de "Unabled" y merece su propia etiqueta: el usuario quiere que corra, pero
 * no correrá hasta que se corrija la causa y se reinicien los intentos.
 */
+/** @type {StatusMeta} */
 var IntervalTaskSuspendedStatus = {
 	label: "Suspended",
 	background: "danger",
@@ -8115,13 +8393,25 @@ var IntervalTaskSuspendedStatus = {
 	description: "The scheduler stopped this task after it reached Max failed attempts. The task stays Enabled, but it will not run until you fix the cause and use Reset attempts."
 };
 /** Devuelve el estado de suspensión, o `null` si el planificador no la suspendió. */
+/**
+* @param {Partial<IntervalTaskRow>|null|undefined} task
+* @returns {StatusMeta|null}
+*/
 function getIntervalTaskSuspensionStatus(task) {
 	return task?.disabled_by === "system" ? IntervalTaskSuspendedStatus : null;
 }
 /** `true` cuando la tarea está suspendida por el planificador (no por el usuario). */
+/**
+* @param {Partial<IntervalTaskRow>|null|undefined} task
+* @returns {boolean}
+*/
 function isIntervalTaskSuspended(task) {
 	return task?.disabled_by === "system";
 }
+/**
+* @param {Partial<BotRow>|null|undefined} bot
+* @returns {BotRow}
+*/
 var defaultValuesBot = (bot) => {
 	return {
 		idbot: null,
@@ -8147,6 +8437,7 @@ var defaultValuesBot = (bot) => {
 * QUARANTINED se recupera solo y NO requiere que nadie lo toque. Por eso cada estado
 * declara `needsAction`: es lo que decide si la interfaz debe alarmar o tranquilizar.
 */
+/** @type {Record<string, StatusMeta & {color: string, needsAction: boolean}>} */
 var BotRuntimeStatus = {
 	STOPPED: {
 		label: "Stopped",
@@ -8207,20 +8498,16 @@ function SaveDeploy($$renderer, $$props) {
 			error: false,
 			message: ""
 		}, dirty = false } = $$props;
+		function r01($$renderer) {
+			$$renderer.push(`<div class="field has-addons"><p class="control"><button class="button is-small is-warning"><span class="icon is-small"><i class="fa-solid fa-rocket"></i></span> <span>Save &amp; Deploy</span></button></p> <p class="control"><button class="button is-small"><span class="icon is-small"><i class="fa-solid fa-xmark"></i></span> <span>Cancel</span></button></p></div>`);
+		}
 		let $$settled = true;
 		let $$inner_renderer;
 		function $$render_inner($$renderer) {
-			{
-				function r01($$renderer) {
-					$$renderer.push(`<div class="field has-addons"><p class="control"><button class="button is-small is-warning"><span class="icon is-small"><i class="fa-solid fa-rocket"></i></span> <span>Save &amp; Deploy</span></button></p> <p class="control"><button class="button is-small"><span class="icon is-small"><i class="fa-solid fa-xmark"></i></span> <span>Cancel</span></button></p></div>`);
-				}
-				Level($$renderer, {
-					left,
-					right: [r01],
-					r01,
-					$$slots: { r01: true }
-				});
-			}
+			Level($$renderer, {
+				left,
+				right: [r01]
+			});
 			$$renderer.push(`<!----> `);
 			Modal($$renderer, {
 				get show() {
@@ -8281,12 +8568,16 @@ function Basic($$renderer, $$props) {
 		var $$store_subs;
 		new Notifications$1();
 		let uf = new uFetch();
+		/**
+		* @type {{idapp?: number|string, onsavedeploy?: (app: import('../../../types/models.js').AppRow) => void}}
+		*/
 		let { idapp = void 0, onsavedeploy = () => {} } = $$props;
 		let deploying = {
 			show: false,
 			message: "",
 			error: false
 		};
+		/** @type {import('../../../types/models.js').AppRow} */
 		let app = {
 			app: "",
 			enabled: false,
@@ -8313,7 +8604,7 @@ function Basic($$renderer, $$props) {
 			} catch (error) {
 				console.error(error);
 				deploying.error = true;
-				deploying.message = `Error: ${error.message}`;
+				deploying.message = `Error: ${getErrorMessage(error)}`;
 			} finally {
 				onsavedeploy(app);
 			}
@@ -8377,6 +8668,7 @@ function Basic($$renderer, $$props) {
 	});
 }
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/utils/httpStatus.js
+/** @type {Record<string, string>} */
 var HTTP_STATUS_TEXT = {
 	100: "Continue",
 	101: "Switching Protocols",
@@ -8441,7 +8733,11 @@ var HTTP_STATUS_TEXT = {
 	510: "Not Extended",
 	511: "Network Authentication Required"
 };
-/** Devuelve la descripción corta en inglés de un status code HTTP. */
+/**
+* Devuelve la descripción corta en inglés de un status code HTTP.
+* @param {number|string} code
+* @returns {string}
+*/
 function httpStatusText(code) {
 	return HTTP_STATUS_TEXT[String(code)] ?? "Unknown Status";
 }
@@ -8450,22 +8746,46 @@ function Dashboard($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
 		let { idapp = void 0 } = $$props;
+		/**
+		* @typedef {Record<string, unknown>} RowAny
+		* @typedef {{value: Array<string|number>, name?: string, other?: string, seriesName?: string}} DashboardChartPoint
+		* @typedef {{idendpoint?: string|number, type?: string, name?: string, showSymbol?: boolean, smooth?: boolean, large?: boolean, data?: Array<DashboardChartPoint>, itemStyle?: Record<string, unknown>, lineStyle?: Record<string, unknown>, extra?: Record<string, unknown>}} ChartSeriesItem
+		* @typedef {{status_class?: string, count?: string|number, minute?: string}} StatusClassRow
+		* @typedef {{status_code?: string|number, recordCount?: string|number}} StatusCodeRow
+		* @typedef {{resource?: string, requestCount?: string|number}} EndpointUsageRow
+		* @typedef {{idendpoint?: string|number, method?: string, resource?: string, series?: Array<DashboardChartPoint>, count?: string|number, bucket?: string, title?: string}} TopErrorEndpointRow
+		* @typedef {{cpuUsage: number}} ServerCpuEvent
+		* @typedef {{memoryUsage: number}} ServerMemoryEvent
+		* @typedef {{name: string, value: number}} StatusSummaryEntry
+		* @typedef {{idendpoint: string|number, name: string, showSymbol: boolean, symbolSize: number, data: Array<DashboardChartPoint>}} EndpointSeriesEntry
+		*/
+		/** @type {Array<ChartSeriesItem>} */
 		let data_request_series = [];
+		/** @type {Array<DashboardChartPoint>} */
 		let data_logs_per_minute = [];
+		/** @type {Array<ChartSeriesItem>} */
 		let data_status_class = [];
+		/** @type {Array<StatusSummaryEntry>} */
 		let data_status_summary = [];
+		/** @type {Array<{name: string, value: number}>} */
 		let data_top_endpoints = [];
+		/** @type {Array<RowAny>} */
 		let data_unused_endpoints = [];
+		/** @type {Array<ChartSeriesItem>} */
 		let data_top_error_endpoints = [];
+		/** @type {Array<RowAny>} */
 		let data_error_requests = [];
 		let loading_error_requests = false;
+		/** @type {Array<DashboardChartPoint>} */
 		let data_cpu = [];
+		/** @type {Array<DashboardChartPoint>} */
 		let data_memory = [];
 		let cpuUsage = void 0;
 		let memoryUsage = void 0;
 		let selectedEnvironment = "prd";
 		let selectedHours = 12;
 		let selectedStatusClasses = ["5xx"];
+		/** @type {Record<string, Array<number>>} */
 		const STATUS_CODE_RANGES = {
 			"1xx": [100, 199],
 			"2xx": [200, 299],
@@ -8475,10 +8795,13 @@ function Dashboard($$renderer, $$props) {
 		};
 		function topErrorsTooltipFormatter(params) {
 			return (Array.isArray(params) ? params : [params]).map((p) => {
-				const date = new Date(p.value[0]);
+				const date = new Date(
+					/** @type {Array} */
+					p.value[0]
+				);
 				const pad = (n) => String(n).padStart(2, "0");
 				const formattedDate = `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-				return `URL: ${p.seriesName}<br/>${formattedDate}<br/>Errores: ${p.value[1]}`;
+				return `URL: ${p.seriesName}<br/>${formattedDate}<br/>Errores: ${/** @type {Array} */ p.value[1]}`;
 			}).join("<br/><br/>");
 		}
 		const STATUS_CLASSES = [
@@ -8509,7 +8832,9 @@ function Dashboard($$renderer, $$props) {
 			}
 		];
 		function handleHoursChange(e) {
-			let value = Math.floor(Number(e.target.value));
+			const input = e.target;
+			if (!input) return;
+			let value = Math.floor(Number(input.value));
 			selectedHours = Number.isFinite(value) && value > 1 ? value : 12;
 		}
 		function matchesSelection(data_endpoint) {
@@ -8526,14 +8851,37 @@ function Dashboard($$renderer, $$props) {
 				};
 			}
 		}
+		/**
+		* @param {Array<DashboardChartPoint>} dataArray
+		* @param {DashboardChartPoint} point
+		* @returns {Array<DashboardChartPoint>}
+		*/
 		function insertSortedPoint(dataArray, point) {
-			const t = new Date(point.value[0]).getTime();
+			const t = new Date(
+				/** @type {Array<string|number>} */
+				point.value[0]
+			).getTime();
 			let i = dataArray.length - 1;
-			while (i >= 0 && new Date(dataArray[i].value[0]).getTime() > t) i--;
+			while (i >= 0 && new Date(
+				/** @type {Array<string|number>} */
+				dataArray[i].value[0]
+			).getTime() > t) i--;
 			const result = [...dataArray];
-			result.splice(i + 1, 0, point);
+			result.splice(
+				i + 1,
+				0,
+				/** @type {DashboardChartPoint} */
+				point
+			);
 			return result;
 		}
+		/**
+		* @param {Array<ChartSeriesItem>} seriesArray
+		* @param {string|number} idendpoint
+		* @param {string} label
+		* @param {DashboardChartPoint} point
+		* @returns {Array<ChartSeriesItem>}
+		*/
 		function upsertSeriesPoint(seriesArray, idendpoint, label, point) {
 			const index = seriesArray.findIndex((series) => series.idendpoint === idendpoint);
 			if (index === -1) return [...seriesArray, {
@@ -8546,53 +8894,84 @@ function Dashboard($$renderer, $$props) {
 			const updated = [...seriesArray];
 			updated[index] = {
 				...updated[index],
-				data: insertSortedPoint(updated[index].data, point)
+				data: insertSortedPoint(updated[index].data || [], point)
 			};
 			return updated;
 		}
+		/**
+		* @param {Array<DashboardChartPoint>} dataArray
+		* @param {string|number} dateValue
+		* @returns {Array<DashboardChartPoint>}
+		*/
 		function incrementMinutePoint(dataArray, dateValue) {
 			const minuteDate = new Date(dateValue || Date.now());
 			minuteDate.setSeconds(0, 0);
 			const t = minuteDate.getTime();
 			let i = dataArray.length - 1;
-			while (i >= 0 && new Date(dataArray[i].value[0]).getTime() > t) i--;
-			if (i >= 0 && new Date(dataArray[i].value[0]).getTime() === t) {
+			while (i >= 0 && new Date(
+				/** @type {Array<string|number>} */
+				dataArray[i].value[0]
+			).getTime() > t) i--;
+			if (i >= 0 && new Date(
+				/** @type {Array<string|number>} */
+				dataArray[i].value[0]
+			).getTime() === t) {
 				const updated = [...dataArray];
-				updated[i] = {
-					...updated[i],
-					value: [updated[i].value[0], updated[i].value[1] + 1]
-				};
+				const pt = updated[i];
+				pt.value = [pt.value[0], pt.value[1] + 1];
+				updated[i] = pt;
 				return updated;
 			}
 			const updated = [...dataArray];
-			updated.splice(i + 1, 0, {
-				name: minuteDate.toISOString(),
-				value: [minuteDate, 1],
-				other: "Nada"
-			});
+			updated.splice(
+				i + 1,
+				0,
+				/** @type {DashboardChartPoint} */
+				{
+					name: minuteDate.toISOString(),
+					value: [minuteDate, 1],
+					other: "Nada"
+				}
+			);
 			return updated;
 		}
+		/**
+		* @param {Array<DashboardChartPoint>} dataArray
+		* @param {string|number} dateValue
+		* @param {string} granularity
+		* @returns {Array<DashboardChartPoint>}
+		*/
 		function incrementBucketPoint(dataArray, dateValue, granularity) {
 			const bucketDate = new Date(dateValue || Date.now());
 			if (granularity === "hour") bucketDate.setMinutes(0, 0, 0);
 			else bucketDate.setSeconds(0, 0);
 			const t = bucketDate.getTime();
 			let i = dataArray.length - 1;
-			while (i >= 0 && new Date(dataArray[i].value[0]).getTime() > t) i--;
-			if (i >= 0 && new Date(dataArray[i].value[0]).getTime() === t) {
+			while (i >= 0 && new Date(
+				/** @type {Array<string|number>} */
+				dataArray[i].value[0]
+			).getTime() > t) i--;
+			if (i >= 0 && new Date(
+				/** @type {Array<string|number>} */
+				dataArray[i].value[0]
+			).getTime() === t) {
 				const updated = [...dataArray];
-				updated[i] = {
-					...updated[i],
-					value: [updated[i].value[0], updated[i].value[1] + 1]
-				};
+				const pt = updated[i];
+				pt.value = [pt.value[0], pt.value[1] + 1];
+				updated[i] = pt;
 				return updated;
 			}
 			const updated = [...dataArray];
-			updated.splice(i + 1, 0, {
-				name: bucketDate.toISOString(),
-				value: [bucketDate, 1],
-				other: "Nada"
-			});
+			updated.splice(
+				i + 1,
+				0,
+				/** @type {DashboardChartPoint} */
+				{
+					name: bucketDate.toISOString(),
+					value: [bucketDate, 1],
+					other: "Nada"
+				}
+			);
 			return updated;
 		}
 		function statusClassForCode(status_code) {
@@ -8603,6 +8982,11 @@ function Dashboard($$renderer, $$props) {
 			if (code < 500) return "client_error";
 			return "server_error";
 		}
+		/**
+		* @param {Array<StatusSummaryEntry>} dataArray
+		* @param {string|number} statusCode
+		* @returns {Array<StatusSummaryEntry>}
+		*/
 		function incrementStatusSummary(dataArray, statusCode) {
 			const code = String(statusCode);
 			const index = dataArray.findIndex((d) => d.name === code);
@@ -8617,9 +9001,15 @@ function Dashboard($$renderer, $$props) {
 			};
 			return updated;
 		}
+		/**
+		* @param {number} intervalMs
+		* @param {() => void} flush
+		* @returns {{trigger: () => void, cancel: () => void}}
+		*/
 		function createLeadingTrailingThrottle(intervalMs, flush) {
 			let cooling = false;
 			let pending = false;
+			/** @type {ReturnType<typeof setTimeout>|null|undefined} */
 			let timer = null;
 			function trigger() {
 				if (!cooling) {
@@ -8649,7 +9039,13 @@ function Dashboard($$renderer, $$props) {
 				cancel
 			};
 		}
+		/**
+		* @param {number} intervalMs
+		* @param {() => void} flush
+		* @returns {{trigger: () => void, cancel: () => void}}
+		*/
 		function createTrailingThrottle(intervalMs, flush) {
+			/** @type {ReturnType<typeof setTimeout>|null|undefined} */
 			let timer = null;
 			function trigger() {
 				if (!timer) timer = setTimeout(() => {
@@ -8666,7 +9062,9 @@ function Dashboard($$renderer, $$props) {
 				cancel
 			};
 		}
+		/** @type {Array<RowAny>} */
 		let pendingEndpointEvents = [];
+		/** @type {Array<RowAny>} */
 		let pendingAggregateEvents = [];
 		function flushEndpointCharts() {
 			const events = pendingEndpointEvents;
@@ -8676,7 +9074,12 @@ function Dashboard($$renderer, $$props) {
 				if (point) data_request_series = upsertSeriesPoint(data_request_series, event.idendpoint, point.other, point);
 				if (Number(event.statusCode) >= 400) data_top_error_endpoints = data_top_error_endpoints.map((series) => series.idendpoint === event.idendpoint ? {
 					...series,
-					data: incrementBucketPoint(series.data, event.dateTime, "hour")
+					data: incrementBucketPoint(
+						series.data || [],
+						/** @type {string|number} */
+						event.dateTime,
+						"hour"
+					)
 				} : series);
 			}
 		}
@@ -8684,13 +9087,25 @@ function Dashboard($$renderer, $$props) {
 			const events = pendingAggregateEvents;
 			pendingAggregateEvents = [];
 			for (const event of events) {
-				data_logs_per_minute = incrementMinutePoint(data_logs_per_minute, event.dateTime);
+				data_logs_per_minute = incrementMinutePoint(
+					data_logs_per_minute,
+					/** @type {string|number} */
+					event.dateTime
+				);
 				let status_class = statusClassForCode(event.statusCode);
 				data_status_class = data_status_class.map((series, index) => STATUS_CLASSES[index].key === status_class ? {
 					...series,
-					data: incrementMinutePoint(series.data, event.dateTime)
+					data: incrementMinutePoint(
+						series.data || [],
+						/** @type {string|number} */
+						event.dateTime
+					)
 				} : series);
-				data_status_summary = incrementStatusSummary(data_status_summary, event.statusCode);
+				data_status_summary = incrementStatusSummary(
+					data_status_summary,
+					/** @type {string|number} */
+					event.statusCode
+				);
 			}
 		}
 		const endpointThrottle = createLeadingTrailingThrottle(2e3, flushEndpointCharts);
@@ -8725,12 +9140,8 @@ function Dashboard($$renderer, $$props) {
 			}
 		}
 		const tableRefreshThrottle = createTrailingThrottle(5e3, loadErrorRequests);
-		let unsubscribe_dy;
-		let unsubscribe_com;
 		onDestroy(() => {
 			tableRefreshThrottle.cancel();
-			unsubscribe_dy();
-			unsubscribe_com();
 			endpointThrottle.cancel();
 			aggregateThrottle.cancel();
 		});
@@ -8778,8 +9189,7 @@ function Dashboard($$renderer, $$props) {
 					},
 					{
 						id: "prd",
-						value: "Production",
-						label: "Production"
+						value: "Production"
 					}
 				],
 				class: "is-small",
@@ -8903,10 +9313,10 @@ function Dashboard($$renderer, $$props) {
 					},
 					series: [{
 						type: "pie",
-						radius: ["40%", "70%"],
-						label: { show: false },
-						labelLine: { show: false },
-						data: data_status_summary
+						data: data_status_summary.map((e) => ({
+							value: [e.value],
+							name: e.name
+						}))
 					}]
 				});
 				$$renderer.push("<!--]-->");
@@ -8929,7 +9339,7 @@ function Dashboard($$renderer, $$props) {
 					},
 					series: [{
 						type: "bar",
-						data: data_top_endpoints.map((d) => d.value)
+						data: data_top_endpoints.map((d) => ({ value: [d.value] }))
 					}]
 				});
 				$$renderer.push("<!--]-->");
@@ -9015,10 +9425,26 @@ function Dashboard($$renderer, $$props) {
 function Variable($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
+		/**
+		* @typedef {import('../../../types/models.js').AppVarRow} AppVarRow
+		*/
+		/**
+		* @type {{
+		*   idapp?: number|string,
+		*   isReadOnly?: boolean,
+		*   showCode?: boolean,
+		*   appVars?: Array<AppVarRow>,
+		*   title?: string,
+		*   environment?: string,
+		*   onchange?: (vars: Array<AppVarRow>) => void,
+		*   oncopy?: (appvar: AppVarRow) => void
+		* }}
+		*/
 		let { idapp = "-", isReadOnly = false, showCode = false, appVars = [], title = "", environment = "", onchange = () => {}, oncopy = () => {} } = $$props;
 		let new_var_name = "";
 		let search_var = "";
 		let classAnimationCopyName = "";
+		/** @type {Record<string, unknown>} */
 		let appVarsInternal = {};
 		let appVarsFiltered = derived(() => {
 			let term = search_var.trim().toLowerCase();
@@ -9030,6 +9456,10 @@ function Variable($$renderer, $$props) {
 			});
 		});
 		new Notifications$1();
+		/**
+		* @param {string} name
+		* @param {string} vars
+		*/
 		function internalOnchange(name, vars) {
 			if (!equalObjs(appVarsInternal[name], vars)) {
 				appVarsInternal[name] = vars;
@@ -9059,73 +9489,58 @@ function Variable($$renderer, $$props) {
 		let $$inner_renderer;
 		function $$render_inner($$renderer) {
 			if (appVars) {
-				$$renderer.push(`<!--[0--><div class="box">`);
-				{
-					function l01($$renderer) {
-						$$renderer.push(`<!---->${escape_html(title)}`);
-					}
-					function r01($$renderer) {
-						$$renderer.push(`<div><div class="field has-addons">`);
-						if (!isReadOnly) $$renderer.push(`<!--[0--><div class="control"><button class="button is-small is-static">$_VAR_</button></div> <div class="control"><input class="input is-small" type="text" placeholder="New app variable"${attr("value", new_var_name)}/></div> <div class="control"><button class="button is-success is-small">New</button></div>`);
-						else $$renderer.push("<!--[-1-->");
-						$$renderer.push(`<!--]--> <div class="control"><input class="input is-small" type="text" placeholder="Search variable"${attr("value", search_var)}/></div> <div class="control"><button class="button is-small is-static" title="Search" type="button"><span class="icon is-small"><i class="fa-solid fa-magnifying-glass"></i></span></button></div></div></div>`);
-					}
-					Level($$renderer, {
-						left: [l01],
-						right: [r01],
-						l01,
-						r01,
-						$$slots: {
-							l01: true,
-							r01: true
-						}
-					});
+				$$renderer.push("<!--[0-->");
+				function l01($$renderer) {
+					$$renderer.push(`<!---->${escape_html(title)}`);
 				}
+				function r01($$renderer) {
+					$$renderer.push(`<div><div class="field has-addons">`);
+					if (!isReadOnly) $$renderer.push(`<!--[0--><div class="control"><button class="button is-small is-static">$_VAR_</button></div> <div class="control"><input class="input is-small" type="text" placeholder="New app variable"${attr("value", new_var_name)}/></div> <div class="control"><button class="button is-success is-small">New</button></div>`);
+					else $$renderer.push("<!--[-1-->");
+					$$renderer.push(`<!--]--> <div class="control"><input class="input is-small" type="text" placeholder="Search variable"${attr("value", search_var)}/></div> <div class="control"><button class="button is-small is-static" title="Search" type="button"><span class="icon is-small"><i class="fa-solid fa-magnifying-glass"></i></span></button></div></div></div>`);
+				}
+				$$renderer.push(`<div class="box">`);
+				Level($$renderer, {
+					left: [l01],
+					right: [r01]
+				});
 				$$renderer.push(`<!----> `);
 				const each_array = ensure_array_like(appVarsFiltered());
 				if (each_array.length !== 0) {
 					$$renderer.push("<!--[-->");
 					for (let i = 0, $$length = each_array.length; i < $$length; i++) {
 						let av = each_array[i];
-						{
-							function left_Editor($$renderer) {
-								left_header($$renderer, av);
-							}
-							function right_Editor($$renderer) {
-								right_header($$renderer, av);
-							}
-							EditorCode($$renderer, {
-								showSelectLang: true,
-								left: left_Editor,
-								right: right_Editor,
-								showCode,
-								showFormat: true,
-								isReadOnly,
-								onchange: (e) => {
-									internalOnchange(av.name, e.code);
-								},
-								get code() {
-									return av.value;
-								},
-								set code($$value) {
-									av.value = $$value;
-									$$settled = false;
-								},
-								get lang() {
-									return av.type;
-								},
-								set lang($$value) {
-									av.type = $$value;
-									$$settled = false;
-								},
-								left_Editor,
-								right_Editor,
-								$$slots: {
-									left_Editor: true,
-									right_Editor: true
-								}
-							});
+						function left_Editor($$renderer) {
+							left_header($$renderer, av);
 						}
+						function right_Editor($$renderer) {
+							right_header($$renderer, av);
+						}
+						EditorCode($$renderer, {
+							showSelectLang: true,
+							left: left_Editor,
+							right: right_Editor,
+							showCode,
+							showFormat: true,
+							isReadOnly,
+							onchange: (e) => {
+								internalOnchange(av.name ?? "", e.code);
+							},
+							get code() {
+								return av.value;
+							},
+							set code($$value) {
+								av.value = $$value;
+								$$settled = false;
+							},
+							get lang() {
+								return av.type;
+							},
+							set lang($$value) {
+								av.type = $$value;
+								$$settled = false;
+							}
+						});
 						$$renderer.push(`<!----> <hr class="reset_margin svelte-d7zei4"/>`);
 					}
 				} else {
@@ -9197,12 +9612,27 @@ function Variables($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
 		let noty = new Notifications$1();
+		/**
+		* @typedef {import('../../../types/models.js').AppVarRow} AppVarRow
+		* @typedef {import('../../../types/models.js').ServerModelChangedEvent} ServerModelChangedEvent
+		*/
+		/**
+		* @type {{
+		*   idapp?: number,
+		*   environment?: string,
+		*   isReadOnly?: boolean,
+		*   onchange?: (vars: unknown) => void
+		* }}
+		*/
 		let { idapp = 0, environment = "*", isReadOnly = false, onchange = () => {} } = $$props;
 		let ShowDialogCopyEndpoint = false;
 		let var_replace_copy = false;
+		/** @type {AppVarRow} */
 		let var_to_copy = {};
 		let target_env_selected = "";
+		/** @type {Record<string, unknown>} */
 		let Datavars = {};
+		/** @type {Array<AppVarRow>} */
 		let DataAppVars = [];
 		let env_dev = derived(() => {
 			return DataAppVars && Array.isArray(DataAppVars) ? DataAppVars.filter((item) => {
@@ -9224,6 +9654,7 @@ function Variables($$renderer, $$props) {
 				return el.id != var_to_copy.environment;
 			}) : [];
 		});
+		/** @type {ReturnType<typeof setTimeout>|undefined} */
 		let reloadVarsTimeout;
 		onDestroy(() => {
 			clearTimeout(reloadVarsTimeout);
@@ -9255,7 +9686,7 @@ function Variables($$renderer, $$props) {
 			} catch (error) {
 				console.error(error);
 				noty.push({
-					message: `Error migrating variable: ${error.message}`,
+					message: `Error migrating variable: ${getErrorMessage(error)}`,
 					color: "danger"
 				});
 			}
@@ -9263,7 +9694,8 @@ function Variables($$renderer, $$props) {
 		}
 		async function GetData() {
 			try {
-				DataAppVars = await GetAppVars(idapp, store_get($$store_subs ??= {}, "$userStore", userStore).token);
+				const rows = await GetAppVars(idapp, true);
+				DataAppVars = Array.isArray(rows) ? rows : [];
 			} catch (error) {
 				console.error(error);
 				DataAppVars = [];
@@ -9272,11 +9704,51 @@ function Variables($$renderer, $$props) {
 		function internalOnchange() {
 			onchange(snapshot(Datavars));
 		}
+		/**
+		* @param {AppVarRow} v
+		*/
 		function internalOncopy(v) {
 			var_to_copy = { ...v };
 			var_replace_copy = false;
 			target_env_selected = "";
 			ShowDialogCopyEndpoint = true;
+		}
+		function titleModal($$renderer) {
+			$$renderer.push(`<span>${escape_html(`Copy ${var_to_copy.name}`)}</span>`);
+		}
+		function bodyDialogModal($$renderer) {
+			$$renderer.push(`<div>Copy or replace the variable to another environment.</div> <br/> <div class="field has-addons"><p class="control"><a class="button is-small is-static">Copy to:</a></p> <p class="control">`);
+			Select($$renderer, {
+				options: available_environments_list(),
+				onchange: (e) => {
+					var_to_copy.env_destination = e;
+					var_to_copy.idvar_destination = void 0;
+					if (DataAppVars && Array.isArray(DataAppVars)) {
+						let var_exists = DataAppVars.find((item) => {
+							return item.name == var_to_copy.name && item.environment == var_to_copy.env_destination;
+						});
+						if (var_exists && var_exists.idvar) var_to_copy.idvar_destination = var_exists.idvar;
+					}
+				},
+				get option() {
+					return target_env_selected;
+				},
+				set option($$value) {
+					target_env_selected = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----></p></div> `);
+			if (!var_to_copy.env_destination || var_to_copy.env_destination == "") $$renderer.push(`<!--[0--><div class="icon-text"><span class="icon has-text-warning"><i class="fas fa-exclamation-triangle"></i></span> <span>Select an environment to copy.</span></div>`);
+			else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--> `);
+			if (var_to_copy && var_to_copy.idvar_destination) {
+				$$renderer.push(`<!--[0--><label class="checkbox"><input type="checkbox"${attr("checked", var_replace_copy, true)}/> I agree to copy and/or replace the application variable to the <strong>${escape_html(var_to_copy.env_destination)}</strong> environment.</label> `);
+				if (!var_replace_copy) $$renderer.push(`<!--[0--><br/> <div class="icon-text"><span class="icon has-text-warning"><i class="fas fa-exclamation-triangle"></i></span> <span>You must agree to continue.</span></div>`);
+				else $$renderer.push("<!--[-1-->");
+				$$renderer.push(`<!--]-->`);
+			} else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]-->`);
 		}
 		let $$settled = true;
 		let $$inner_renderer;
@@ -9288,7 +9760,7 @@ function Variables($$renderer, $$props) {
 					environment: "dev",
 					isReadOnly,
 					title: "DEVELOPMENT",
-					onchange: (x) => {
+					onchange: () => {
 						internalOnchange();
 					},
 					oncopy: (x) => {
@@ -9371,84 +9843,39 @@ function Variables($$renderer, $$props) {
 				});
 				$$renderer.push(`<!----></div>`);
 			} else $$renderer.push("<!--[-1-->");
-			$$renderer.push(`<!--]--></div> `);
-			{
-				function titleModal($$renderer) {
-					$$renderer.push(`<span>${escape_html(`Copy ${var_to_copy.name}`)}</span>`);
-				}
-				function bodyDialogModal($$renderer) {
-					$$renderer.push(`<div>Copy or replace the variable to another environment.</div> <br/> <div class="field has-addons"><p class="control"><a class="button is-small is-static">Copy to:</a></p> <p class="control">`);
-					Select($$renderer, {
-						options: available_environments_list(),
-						onchange: (e) => {
-							var_to_copy.env_destination = e;
-							var_to_copy.idvar_destination = void 0;
-							if (DataAppVars && Array.isArray(DataAppVars)) {
-								let var_exists = DataAppVars.find((item) => {
-									return item.name == var_to_copy.name && item.environment == var_to_copy.env_destination;
-								});
-								if (var_exists && var_exists.idvar) var_to_copy.idvar_destination = var_exists.idvar;
-							}
-						},
-						get option() {
-							return target_env_selected;
-						},
-						set option($$value) {
-							target_env_selected = $$value;
-							$$settled = false;
-						}
-					});
-					$$renderer.push(`<!----></p></div> `);
-					if (!var_to_copy.env_destination || var_to_copy.env_destination == "") $$renderer.push(`<!--[0--><div class="icon-text"><span class="icon has-text-warning"><i class="fas fa-exclamation-triangle"></i></span> <span>Select an environment to copy.</span></div>`);
-					else $$renderer.push("<!--[-1-->");
-					$$renderer.push(`<!--]--> `);
-					if (var_to_copy && var_to_copy.idvar_destination) {
-						$$renderer.push(`<!--[0--><label class="checkbox"><input type="checkbox"${attr("checked", var_replace_copy, true)}/> I agree to copy and/or replace the application variable to the <strong>${escape_html(var_to_copy.env_destination)}</strong> environment.</label> `);
-						if (!var_replace_copy) $$renderer.push(`<!--[0--><br/> <div class="icon-text"><span class="icon has-text-warning"><i class="fas fa-exclamation-triangle"></i></span> <span>You must agree to continue.</span></div>`);
-						else $$renderer.push("<!--[-1-->");
-						$$renderer.push(`<!--]-->`);
-					} else $$renderer.push("<!--[-1-->");
-					$$renderer.push(`<!--]-->`);
-				}
-				Modal_1($$renderer, {
-					title: titleModal,
-					body: bodyDialogModal,
-					onaccept: async () => {
-						if (!var_to_copy.env_destination) {
-							noty.push({
-								message: "You must select an environment to copy the variable to.",
-								color: "danger"
-							});
-							return;
-						}
-						if (var_to_copy.idvar_destination && !var_replace_copy) {
-							noty.push({
-								message: "You must agree to replace the variable.",
-								color: "danger"
-							});
-							return;
-						}
-						await SaveAppVarCopyReplace();
-						ShowDialogCopyEndpoint = false;
-					},
-					oncancel: () => {
-						var_to_copy = {};
-					},
-					get show() {
-						return ShowDialogCopyEndpoint;
-					},
-					set show($$value) {
-						ShowDialogCopyEndpoint = $$value;
-						$$settled = false;
-					},
-					titleModal,
-					bodyDialogModal,
-					$$slots: {
-						titleModal: true,
-						bodyDialogModal: true
+			$$renderer.push(`<!--]--></div>  `);
+			Modal_1($$renderer, {
+				title: titleModal,
+				body: bodyDialogModal,
+				onaccept: async () => {
+					if (!var_to_copy.env_destination) {
+						noty.push({
+							message: "You must select an environment to copy the variable to.",
+							color: "danger"
+						});
+						return;
 					}
-				});
-			}
+					if (var_to_copy.idvar_destination && !var_replace_copy) {
+						noty.push({
+							message: "You must agree to replace the variable.",
+							color: "danger"
+						});
+						return;
+					}
+					await SaveAppVarCopyReplace();
+					ShowDialogCopyEndpoint = false;
+				},
+				oncancel: () => {
+					var_to_copy = {};
+				},
+				get show() {
+					return ShowDialogCopyEndpoint;
+				},
+				set show($$value) {
+					ShowDialogCopyEndpoint = $$value;
+					$$settled = false;
+				}
+			});
 			$$renderer.push(`<!---->`);
 		}
 		do {
@@ -9504,16 +9931,15 @@ function Application_variables($$renderer, $$props) {
 function CellPath($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = void 0, row = void 0 } = $$props;
+		/** @type {ReturnType<typeof setTimeout>|undefined} */
 		let timeoutIsRunning;
 		let env_params = derived(() => {
 			return Environment && Array.isArray(Environment) ? Environment.find((item) => {
 				return row.environment == item.id;
-			}) : [];
+			}) : void 0;
 		});
-		let unsubscribe;
 		onDestroy(() => {
 			clearTimeout(timeoutIsRunning);
-			unsubscribe();
 		});
 		$$renderer.push(`<td>`);
 		if (env_params()) $$renderer.push(`<!--[0--><span class="icon-text"><span${attr_class(`icon  has-text-black-ter `)}><i${attr_class(`fa-solid fa-gear `)}></i></span> <span>${escape_html(value)}</span></span>`);
@@ -9618,6 +10044,7 @@ function CellHandler($$renderer, $$props) {
 		let css_class = "";
 		let css_icon = "fas fa-home";
 		let error_function = derived(() => {
+			/** @type {{valid: boolean, message?: string}} */
 			let r = { valid: true };
 			if (row.handler == "FUNCTION") {
 				if (row.environment == "prd") r.valid = searchFunction(row.code, store_get($$store_subs ??= {}, "$listFunctionStorePRD", listFunctionStorePRD));
@@ -9627,6 +10054,11 @@ function CellHandler($$renderer, $$props) {
 			}
 			return r;
 		});
+		/**
+		* @param {string} name_function
+		* @param {unknown} store_data
+		* @returns {boolean}
+		*/
 		function searchFunction(name_function, store_data) {
 			let r = false;
 			if (store_data && Array.isArray(store_data)) r = store_data.some((item) => {
@@ -9702,6 +10134,7 @@ function CellMCPTool($$renderer, $$props) {
 function CellCacheTime($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = void 0, row = void 0 } = $$props;
+		/** @type {{bytes?: number}} */
 		let value_cache = {};
 		const unsubscribe = storeCacheSize.subscribe((cache_data) => {
 			if (row && cache_data) {
@@ -9729,7 +10162,8 @@ function CellCountStatusCode($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		"use strict";
 		let { value = void 0, row = void 0 } = $$props;
-		let value_count_status_code = {};
+		/** @type {Record<string, number>|undefined} */
+		let value_count_status_code = void 0;
 		const unsubscribe = storeCountResponseStatusCode.subscribe((ListCountStatusCode) => {
 			if (row && row.idendpoint) value_count_status_code = ListCountStatusCode[row.idendpoint];
 		});
@@ -9741,17 +10175,18 @@ function CellCountStatusCode($$renderer, $$props) {
 			$$renderer.push("<!--[0-->");
 			if (value_count_status_code) {
 				$$renderer.push(`<!--[0--><div class="field is-grouped is-grouped-multiline"><!--[-->`);
-				const each_array = ensure_array_like(Object.keys(value_count_status_code));
+				const each_array = ensure_array_like(Object.entries(value_count_status_code));
 				for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
-					let statusCode = each_array[$$index];
+					let [statusCode, count] = each_array[$$index];
+					const code = Number(statusCode);
 					$$renderer.push(`<div class="control"><div class="tags has-addons">`);
-					if (statusCode >= 100 && statusCode < 200) $$renderer.push(`<!--[0--><span class="tag is-info">${escape_html(statusCode)}</span>`);
-					else if (statusCode >= 200 && statusCode < 300) $$renderer.push(`<!--[1--><span class="tag is-success">${escape_html(statusCode)}</span>`);
-					else if (statusCode >= 300 && statusCode < 400) $$renderer.push(`<!--[2--><span class="tag is-primary">${escape_html(statusCode)}</span>`);
-					else if (statusCode >= 400 && statusCode < 500) $$renderer.push(`<!--[3--><span class="tag is-warning">${escape_html(statusCode)}</span>`);
-					else if (statusCode >= 500 && statusCode < 600) $$renderer.push(`<!--[4--><span class="tag is-danger">${escape_html(statusCode)}</span>`);
+					if (code >= 100 && code < 200) $$renderer.push(`<!--[0--><span class="tag is-info">${escape_html(statusCode)}</span>`);
+					else if (code >= 200 && code < 300) $$renderer.push(`<!--[1--><span class="tag is-success">${escape_html(statusCode)}</span>`);
+					else if (code >= 300 && code < 400) $$renderer.push(`<!--[2--><span class="tag is-primary">${escape_html(statusCode)}</span>`);
+					else if (code >= 400 && code < 500) $$renderer.push(`<!--[3--><span class="tag is-warning">${escape_html(statusCode)}</span>`);
+					else if (code >= 500 && code < 600) $$renderer.push(`<!--[4--><span class="tag is-danger">${escape_html(statusCode)}</span>`);
 					else $$renderer.push(`<!--[-1--><span class="tag is-dark">${escape_html(statusCode)}</span>`);
-					$$renderer.push(`<!--]--> <span class="tag is-dark">${escape_html(value_count_status_code[statusCode])}</span></div></div>`);
+					$$renderer.push(`<!--]--> <span class="tag is-dark">${escape_html(count)}</span></div></div>`);
 				}
 				$$renderer.push(`<!--]--></div>`);
 			} else $$renderer.push("<!--[-1-->");
@@ -9771,7 +10206,7 @@ function CellEnv($$renderer, $$props) {
 		let env_params = derived(() => {
 			return Environment && Array.isArray(Environment) ? Environment.find((item) => {
 				return row.environment == item.id;
-			}) : [];
+			}) : void 0;
 		});
 		$$renderer.push(`<td>`);
 		if (env_params()) $$renderer.push(`<!--[0--><span class="icon-text"><span${attr_class(`icon ${stringify(env_params().color)}`)}><i${attr_class(clsx(env_params().icon))}></i></span></span>`);
@@ -9877,6 +10312,9 @@ function App_vars_selector($$renderer, $$props) {
 			code: item.value
 		})) : []);
 		let value_selected = derived(() => options_app_vars().find((item) => item.name === value));
+		/**
+		* @param {string} val
+		*/
 		function onselectInternal(val) {
 			value = val;
 			onselect(val);
@@ -9932,7 +10370,6 @@ function Fetch($$renderer, $$props) {
 		let { endpoint = {}, onchange = () => {} } = $$props;
 		let tabList = [{
 			label: "Url",
-			isActive: true,
 			component: tab_url
 		}];
 		function getData() {
@@ -10024,7 +10461,6 @@ function Js($$renderer, $$props) {
 		}
 		let tabList = [{
 			label: "Code",
-			isActive: true,
 			classIcon: " fa-brands fa-node-js ",
 			component: tab_code
 		}, {
@@ -10073,6 +10509,9 @@ function Js($$renderer, $$props) {
 function Params_json_selector($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { freeTyping = void 0, placeholder = void 0, classIcon = void 0, label = void 0, custom = void 0, appvar = void 0, environment = void 0, langEditor = void 0, onselect = () => {} } = $$props;
+		/**
+		* @param {{code: string}} event
+		*/
 		function handleCodeChange(event) {
 			console.log("handleCodeChange", event);
 			custom = event.code;
@@ -10125,12 +10564,10 @@ function Soap($$renderer, $$props) {
 		} };
 		let tabList = [{
 			label: "Parameters",
-			isActive: true,
 			classIcon: " fa-solid fa-soap ",
 			component: tab_parameters
 		}, {
 			label: "Information",
-			isActive: false,
 			component: tab_infor
 		}];
 		let jsonParams = {
@@ -10265,7 +10702,6 @@ function Sql($$renderer, $$props) {
 		let tabList = [
 			{
 				label: "Query",
-				isActive: true,
 				classIcon: " fa-solid fa-database ",
 				component: tab_query
 			},
@@ -10411,7 +10847,6 @@ function SqlBulkInsert($$renderer, $$props) {
 		let cnx_appvar = "";
 		let tabList = [{
 			label: "Parameters",
-			isActive: true,
 			classIcon: " fa-solid fa-database ",
 			component: tab_tablename
 		}, {
@@ -10566,7 +11001,6 @@ function SqlHana($$renderer, $$props) {
 		let tabList = [
 			{
 				label: "Query",
-				isActive: true,
 				classIcon: " fa-solid fa-database ",
 				component: tab_query
 			},
@@ -10742,7 +11176,6 @@ function HiveDriver($$renderer, $$props) {
 		let tabList = [
 			{
 				label: "Query",
-				isActive: true,
 				classIcon: " fa-solid fa-database ",
 				component: tab_query
 			},
@@ -10873,9 +11306,20 @@ function HiveDriver($$renderer, $$props) {
 function AsyncWrapper($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		/**
-		* @type {{endpoint: any, onchange: Function, app: any}}
+		* @typedef {import('../../../../../types/models.js').EndpointRow} EndpointRow
+		* @typedef {import('../../../../../types/models.js').AsyncWrapperConfig} AsyncWrapperConfig
+		* @typedef {import('../../../../../types/models.js').HandlerChangePayload} HandlerChangePayload
+		*/
+		/**
+		* @type {{
+		*   endpoint: EndpointRow,
+		*   onchange: (data: HandlerChangePayload) => void,
+		*   app: {app?: string, endpoints?: Array<EndpointRow>}
+		* }}
 		*/
 		let { endpoint = {}, onchange = () => {}, app = {} } = $$props;
+		/** Configuración async del endpoint, creada por `ensureAsyncConfig`. */
+		const asyncConfig = derived(() => endpoint.custom_data?.async);
 		let endpointOptions = derived(() => {
 			return (app?.endpoints || []).filter((e) => {
 				if (!e || !e.idendpoint) return false;
@@ -10894,6 +11338,23 @@ function AsyncWrapper($$renderer, $$props) {
 				value: e.idendpoint
 			}));
 		});
+		/**
+		* Garantiza que exista `custom_data.async` y la devuelve.
+		* @returns {AsyncWrapperConfig}
+		*/
+		function ensureAsyncConfig() {
+			if (!endpoint.custom_data) endpoint.custom_data = {};
+			const custom_data = endpoint.custom_data;
+			if (!custom_data.async) custom_data.async = {
+				ttl_ms: 36e5,
+				max_consumes: 5,
+				notify_ws: false
+			};
+			return custom_data.async;
+		}
+		/**
+		* @param {unknown} baseId
+		*/
 		function applyBaseEndpoint(baseId) {
 			if (!baseId) return;
 			const base = (app?.endpoints || []).find((x) => x && x.idendpoint === baseId);
@@ -10934,34 +11395,9 @@ function AsyncWrapper($$renderer, $$props) {
 				placeholder: "Select the base endpoint this async wrapper will call",
 				classLabel: "is-small",
 				classInput: "is-small",
-				optionValueKey: "value",
-				optionLabelKey: "name",
-				displayValue: (val) => {
-					if (!val) return "";
-					const found = endpointOptions().find((o) => o.value === val);
-					if (found) return found.name;
-					const e = (app?.endpoints || []).find((x) => x && x.idendpoint === val);
-					if (e) {
-						const method = e.method || "";
-						const appName = app?.app || e.app || "";
-						const resource = e.resource || e.endpoint || "";
-						const env = e.environment || "";
-						return `[${method}] ${`${method == "WS" ? "/ws/" : "/api/"}${appName}${resource}/${env}`}`.trim();
-					}
-					return val;
-				},
-				onselect: (val) => {
-					applyBaseEndpoint(val);
-				},
-				onchange: (val) => {
-					applyBaseEndpoint(val);
-				},
-				get options() {
-					return endpointOptions();
-				},
-				set options($$value) {
-					endpointOptions($$value);
-					$$settled = false;
+				options: endpointOptions(),
+				onselect: (option) => {
+					applyBaseEndpoint(option?.value ?? option);
 				},
 				get selectedValue() {
 					return endpoint.code;
@@ -10989,33 +11425,27 @@ function AsyncWrapper($$renderer, $$props) {
 			Basic$1($$renderer, {
 				label: "TTL (ms)",
 				type: "number",
+				value: asyncConfig()?.ttl_ms ?? 36e5,
 				min: "1000",
 				step: "1000",
-				onchange: update,
-				get value() {
-					return endpoint.custom_data.async.ttl_ms;
-				},
-				set value($$value) {
-					endpoint.custom_data.async.ttl_ms = $$value;
-					$$settled = false;
+				onchange: (value) => {
+					ensureAsyncConfig().ttl_ms = Number(value);
+					update();
 				}
 			});
 			$$renderer.push(`<!----></div> <div class="column">`);
 			Basic$1($$renderer, {
 				label: "Max consumes",
 				type: "number",
+				value: asyncConfig()?.max_consumes ?? 5,
 				min: "1",
 				step: "1",
-				onchange: update,
-				get value() {
-					return endpoint.custom_data.async.max_consumes;
-				},
-				set value($$value) {
-					endpoint.custom_data.async.max_consumes = $$value;
-					$$settled = false;
+				onchange: (value) => {
+					ensureAsyncConfig().max_consumes = Number(value);
+					update();
 				}
 			});
-			$$renderer.push(`<!----></div> <div class="column" style="display: flex; align-items: flex-end; padding-bottom: 0.75rem;"><label class="checkbox"><input type="checkbox"${attr("checked", endpoint.custom_data.async.notify_ws, true)}/> <span>Notify via WebSocket</span></label></div></div></div>`);
+			$$renderer.push(`<!----></div> <div class="column" style="display: flex; align-items: flex-end; padding-bottom: 0.75rem;"><label class="checkbox"><input type="checkbox"${attr("checked", asyncConfig()?.notify_ws ?? false, true)}/> <span>Notify via WebSocket</span></label></div></div></div>`);
 		}
 		do {
 			$$settled = true;
@@ -11033,6 +11463,15 @@ function AsyncWrapper($$renderer, $$props) {
 function Text($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let notify = new Notifications$1();
+		/**
+		* @typedef {import('../../../../../types/models.js').TextCustomData} TextCustomData
+		* @typedef {import('../../../../../types/models.js').CustomData} CustomData
+		* @typedef {import('../../../../../types/models.js').EndpointRow} EndpointRow
+		* @typedef {import('../../../../../types/models.js').HandlerChangePayload} HandlerChangePayload
+		*/
+		/**
+		* @type {{endpoint: EndpointRow, onchange: (data: HandlerChangePayload) => void}}
+		*/
 		let { endpoint = {}, onchange = () => {} } = $$props;
 		const mimeTypes = [
 			{
@@ -11230,10 +11669,10 @@ function Text($$renderer, $$props) {
 		];
 		let tabList = [{
 			label: "Payload",
-			isActive: true,
 			component: tab_payload
 		}];
 		let payload = "";
+		/** @type {TextCustomData} */
 		let custom_data = { mimeType: "text/plain" };
 		let file_selected = void 0;
 		let langEditor = derived(() => mimeTypes.find((m) => m.id === custom_data.mimeType)?.editor ?? "text");
@@ -11246,7 +11685,8 @@ function Text($$renderer, $$props) {
 			};
 		}
 		function fnOnChange() {
-			onchange(getData());
+			const data = getData();
+			onchange(data);
 		}
 		function tab_payload($$renderer) {
 			$$renderer.push(`<div><div><div><div class="content is-small">Plain Text that will be returned by the Endpoint.</div></div></div> `);
@@ -11279,7 +11719,8 @@ function Text($$renderer, $$props) {
 				title: "Select file",
 				placeholder: "Select file",
 				onchange: (c) => {
-					const selectedFile = c.target.files[0];
+					const input = c.currentTarget;
+					const selectedFile = input.files?.[0];
 					if (!selectedFile) {
 						custom_data.fileName = "";
 						file_selected = void 0;
@@ -11292,18 +11733,26 @@ function Text($$renderer, $$props) {
 						});
 						file_selected = void 0;
 						custom_data.fileName = "";
-						c.target.value = "";
+						input.value = "";
 						return;
 					}
 					const mimeType = selectedFile.type || "application/octet-stream";
 					if (mimeType.startsWith("text/") || mimeType === "application/json" || mimeType === "application/javascript" || mimeType === "application/xml") {
 						const reader = new FileReader();
-						reader.onload = (e) => {
-							payload = e.target.result;
+						reader.onload = (event) => {
+							const content = event.target?.result;
+							if (typeof content !== "string") {
+								notify.push({
+									message: "The selected file could not be read.",
+									color: "danger"
+								});
+								return;
+							}
+							payload = content;
 							custom_data.isBase64 = false;
 							custom_data.fileName = void 0;
 							file_selected = void 0;
-							c.target.value = "";
+							input.value = "";
 							custom_data.mimeType = mimeType;
 							fnOnChange();
 						};
@@ -11390,7 +11839,6 @@ function Mongodb($$renderer, $$props) {
 		let tabList = [
 			{
 				label: "Code",
-				isActive: true,
 				classIcon: " fa-brands fa-node-js ",
 				component: tab_code
 			},
@@ -11512,6 +11960,7 @@ function CustomFunction($$renderer, $$props) {
 		var $$store_subs;
 		let { endpoint = {}, onchange = () => {} } = $$props;
 		let functions = derived(() => {
+			/** @type {Array<{id: string, value: string|number}>} */
 			let r = [];
 			switch (endpoint.environment) {
 				case "dev":
@@ -11526,7 +11975,6 @@ function CustomFunction($$renderer, $$props) {
 		});
 		let tabList = [{
 			label: "Function",
-			isActive: true,
 			component: tab_fn
 		}];
 		function getData() {
@@ -11588,7 +12036,11 @@ function CustomFunction($$renderer, $$props) {
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/common/methods_select.svelte
 function Methods_select($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
-		let { disabled = false, option = {}, onselect } = $$props;
+		/**
+		* @type {{disabled?: boolean, option?: string|number|undefined, onselect?: (e: {value: any}) => void}}
+		*/
+		let { disabled = false, option = void 0, onselect = (s) => {} } = $$props;
+		/** @type {Array<{id: string, value: string, enabled?: boolean, description?: string}>} */
 		let methods = [];
 		const unsubscribe = listMethodStore.subscribe((value) => {
 			methods = value;
@@ -11640,16 +12092,31 @@ function Methods_select($$renderer, $$props) {
 	});
 }
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/endpoint.svelte
+function titleModal($$renderer) {
+	$$renderer.push(`<span>Copy endpoint to...</span>`);
+}
 function Endpoint($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
+		/**
+		* @typedef {import('../../../../types/models.js').EndpointRow} EndpointRow
+		* @typedef {import('../../../../types/models.js').AppRow} AppRow
+		*/
+		/**
+		* @type {{
+		*   endpoint?: EndpointRow,
+		*   app?: AppRow,
+		*   validateResource?: boolean,
+		*   availableURL?: boolean,
+		*   oncopy?: (result: unknown) => void
+		* }}
+		*/
 		let { endpoint = {
 			method: "X",
-			access: 0,
-			handler: "?",
-			environment: "?"
+			access: 0
 		}, app = {}, validateResource = false, availableURL = false, oncopy = () => {} } = $$props;
 		let notify = new Notifications$1();
 		let environment_list = Environment;
+		/** @type {Array<{id: string|number, value: string, enabled?: boolean}>} */
 		let handlers = [];
 		let new_keyword = "";
 		let ShowDialogCopyEndpoint = false;
@@ -11668,60 +12135,86 @@ function Endpoint($$renderer, $$props) {
 			handlers = value;
 		});
 		onDestroy(unsubscribe);
+		function bodyDialogModal($$renderer) {
+			$$renderer.push(`<div>Copy the endpoint to another environment including all configuration and testing parameters.</div> <br/> <div class="field has-addons"><p class="control"><a class="button is-small is-static">Copy to:</a></p> <p class="control">`);
+			Select($$renderer, {
+				options: available_environments_list(),
+				onchange: (e) => {
+					if (app && app.endpoints) {
+						let endpoint_find = app.endpoints.find((ep) => {
+							return ep.environment == e && ep.handler == endpoint.handler && ep.method == endpoint.method && ep.resource == endpoint.resource;
+						});
+						endpoint_copied = { ...endpoint };
+						endpoint_copied.environment = e;
+						endpoint_copied.idendpoint = void 0;
+						endpoint_copied.endpoint = createEndpoint(endpoint_copied.method || "", app.app || "", endpoint_copied.resource || "", endpoint_copied.environment || "");
+						if (endpoint_find) endpoint_copied.idendpoint = endpoint_find.idendpoint;
+					} else endpoint_copied = {};
+				},
+				get option() {
+					return endpoint_env_copy;
+				},
+				set option($$value) {
+					endpoint_env_copy = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----></p></div> `);
+			if (endpoint_copied && endpoint_copied.idendpoint && endpoint_copied.idendpoint.length > 0) {
+				$$renderer.push(`<!--[0--><label class="checkbox"><input type="checkbox"${attr("checked", endpoint_replace_copy, true)}/> I agree to replace all data on the endpoint.</label> `);
+				$$renderer.push(`<!--[0--><br/> <div class="icon-text"><span class="icon has-text-warning"><i class="fas fa-exclamation-triangle"></i></span> <span>You are required to accept the replacement in order to continue.</span></div>`);
+				$$renderer.push(`<!--]-->`);
+			} else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--> `);
+			if (endpoint_env_copy == "") $$renderer.push(`<!--[0--><div class="icon-text"><span class="icon has-text-warning"><i class="fas fa-exclamation-triangle"></i></span> <span>Select an environment to copy.</span></div>`);
+			else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--> <br/> <div>If you use application variables you must copy or create them individually.</div>`);
+		}
+		function copy_endpoint($$renderer) {
+			if (endpoint.idendpoint && endpoint.idendpoint.length > 0) $$renderer.push(`<!--[0--><div class="field has-addons"><p class="control"><button class="button is-small is-info"><span class="icon is-small"><i class="fa-solid fa-copy"></i></span> <span>Copy endpoint to</span></button></p></div>`);
+			else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]-->`);
+		}
+		function enabled_endpoint($$renderer) {
+			Basic$1($$renderer, {
+				label: "Enabled",
+				type: "checkbox",
+				placeholder: "Enabled",
+				get value() {
+					return endpoint.enabled;
+				},
+				set value($$value) {
+					endpoint.enabled = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----> `);
+			Basic$1($$renderer, {
+				label: "Title",
+				type: "text",
+				placeholder: "Title",
+				get value() {
+					return endpoint.title;
+				},
+				set value($$value) {
+					endpoint.title = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!---->`);
+		}
 		let $$settled = true;
 		let $$inner_renderer;
 		function $$render_inner($$renderer) {
 			$$renderer.push(`<div>`);
-			{
-				function enabled_endpoint($$renderer) {
-					Basic$1($$renderer, {
-						label: "Enabled",
-						type: "checkbox",
-						placeholder: "Enabled",
-						get value() {
-							return endpoint.enabled;
-						},
-						set value($$value) {
-							endpoint.enabled = $$value;
-							$$settled = false;
-						}
-					});
-					$$renderer.push(`<!----> `);
-					Basic$1($$renderer, {
-						label: "Title",
-						type: "text",
-						placeholder: "Title",
-						get value() {
-							return endpoint.title;
-						},
-						set value($$value) {
-							endpoint.title = $$value;
-							$$settled = false;
-						}
-					});
-					$$renderer.push(`<!---->`);
-				}
-				function copy_endpoint($$renderer) {
-					if (endpoint.idendpoint && endpoint.idendpoint.length > 0) $$renderer.push(`<!--[0--><div class="field has-addons"><p class="control"><button class="button is-small is-info"><span class="icon is-small"><i class="fa-solid fa-copy"></i></span> <span>Copy endpoint to</span></button></p></div>`);
-					else $$renderer.push("<!--[-1-->");
-					$$renderer.push(`<!--]-->`);
-				}
-				Level($$renderer, {
-					left: [enabled_endpoint],
-					right: [copy_endpoint],
-					enabled_endpoint,
-					copy_endpoint,
-					$$slots: {
-						enabled_endpoint: true,
-						copy_endpoint: true
-					}
-				});
-			}
+			Level($$renderer, {
+				left: [enabled_endpoint],
+				right: [copy_endpoint]
+			});
 			$$renderer.push(`<!----> <input class="input" type="hidden" placeholder="Name"${attr("value", endpoint.idendpoint)}/> <div class="field is-expanded"><div class="field has-addons"><p class="control"><a class="button is-small is-static">API Resource:</a></p> <p class="control"><a class="button is-small is-static">${escape_html(endpoint.method == "WS" ? "/ws/" : "/api/")}${escape_html(app.app)}</a></p> <p class="control is-expanded"><input class="input is-small" type="text" placeholder="Resourse"${attr("disabled", endpoint.handler == "MCP" || endpoint.handler == "ASYNC_WRAPPER", true)}${attr("value", endpoint.resource)}/></p> <p class="control"><a class="button is-small is-static">/</a></p> <p class="control">`);
 			if (endpoint && endpoint.environment) {
 				$$renderer.push("<!--[0-->");
 				Select($$renderer, {
-					onselect: (e) => {},
 					get options() {
 						return environment_list;
 					},
@@ -11836,100 +12329,54 @@ function Endpoint($$renderer, $$props) {
 			$$renderer.push(`<!--]--></div></div></div> <hr/> <div class="field"><label class="label is-small">Description</label> <div class="control"><textarea class="textarea is-small" placeholder="Textarea">`);
 			const $$body = escape_html(endpoint.description);
 			if ($$body) $$renderer.push(`${$$body}`);
-			$$renderer.push(`</textarea></div></div></div> `);
-			{
-				function titleModal($$renderer) {
-					$$renderer.push(`<span>Copy endpoint to...</span>`);
-				}
-				function bodyDialogModal($$renderer) {
-					$$renderer.push(`<div>Copy the endpoint to another environment including all configuration and testing parameters.</div> <br/> <div class="field has-addons"><p class="control"><a class="button is-small is-static">Copy to:</a></p> <p class="control">`);
-					Select($$renderer, {
-						options: available_environments_list(),
-						onchange: (e) => {
-							if (app && app.endpoints) {
-								let endpoint_find = app.endpoints.find((ep) => {
-									return ep.environment == e && ep.handler == endpoint.handler && ep.method == endpoint.method && ep.resource == endpoint.resource;
-								});
-								endpoint_copied = { ...endpoint };
-								endpoint_copied.environment = e;
-								endpoint_copied.idendpoint = null;
-								endpoint_copied.endpoint = createEndpoint(endpoint_copied.method, app.app, endpoint_copied.resource, endpoint_copied.environment);
-								if (endpoint_find) endpoint_copied.idendpoint = endpoint_find.idendpoint;
-							} else endpoint_copied = {};
-						},
-						get option() {
-							return endpoint_env_copy;
-						},
-						set option($$value) {
-							endpoint_env_copy = $$value;
-							$$settled = false;
-						}
-					});
-					$$renderer.push(`<!----></p></div> `);
-					if (endpoint_copied && endpoint_copied.idendpoint && endpoint_copied.idendpoint.length > 0) {
-						$$renderer.push(`<!--[0--><label class="checkbox"><input type="checkbox"${attr("checked", endpoint_replace_copy, true)}/> I agree to replace all data on the endpoint.</label> `);
-						$$renderer.push(`<!--[0--><br/> <div class="icon-text"><span class="icon has-text-warning"><i class="fas fa-exclamation-triangle"></i></span> <span>You are required to accept the replacement in order to continue.</span></div>`);
-						$$renderer.push(`<!--]-->`);
-					} else $$renderer.push("<!--[-1-->");
-					$$renderer.push(`<!--]--> `);
-					if (endpoint_env_copy == "") $$renderer.push(`<!--[0--><div class="icon-text"><span class="icon has-text-warning"><i class="fas fa-exclamation-triangle"></i></span> <span>Select an environment to copy.</span></div>`);
-					else $$renderer.push("<!--[-1-->");
-					$$renderer.push(`<!--]--> <br/> <div>If you use application variables you must copy or create them individually.</div>`);
-				}
-				Modal_1($$renderer, {
-					title: titleModal,
-					body: bodyDialogModal,
-					onaccept: async () => {
-						if (!endpoint_env_copy) {
-							notify.push({
-								message: "You must select an environment to copy the endpoint to.",
-								color: "warning"
-							});
-							return;
-						}
-						if (!endpoint_copied?.idendpoint || endpoint_replace_copy) {
-							if (endpoint_env_copy && endpoint_env_copy !== "") {
-								try {
-									let result = await EndpointSave(endpoint_copied);
-									if (result && result.result && result.result.idapp == app.idapp) {
-										oncopy(result.result);
-										notify.push({
-											message: "Copied successfully to " + endpoint_env_copy,
-											color: "success"
-										});
-									} else notify.push({
-										message: "Error copying endpoint: " + (result.message || "Unknown error"),
-										color: "danger"
-									});
-								} catch (error) {
-									console.error("Error copying endpoint: ", error);
-									notify.push({
-										message: "Error copying endpoint: " + error.message,
-										color: "danger"
-									});
-								}
-								ShowDialogCopyEndpoint = false;
-							}
-						} else notify.push({
-							message: "You must accept overwriting the endpoint data.",
+			$$renderer.push(`</textarea></div></div></div>  `);
+			Modal_1($$renderer, {
+				title: titleModal,
+				body: bodyDialogModal,
+				onaccept: async () => {
+					if (!endpoint_env_copy) {
+						notify.push({
+							message: "You must select an environment to copy the endpoint to.",
 							color: "warning"
 						});
-					},
-					get show() {
-						return ShowDialogCopyEndpoint;
-					},
-					set show($$value) {
-						ShowDialogCopyEndpoint = $$value;
-						$$settled = false;
-					},
-					titleModal,
-					bodyDialogModal,
-					$$slots: {
-						titleModal: true,
-						bodyDialogModal: true
+						return;
 					}
-				});
-			}
+					if (!endpoint_copied?.idendpoint || endpoint_replace_copy) {
+						if (endpoint_env_copy && endpoint_env_copy !== "") {
+							try {
+								let result = await EndpointSave(endpoint_copied);
+								if (result && result.result && result.result.idapp == app.idapp) {
+									oncopy(result.result);
+									notify.push({
+										message: "Copied successfully to " + endpoint_env_copy,
+										color: "success"
+									});
+								} else notify.push({
+									message: "Error copying endpoint: " + (result.message || "Unknown error"),
+									color: "danger"
+								});
+							} catch (error) {
+								console.error("Error copying endpoint: ", error);
+								notify.push({
+									message: "Error copying endpoint: " + getErrorMessage(error),
+									color: "danger"
+								});
+							}
+							ShowDialogCopyEndpoint = false;
+						}
+					} else notify.push({
+						message: "You must accept overwriting the endpoint data.",
+						color: "warning"
+					});
+				},
+				get show() {
+					return ShowDialogCopyEndpoint;
+				},
+				set show($$value) {
+					ShowDialogCopyEndpoint = $$value;
+					$$settled = false;
+				}
+			});
 			$$renderer.push(`<!---->`);
 		}
 		do {
@@ -11950,7 +12397,9 @@ function Endpoint($$renderer, $$props) {
 function Authorizations($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { users = {} } = $$props;
+		/** @type {Array<Record<string, unknown>>} */
 		let table_users = [];
+		/** @type {Array<Record<string, unknown>>} */
 		let data_users = [];
 		let columns = {
 			auth: {
@@ -11983,6 +12432,7 @@ function Authorizations($$renderer, $$props) {
 			username: { label: "username" },
 			email: { label: "email" }
 		};
+		/** @type {ReturnType<typeof setTimeout>|undefined} */
 		let timeoutChageAuth;
 		const unsubscribe = storeUsersList.subscribe((value) => {
 			data_users = value;
@@ -12099,7 +12549,9 @@ function Logs$1($$renderer, $$props) {
 			status_client_error: 2,
 			status_server_error: 3
 		} } = $$props;
+		/** @type {Array<Record<string, unknown>>} */
 		let dataLogs = [];
+		/** @type {Array<Record<string, unknown>>} */
 		let datatraceLogs = [];
 		let trace_id = "";
 		let columns_trace = {
@@ -12139,28 +12591,25 @@ function Logs$1($$renderer, $$props) {
 			end_date: formattedNow,
 			idendpoint: endpoint.idendpoint || "ffffffff-ffff-ffff-ffff-ffffffffffff",
 			limit: 1e3,
-			timezone: DateTime.local().z
+			timezone: DateTime.local().zoneName
 		};
 		let tabs = [
 			{
 				label: "Parametrization",
 				classIcon: "fa-solid fa-rectangle-list",
 				slot: "parameterization",
-				isActive: true,
 				component: tab_param
 			},
 			{
 				label: "Registered logs",
 				classIcon: "fa-solid fa-file-lines",
 				slot: "logs",
-				isActive: false,
 				component: tab_logs
 			},
 			{
 				label: "Trace Logs",
 				classIcon: "fa-solid fa-file-lines",
 				slot: "logs",
-				isActive: false,
 				component: tab_trace_logs
 			}
 		];
@@ -12248,68 +12697,54 @@ function Logs$1($$renderer, $$props) {
 			$$renderer.push(`<!--]--></td><td class="is-vcentered has-text-centered"><span class="tag is-danger is-light has-text-weight-bold"><span class="icon is-small mr-1"><i class="fa-solid fa-server"></i></span> 5XX</span></td><td><details><summary class="has-text-weight-bold is-clickable mb-2">Server error</summary> <p class="has-text-grey mb-3">The server was unable to fulfill an apparently valid request.</p> <div class="tags"><span class="tag is-danger is-light">500 Internal Server Error</span> <span class="tag is-danger is-light">501 Not Implemented</span> <span class="tag is-danger is-light">502 Bad Gateway</span> <span class="tag is-danger is-light">503 Service Unavailable</span> <span class="tag is-danger is-light">504 Gateway Timeout</span> <span class="tag is-danger is-light">505 HTTP Version Not Supported</span> <span class="tag is-danger is-light">506 Variant Also Negotiates</span> <span class="tag is-danger is-light">507 Insufficient Storage</span> <span class="tag is-danger is-light">508 Loop Detected</span> <span class="tag is-danger is-light">510 Not Extended</span> <span class="tag is-danger is-light">511 Network Auth Required</span></div></details></td></tr></tbody></table></div>`);
 		}
 		function tab_logs($$renderer) {
-			{
-				function rt1($$renderer) {
-					$$renderer.push(`<div class="field has-addons has-addons-centered"><span class="control"><input class="input is-small" type="datetime-local" placeholder="Start"${attr("value", params.start_date)}/></span> <span class="control"><a class="button is-static is-small">Start</a></span></div>`);
-				}
-				function rt2($$renderer) {
-					$$renderer.push(`<div class="field has-addons has-addons-centered"><span class="control"><input class="input is-small" type="datetime-local" placeholder="Start"${attr("value", params.end_date)}/></span> <span class="control"><a class="button is-static is-small">End</a></span></div>`);
-				}
-				function rt3($$renderer) {
-					$$renderer.push(`<div class="field has-addons has-addons-centered"><span class="control"><input class="input is-small" type="number" placeholder="Limit"${attr("value", params.limit)}/></span> <span class="control"><a class="button is-static is-small">Limit</a></span></div>`);
-				}
-				Table($$renderer, {
-					right_items: [
-						rt1,
-						rt2,
-						rt3
-					],
-					onsearch: fetchLogs,
-					get columns() {
-						return columns_logs;
-					},
-					set columns($$value) {
-						columns_logs = $$value;
-						$$settled = false;
-					},
-					get RawDataTable() {
-						return dataLogs;
-					},
-					set RawDataTable($$value) {
-						dataLogs = $$value;
-						$$settled = false;
-					},
+			function rt1($$renderer) {
+				$$renderer.push(`<div class="field has-addons has-addons-centered"><span class="control"><input class="input is-small" type="datetime-local" placeholder="Start"${attr("value", params.start_date)}/></span> <span class="control"><a class="button is-static is-small">Start</a></span></div>`);
+			}
+			function rt2($$renderer) {
+				$$renderer.push(`<div class="field has-addons has-addons-centered"><span class="control"><input class="input is-small" type="datetime-local" placeholder="Start"${attr("value", params.end_date)}/></span> <span class="control"><a class="button is-static is-small">End</a></span></div>`);
+			}
+			function rt3($$renderer) {
+				$$renderer.push(`<div class="field has-addons has-addons-centered"><span class="control"><input class="input is-small" type="number" placeholder="Limit"${attr("value", params.limit)}/></span> <span class="control"><a class="button is-static is-small">Limit</a></span></div>`);
+			}
+			Table($$renderer, {
+				right_items: [
 					rt1,
 					rt2,
-					rt3,
-					$$slots: {
-						rt1: true,
-						rt2: true,
-						rt3: true
-					}
-				});
-			}
+					rt3
+				],
+				onsearch: fetchLogs,
+				get columns() {
+					return columns_logs;
+				},
+				set columns($$value) {
+					columns_logs = $$value;
+					$$settled = false;
+				},
+				get RawDataTable() {
+					return dataLogs;
+				},
+				set RawDataTable($$value) {
+					dataLogs = $$value;
+					$$settled = false;
+				}
+			});
 		}
 		function tab_trace_logs($$renderer) {
-			{
-				function rt1($$renderer) {
-					$$renderer.push(`<div class="field has-addons has-addons-centered"><span class="control"><a class="button is-static is-small">Trace ID</a></span> <span class="control"><input class="input is-small" type="text" placeholder="Trace ID"${attr("value", trace_id)}/></span> <span class="control"><button class="button is-small" aria-label="Search trace logs" title="Search trace logs"><span class="icon is-small"><i class="fa-solid fa-magnifying-glass"></i></span></button></span></div>`);
-				}
-				Table($$renderer, {
-					columns: columns_trace,
-					left_items: [rt1],
-					onsearch: fetchTraceLogs,
-					get RawDataTable() {
-						return datatraceLogs;
-					},
-					set RawDataTable($$value) {
-						datatraceLogs = $$value;
-						$$settled = false;
-					},
-					rt1,
-					$$slots: { rt1: true }
-				});
+			function rt1($$renderer) {
+				$$renderer.push(`<div class="field has-addons has-addons-centered"><span class="control"><a class="button is-static is-small">Trace ID</a></span> <span class="control"><input class="input is-small" type="text" placeholder="Trace ID"${attr("value", trace_id)}/></span> <span class="control"><button class="button is-small" aria-label="Search trace logs" title="Search trace logs"><span class="icon is-small"><i class="fa-solid fa-magnifying-glass"></i></span></button></span></div>`);
 			}
+			Table($$renderer, {
+				columns: columns_trace,
+				left_items: [rt1],
+				onsearch: fetchTraceLogs,
+				get RawDataTable() {
+					return datatraceLogs;
+				},
+				set RawDataTable($$value) {
+					datatraceLogs = $$value;
+					$$settled = false;
+				}
+			});
 		}
 		let $$settled = true;
 		let $$inner_renderer;
@@ -12347,7 +12782,8 @@ function Logs$1($$renderer, $$props) {
 function Endpoint_bkp($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let uF = new uFetch(url_paths.getEndpointBackups);
-		let { idendpoint = void 0, onselect = (d) => {} } = $$props;
+		let { idendpoint = void 0, onselect = () => {} } = $$props;
+		/** @type {Array<Record<string, unknown>>} */
 		let dataBackups = [];
 		let selectionType = 1;
 		let columns = {
@@ -12369,39 +12805,35 @@ function Endpoint_bkp($$renderer, $$props) {
 				}
 			} else dataBackups = [];
 		}
+		function restoreBackup($$renderer) {
+			$$renderer.push(`<button${attr_class(`button is-small ${stringify(class_search())}`)}><span>Restore Backup ${escape_html(data_backup?.idbackup || "")}</span> <span class="icon"><i class="fa-regular fa-circle-up"></i></span></button>`);
+		}
 		let $$settled = true;
 		let $$inner_renderer;
 		function $$render_inner($$renderer) {
-			{
-				function restoreBackup($$renderer) {
-					$$renderer.push(`<button${attr_class(`button is-small ${stringify(class_search())}`)}><span>Restore Backup ${escape_html(data_backup?.idbackup || "")}</span> <span class="icon"><i class="fa-regular fa-circle-up"></i></span></button>`);
+			Table($$renderer, {
+				columns,
+				left_items: [restoreBackup],
+				onsearch: fetchData,
+				onselectrows: (selected) => {
+					if (selected.rows && selected.rows.length == 1) data_backup = selected.rows[0];
+					else data_backup = null;
+				},
+				get RawDataTable() {
+					return dataBackups;
+				},
+				set RawDataTable($$value) {
+					dataBackups = $$value;
+					$$settled = false;
+				},
+				get selectionType() {
+					return selectionType;
+				},
+				set selectionType($$value) {
+					selectionType = $$value;
+					$$settled = false;
 				}
-				Table($$renderer, {
-					columns,
-					left_items: [restoreBackup],
-					onsearch: fetchData,
-					onselectrows: (selected) => {
-						if (selected.rows && selected.rows.length == 1) data_backup = selected.rows[0];
-						else data_backup = null;
-					},
-					get RawDataTable() {
-						return dataBackups;
-					},
-					set RawDataTable($$value) {
-						dataBackups = $$value;
-						$$settled = false;
-					},
-					get selectionType() {
-						return selectionType;
-					},
-					set selectionType($$value) {
-						selectionType = $$value;
-						$$settled = false;
-					},
-					restoreBackup,
-					$$slots: { restoreBackup: true }
-				});
-			}
+			});
 		}
 		do {
 			$$settled = true;
@@ -12434,7 +12866,6 @@ function TelegramBot($$renderer, $$props) {
 		}
 		let tabList = [{
 			label: "Bot Code",
-			isActive: true,
 			classIcon: " fa-brands fa-node-js ",
 			component: tab_code
 		}, {
@@ -12568,7 +12999,7 @@ function Endpoint_label($$renderer, $$props) {
 		let env_selected = derived(() => {
 			return Environment && Array.isArray(Environment) ? Environment.find((item) => {
 				return item.id == environment;
-			}) : [];
+			}) : void 0;
 		});
 		$$renderer.push(`<nav class="level"><div class="level-left"><div class="level-item"><h4 class="subtitle is-5"><div class="icon-text" style="cursor: pointer;" title="Copy to clipboard"><span${attr_class(`icon has-text-info`)}><i${attr_class(`fa-solid fa-copy`)}></i></span> <span>${escape_html(endpoint)}</span></div></h4></div></div> <div class="level-right"><span class="level-item"><div class="field is-grouped is-grouped-multiline"><div class="control"><div class="tags has-addons"><span class="tag is-dark">Method</span> <span${attr_class(`tag is-${stringify(listHTTPMethods[method]?.color)}`)}>${escape_html(method)}</span></div></div> <div class="control"><div class="tags has-addons"><span class="tag is-dark">Handler</span> <span${attr_class(`tag is-${stringify(handler_params()?.css_class)}`)}>${escape_html(handler_params()?.value)}</span></div></div> <div class="control"><div class="tags has-addons"><span class="tag is-dark">Env</span> <span${attr_class(`tag is-${stringify(env_selected()?.background)}`)}>${escape_html(env_selected()?.value)}</span></div></div></div></span></div></nav>`);
 		bind_props($$props, {
@@ -12582,12 +13013,29 @@ function Endpoint_label($$renderer, $$props) {
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/endpoints/widgets/editor.svelte
 function Editor($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
-		var $$store_subs;
+		/**
+		* @typedef {import('../../../../types/models.js').EndpointRow} EndpointRow
+		* @typedef {import('../../../../types/models.js').AppRow} AppRow
+		* @typedef {import('../../../../types/models.js').HandlerChangePayload} HandlerChangePayload
+		* @typedef {import('../../../../types/models.js').DataTest} DataTest
+		*/
+		/**
+		* @type {{showEditor?: boolean, onsave?: (d: HandlerChangePayload) => void, oncopy?: (ep: EndpointRow) => void}}
+		*/
 		let { showEditor = false, onsave = (d) => {}, oncopy = () => {} } = $$props;
 		let noty = new Notifications$1();
+		/** @type {EndpointRow} */
 		let endpoint = structuredClone(defaultEndpoint);
+		/** @type {AppRow} */
 		let app = {};
+		/** @type {number|string|undefined} */
 		let idendpoint = void 0;
+		/** @type {number} */
+		let idappNumber = derived(() => Number(endpoint.idapp || 0));
+		/** @type {string} */
+		let customDataJson = derived(() => JSON.stringify(endpoint.custom_data || {}));
+		/** @type {string} */
+		let corsJson = derived(() => JSON.stringify(endpoint.cors || {}));
 		let markdown_docs = "";
 		let deploying = {
 			show: false,
@@ -12595,6 +13043,9 @@ function Editor($$renderer, $$props) {
 			error: false
 		};
 		let dirty = false;
+		/**
+		* @param {any} data
+		*/
 		function setData(data) {
 			app = data.app || {};
 			idendpoint = data.idendpoint || void 0;
@@ -12637,20 +13088,26 @@ function Editor($$renderer, $$props) {
 			if (filaConDatos(data_test.query) || filaConDatos(data_test.headers) || authConDatos) return data_test;
 			return code;
 		}
+		/**
+		* @param {EndpointRow} ep
+		* @returns {EndpointRow}
+		*/
 		function normalizeEndpoint(ep) {
 			if (!ep) return ep;
-			for (const field of [
+			const jsonFields = [
 				"json_schema",
 				"mcp",
 				"ctrl",
 				"data_test",
 				"cors",
 				"headers_test"
-			]) if (typeof ep[field] === "string") {
-				const val = ep[field].trim();
-				if (val === "" || val === "null" || val === "undefined") ep[field] = {};
+			];
+			const epRec = ep;
+			for (const field of jsonFields) if (typeof epRec[field] === "string") {
+				const val = epRec[field].trim();
+				if (val === "" || val === "null" || val === "undefined") epRec[field] = {};
 				else try {
-					ep[field] = JSON.parse(val);
+					epRec[field] = JSON.parse(val);
 				} catch (e) {
 					console.error(`Error parsing ${field}:`, e);
 					try {
@@ -12661,23 +13118,24 @@ function Editor($$renderer, $$props) {
 					} catch (err) {
 						console.error("Failed to show notification:", err);
 					}
-					ep[field] = {};
+					epRec[field] = {};
 				}
 			}
-			ep.json_schema ??= {};
-			ep.json_schema.in ??= {};
-			ep.json_schema.in.enabled ??= false;
-			ep.json_schema.in.schema ??= {};
-			ep.json_schema.out ??= {};
-			ep.json_schema.out.enabled ??= false;
-			ep.json_schema.out.schema ??= {};
-			ep.custom_data ??= {};
-			ep.mcp ??= {};
-			ep.ctrl ??= {};
-			ep.ctrl.users ??= [];
-			ep.ctrl.log ??= {};
-			ep.data_test = ensureDataTestShape(unwrapNestedDataTest(ep.data_test));
-			return ep;
+			const js = epRec.json_schema;
+			js.in ??= {};
+			js.in.enabled ??= false;
+			js.in.schema ??= {};
+			js.out ??= {};
+			js.out.enabled ??= false;
+			js.out.schema ??= {};
+			/** @type {any} */ epRec.custom_data ??= {};
+			/** @type {any} */ epRec.mcp ??= {};
+			let ctrl = epRec.ctrl;
+			ctrl ??= {};
+			ctrl.users ??= [];
+			ctrl.log ??= {};
+			epRec.data_test = ensureDataTestShape(unwrapNestedDataTest(epRec.data_test));
+			return epRec;
 		}
 		async function setValuesEndpoint() {
 			if (app && app.endpoints && idendpoint) {
@@ -12694,7 +13152,7 @@ function Editor($$renderer, $$props) {
 			deploying.message = "Saving Endpoint...";
 			deploying.error = false;
 			try {
-				let resp = await EndpointSave(endpoint, store_get($$store_subs ??= {}, "$userStore", userStore).token);
+				let resp = await EndpointSave(endpoint);
 				let response = resp.result;
 				if (response && response.idapp == app.idapp) {
 					deploying.show = false;
@@ -12702,7 +13160,7 @@ function Editor($$renderer, $$props) {
 						message: "Endpoint saved and deployed successfully.",
 						color: "success"
 					});
-					onsave();
+					/** @type {any} */ onsave();
 				} else {
 					deploying.error = true;
 					deploying.message = `Error: ${resp.message}`;
@@ -12710,7 +13168,7 @@ function Editor($$renderer, $$props) {
 			} catch (error) {
 				console.error(error);
 				deploying.error = true;
-				deploying.message = `Error: ${error.message}`;
+				deploying.message = `Error: ${getErrorMessage(error)}`;
 			}
 		}
 		let validateResource = false;
@@ -12719,7 +13177,6 @@ function Editor($$renderer, $$props) {
 			{
 				name: "endpoint",
 				label: "Endpoint",
-				isActive: true,
 				component: tab_endpoint,
 				classIcon: " fa-solid fa-network-wired "
 			},
@@ -12797,6 +13254,7 @@ function Editor($$renderer, $$props) {
 			}
 		];
 		/** Mapa de handler → tabs permitidas. Sin entrada = todas las tabs. */
+		/** @type {Record<string, Set<string>>} */
 		const HANDLER_TABS = {
 			MCP: /* @__PURE__ */ new Set([
 				"endpoint",
@@ -12919,16 +13377,19 @@ function Editor($$renderer, $$props) {
 		};
 		let derivedtabList = derived(() => {
 			if (!app.app) return [];
-			const allowed = HANDLER_TABS[endpoint?.handler];
+			const allowed = HANDLER_TABS[endpoint?.handler ?? ""];
 			if (!allowed) return tabList;
 			return tabList.filter((tab) => allowed.has(tab.name));
 		});
 		function clearValues() {
 			let ep = structuredClone(defaultEndpoint);
-			ep.idapp = app.idapp;
+			ep.idapp = app.idapp || "";
 			endpoint = normalizeEndpoint(ep);
 		}
-		function onChangeValueHandler(v) {
+		/**
+		* @param {HandlerChangePayload} [v]
+		*/
+		function onChangeValueHandler(v = void 0) {
 			console.trace("onChangeValueHandler", v);
 			if (v) {
 				dirty = true;
@@ -13034,10 +13495,10 @@ function Editor($$renderer, $$props) {
 					environment: endpoint.environment,
 					isReadOnly: true,
 					get idapp() {
-						return endpoint.idapp;
+						return idappNumber();
 					},
 					set idapp($$value) {
-						endpoint.idapp = $$value;
+						idappNumber($$value);
 						$$settled = false;
 					}
 				});
@@ -13103,7 +13564,6 @@ function Editor($$renderer, $$props) {
 			}
 			Tab($$renderer, { tabs: [{
 				label: "In",
-				isActive: true,
 				component: json_schema_in,
 				classIcon: " fa-solid fa-arrow-right-to-bracket "
 			}, {
@@ -13123,10 +13583,10 @@ function Editor($$renderer, $$props) {
 					showFormat: true,
 					onchange: (datajs) => {},
 					get code() {
-						return endpoint.custom_data;
+						return customDataJson();
 					},
 					set code($$value) {
-						endpoint.custom_data = $$value;
+						customDataJson($$value);
 						$$settled = false;
 					}
 				});
@@ -13387,13 +13847,6 @@ function Editor($$renderer, $$props) {
 					set mcp($$value) {
 						endpoint.mcp = $$value;
 						$$settled = false;
-					},
-					get endpoint() {
-						return endpoint;
-					},
-					set endpoint($$value) {
-						endpoint = $$value;
-						$$settled = false;
 					}
 				});
 			} else $$renderer.push("<!--[-1-->");
@@ -13409,10 +13862,10 @@ function Editor($$renderer, $$props) {
 						onChangeValueHandler();
 					},
 					get code() {
-						return endpoint.cors;
+						return corsJson();
 					},
 					set code($$value) {
-						endpoint.cors = $$value;
+						corsJson($$value);
 						$$settled = false;
 					}
 				});
@@ -13579,7 +14032,6 @@ function Editor($$renderer, $$props) {
 			$$render_inner($$inner_renderer);
 		} while (!$$settled);
 		$$renderer.subsume($$inner_renderer);
-		if ($$store_subs) unsubscribe_stores($$store_subs);
 		bind_props($$props, {
 			showEditor,
 			setData
@@ -13590,13 +14042,23 @@ function Editor($$renderer, $$props) {
 function Endpoints($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
+		/**
+		* @typedef {import('../../../types/models.js').AppRow} AppRow
+		* @typedef {import('../../../types/models.js').EndpointRow} EndpointRow
+		* @typedef {import('../../../types/models.js').ServerModelChangedEvent} ServerModelChangedEvent
+		*/
+		/**
+		* @type {{idapp?: number, onsavedeploy?: (app: AppRow) => void}}
+		*/
 		let { idapp = 0, onsavedeploy = () => {} } = $$props;
 		let notify = new Notifications$1();
 		let EndpointEditorWidget = void 0;
+		/** @type {AppRow} */
 		let app = {
 			app: "",
 			enabled: false,
-			description: ""
+			description: "",
+			endpoints: []
 		};
 		let showMigrateModal = false;
 		let migrateTargetEnv = "";
@@ -13606,13 +14068,16 @@ function Endpoints($$renderer, $$props) {
 		const canEdit = derived(() => currentUserHasPermission(currentUser(), permEnv, "endpoints", "edit"));
 		const canDelete = derived(() => currentUserHasPermission(currentUser(), permEnv, "endpoints", "delete"));
 		let migrateConfirmCheck = false;
+		/** @type {Array<string|number>} */
 		let selectedEndpointsForMigration = [];
 		let showEndpointEdit = false;
 		let TableSelectionType = 0;
 		let serverAPIVersion = "Loading...";
 		let serverAPILastVersion = "";
 		let serverDDBB = "?";
+		/** @type {ReturnType<typeof setTimeout>|undefined} */
 		let reloadEndpointsTimeout;
+		/** @type {ReturnType<typeof setTimeout>|undefined} */
 		let reloadAppVarsTimeout;
 		onDestroy(() => {
 			clearTimeout(reloadEndpointsTimeout);
@@ -13621,6 +14086,7 @@ function Endpoints($$renderer, $$props) {
 		/**
 		* Normaliza una versión para poder compararla: descarta los textos de
 		* marcador de posición y tolera espacios o un prefijo "v".
+		* @param {string} value
 		*/
 		function normalizeVersion(value) {
 			let v = typeof value === "string" ? value.trim() : "";
@@ -13635,98 +14101,86 @@ function Endpoints($$renderer, $$props) {
 		let avisoVersionTitulo = derived(() => {
 			return `Versión instalada ${serverAPIVersion} · última publicada ${serverAPILastVersion}`;
 		});
+		function lt01($$renderer) {
+			$$renderer.push(`<div class="control"><div class="tags has-addons"><span class="tag is-dark">Server API</span> <span class="tag is-success">${escape_html(serverAPIVersion)}</span></div></div> <div class="control"><div class="tags has-addons"><span class="tag is-dark">DataBase</span> <span class="tag is-link">${escape_html(serverDDBB)}</span></div></div> `);
+			if (hayVersionDistinta()) {
+				$$renderer.push(`<!--[0--><div class="control"><div class="tags has-addons"${attr("title", avisoVersionTitulo())}><span class="tag is-dark"><span class="icon is-small mr-1 has-text-warning"><i class="fa-solid fa-bell fa-shake"></i></span> Update</span> <span class="tag is-warning">${escape_html(serverAPILastVersion)} `);
+				$$renderer.push("<!--[-1-->");
+				$$renderer.push(`<!--]--></span></div></div>`);
+			} else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]-->`);
+		}
+		function rt1($$renderer) {
+			$$renderer.push(`<span><button class="button is-small" title="Clear Cache"><span class="icon is-small"><i class="fa-solid fa-eraser"></i></span> <span>Cache</span></button></span>`);
+		}
+		function rt2($$renderer) {
+			$$renderer.push(`<span><button title="Generate Documentation" class="button is-small"><span class="icon is-small"><i class="fa-solid fa-file-export"></i></span> <span>Doc</span></button></span>`);
+		}
+		function rt3($$renderer) {
+			$$renderer.push(`<span><button class="button is-small" title="Migrate selected endpoints to another environment"><span class="icon is-small"><i class="fa-solid fa-route"></i></span> <span>Migrate</span></button></span>`);
+		}
 		let $$settled = true;
 		let $$inner_renderer;
 		function $$render_inner($$renderer) {
 			$$renderer.push(`<div><div>`);
-			{
-				function lt01($$renderer) {
-					$$renderer.push(`<div class="control"><div class="tags has-addons"><span class="tag is-dark">Server API</span> <span class="tag is-success">${escape_html(serverAPIVersion)}</span></div></div> <div class="control"><div class="tags has-addons"><span class="tag is-dark">DataBase</span> <span class="tag is-link">${escape_html(serverDDBB)}</span></div></div> `);
-					if (hayVersionDistinta()) {
-						$$renderer.push(`<!--[0--><div class="control"><div class="tags has-addons"${attr("title", avisoVersionTitulo())}><span class="tag is-dark"><span class="icon is-small mr-1 has-text-warning"><i class="fa-solid fa-bell fa-shake"></i></span> Update</span> <span class="tag is-warning">${escape_html(serverAPILastVersion)} `);
-						$$renderer.push("<!--[-1-->");
-						$$renderer.push(`<!--]--></span></div></div>`);
-					} else $$renderer.push("<!--[-1-->");
-					$$renderer.push(`<!--]-->`);
-				}
-				function rt1($$renderer) {
-					$$renderer.push(`<span><button class="button is-small" title="Clear Cache"><span class="icon is-small"><i class="fa-solid fa-eraser"></i></span> <span>Cache</span></button></span>`);
-				}
-				function rt2($$renderer) {
-					$$renderer.push(`<span><button title="Generate Documentation" class="button is-small"><span class="icon is-small"><i class="fa-solid fa-file-export"></i></span> <span>Doc</span></button></span>`);
-				}
-				function rt3($$renderer) {
-					$$renderer.push(`<span><button class="button is-small" title="Migrate selected endpoints to another environment"><span class="icon is-small"><i class="fa-solid fa-route"></i></span> <span>Migrate</span></button></span>`);
-				}
-				Table($$renderer, {
-					showEditRow: "true",
-					showNewButton: canCreate(),
-					showEditButton: canEdit(),
-					showDeleteButton: canDelete(),
-					columns: endpointColumns,
-					left_items: [lt01],
-					right_items: [
-						rt3,
-						rt2,
-						rt1
-					],
-					ondeleterow: (data) => {
-						if (confirm("Do you want to delete the endpoints selected?")) {
-							const rows = data.rows || [];
-							Promise.all(rows.map((element) => DeleteEndpoint(element.idendpoint).then((result) => {
-								if (!result || result.result?.idapp !== app?.idapp) notify.push({
-									message: `Error deleting endpoint ${element.idendpoint}`,
-									color: "danger"
-								});
-							}))).finally(() => {
-								app.endpoints = app.endpoints.filter((item) => {
-									return !rows.some((element) => element.idendpoint == item.idendpoint);
-								});
-							});
-						}
-					},
-					onnewrow: () => {
-						if (idapp && idapp.length > 5) {
-							showEndpointEdit = true;
-							EndpointEditorWidget.setData({ app });
-						} else notify.push({
-							message: "Not app selected",
-							color: "warning"
-						});
-					},
-					oneditrow: (data) => {
-						showEndpointEdit = true;
-						EndpointEditorWidget.setData({
-							app,
-							idendpoint: data.idendpoint
-						});
-					},
-					get RawDataTable() {
-						return app.endpoints;
-					},
-					set RawDataTable($$value) {
-						app.endpoints = $$value;
-						$$settled = false;
-					},
-					get selectionType() {
-						return TableSelectionType;
-					},
-					set selectionType($$value) {
-						TableSelectionType = $$value;
-						$$settled = false;
-					},
-					lt01,
-					rt1,
-					rt2,
+			Table($$renderer, {
+				showEditRow: true,
+				showNewButton: canCreate(),
+				showEditButton: canEdit(),
+				showDeleteButton: canDelete(),
+				columns: endpointColumns,
+				left_items: [lt01],
+				right_items: [
 					rt3,
-					$$slots: {
-						lt01: true,
-						rt1: true,
-						rt2: true,
-						rt3: true
+					rt2,
+					rt1
+				],
+				ondeleterow: (data) => {
+					if (confirm("Do you want to delete the endpoints selected?")) {
+						const rows = data.rows || [];
+						Promise.all(rows.map((element) => DeleteEndpoint(element.idendpoint).then((result) => {
+							if (!result || result.result?.idapp !== app?.idapp) notify.push({
+								message: `Error deleting endpoint ${element.idendpoint}`,
+								color: "danger"
+							});
+						}))).finally(() => {
+							app.endpoints = (app.endpoints ?? []).filter((item) => {
+								return !rows.some((element) => element.idendpoint == item.idendpoint);
+							});
+						});
 					}
-				});
-			}
+				},
+				onnewrow: () => {
+					if (idapp) {
+						showEndpointEdit = true;
+						EndpointEditorWidget.setData({ app });
+					} else notify.push({
+						message: "Not app selected",
+						color: "warning"
+					});
+				},
+				oneditrow: (data) => {
+					showEndpointEdit = true;
+					EndpointEditorWidget.setData({
+						app,
+						idendpoint: data.idendpoint
+					});
+				},
+				get RawDataTable() {
+					return app.endpoints;
+				},
+				set RawDataTable($$value) {
+					app.endpoints = $$value;
+					$$settled = false;
+				},
+				get selectionType() {
+					return TableSelectionType;
+				},
+				set selectionType($$value) {
+					TableSelectionType = $$value;
+					$$settled = false;
+				}
+			});
 			$$renderer.push(`<!----> `);
 			$$renderer.push("<!--[-1-->");
 			$$renderer.push(`<!--]--></div></div> `);
@@ -13777,10 +14231,10 @@ function Endpoints($$renderer, $$props) {
 				$$renderer.push("<!--[0-->");
 				Editor($$renderer, {
 					oncopy: async (eps) => {
-						onsavedeploy();
+						onsavedeploy?.(app);
 					},
 					onsave: async (e) => {
-						onsavedeploy();
+						onsavedeploy?.(app);
 					},
 					get showEditor() {
 						return showEndpointEdit;
@@ -13861,6 +14315,7 @@ function History($$renderer, $$props) {
 		var $$store_subs;
 		let { task = {} } = $$props;
 		const uF = new uFetch(url_paths.getIntervalTaskRuns);
+		/** @type {Array<Record<string, unknown>>} */
 		let dataRuns = [];
 		let loading = false;
 		let columns = {
@@ -13960,17 +14415,29 @@ function Interval_tasks($$renderer, $$props) {
 		const canCreate = derived(() => currentUserHasPermission(currentUser(), permEnv, "interval_tasks", "create"));
 		const canEdit = derived(() => currentUserHasPermission(currentUser(), permEnv, "interval_tasks", "edit"));
 		const canDelete = derived(() => currentUserHasPermission(currentUser(), permEnv, "interval_tasks", "delete"));
+		/**
+		* @typedef {import('../../../types/models.js').IntervalTaskRow} IntervalTaskRow
+		* @typedef {import('../../../types/models.js').EndpointRow} EndpointRow
+		* @typedef {import('../../../types/models.js').IntervalTaskEvent} IntervalTaskEvent
+		*/
 		let showEditor = false;
 		let runNowPending = false;
 		let stopNowPending = false;
+		/** @type {IntervalTaskRow} */
 		let historyTask = {};
+		/** @type {IntervalTaskRow} */
 		let selectedRow = defaultValuesIntervalTask({});
+		let paramsJson = JSON.stringify(selectedRow.params ?? {});
+		/** @type {Array<{name: string, value: string|number}>} */
 		let optionsEndpoints = [];
+		/** @type {Array<EndpointRow>} */
 		let endpoints = [];
+		/** @type {Array<{id: string|number, value: string}>} */
 		let optionsApiKeys = [];
 		let activeTab = 0;
 		const TAB_HISTORY = 2;
 		const TAB_RESPONSE = 3;
+		/** @type {Array<{name: string, label: string, component: import('svelte').Snippet, classIcon: string, disabled?: boolean}>} */
 		let tabList = [
 			{
 				name: "config",
@@ -14019,7 +14486,9 @@ function Interval_tasks($$renderer, $$props) {
 			value: "Cron (time expression)"
 		}];
 		let selectionType = 1;
+		/** @type {Array<IntervalTaskRow>} */
 		let DataTableTasks = [];
+		/** @type {Map<string, Record<string, unknown> & {generation: number}>} */
 		const latestRuntimeEvents = /* @__PURE__ */ new Map();
 		let runtimeEventGeneration = 0;
 		const runtimeEventFields = [
@@ -14033,12 +14502,20 @@ function Interval_tasks($$renderer, $$props) {
 			"disabled_reason",
 			"task_enabled"
 		];
+		/**
+		* @param {IntervalTaskRow} task
+		* @param {IntervalTaskEvent & Record<string, unknown>} ev
+		* @returns {IntervalTaskRow}
+		*/
 		function applyRuntimeEvent(task, ev) {
+			/** @type {Record<string, unknown>} */
+			const evRec = ev;
+			/** @type {Record<string, unknown>} */
 			const updated = { ...task };
-			for (const field of runtimeEventFields) if (ev[field] !== void 0) updated[field] = ev[field];
-			if (ev.enabled !== void 0) updated.task_enabled = ev.enabled;
-			if (ev.started_at && ev.last_run === void 0) updated.last_run = ev.started_at;
-			if (ev.duration_ms !== void 0 && ev.duration_ms !== null) updated.last_exec_time = Math.round(ev.duration_ms);
+			for (const field of runtimeEventFields) if (evRec[field] !== void 0) updated[field] = evRec[field];
+			if (evRec.enabled !== void 0) updated.task_enabled = evRec.enabled;
+			if (evRec.started_at && evRec.last_run === void 0) updated.last_run = evRec.started_at;
+			if (evRec.duration_ms !== void 0 && evRec.duration_ms !== null) updated.last_exec_time = Math.round(evRec.duration_ms);
 			return updated;
 		}
 		let columns = {
@@ -14166,6 +14643,9 @@ function Interval_tasks($$renderer, $$props) {
 			}
 		});
 		/** Formatea una fecha del servidor; devuelve '—' si no hay valor. */
+		/**
+		* @param {string|number|null|undefined} value
+		*/
 		function formatMoment(value) {
 			if (!value) return "—";
 			const date = new Date(value);
@@ -14194,7 +14674,10 @@ function Interval_tasks($$renderer, $$props) {
 				else DataTableTasks = [];
 			} else console.log("idapp not found");
 		}
-		/** `params` llega como objeto desde la API, pero se normaliza por si viniera serializado. */
+		/** `params` llega como objeto desde la API, pero se normaliza por si viniera serializado.
+		* @param {IntervalTaskRow} row
+		* @returns {IntervalTaskRow}
+		*/
 		function normalizeParams(row) {
 			if (typeof row.params === "string") try {
 				row.params = JSON.parse(row.params || "{}");
@@ -14204,6 +14687,9 @@ function Interval_tasks($$renderer, $$props) {
 			else if (!row.params || typeof row.params !== "object") row.params = {};
 			return row;
 		}
+		/**
+		* @param {Array<IntervalTaskRow>} tasks
+		*/
 		async function deleteTasks(tasks) {
 			let idtasks = tasks.map((t) => {
 				return t.idtask;
@@ -14214,6 +14700,15 @@ function Interval_tasks($$renderer, $$props) {
 			})).json();
 			await loadTasks();
 		}
+		function r01($$renderer) {
+			$$renderer.push(`<div class="field has-addons">`);
+			if (selectedRow.idtask) $$renderer.push(`<!--[0--><p class="control"><button${attr_class("button is-small is-warning", void 0, { "is-loading": runNowPending })}${attr("disabled", !runtime()?.task_enabled || Boolean(suspensionStatus()) || Number(runtime()?.status) === 1 && !runtime()?.allow_concurrent, true)}${attr("title", !runtime()?.task_enabled ? "Enable and save the task before running it" : suspensionStatus() ? "The scheduler suspended this task: fix the cause and use Reset attempts" : Number(runtime()?.status) === 1 && !runtime()?.allow_concurrent ? "The task is already running and does not allow concurrency" : "Runs the last saved configuration immediately")}><span class="icon is-small"><i class="fa-solid fa-bolt"></i></span> <span>Run now</span></button></p> <p class="control"><button${attr_class("button is-small is-danger", void 0, { "is-loading": stopNowPending })}${attr("disabled", Number(runtime()?.status) !== 1, true)}${attr("title", Number(runtime()?.status) === 1 ? "Aborts the execution in flight; the task is not disabled and keeps its schedule" : "There is no execution in flight to stop")}><span class="icon is-small"><i class="fa-solid fa-stop"></i></span> <span>Stop now</span></button></p>`);
+			else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--> <p class="control"><button class="button is-small is-link"><span class="icon is-small"><i class="fa-solid fa-rocket"></i></span> <span>Save &amp; Deploy</span></button></p> <p class="control"><button class="button is-small"><span class="icon is-small"><i class="fa-solid fa-xmark"></i></span> <span>Cancel</span></button></p></div>`);
+		}
+		function taskActions($$renderer) {
+			$$renderer.push(`<div class="field has-addons"><p class="control"><button class="button is-small"${attr("disabled", !historyTask?.idtask || historyTaskSuspended(), true)}${attr("title", !historyTask?.idtask ? "Select a single task to act on it" : historyTaskSuspended() ? "The scheduler suspended this task: fix the cause and use Reset attempts" : "Despierta el planificador y ejecuta la tarea inmediatamente")}><span class="icon is-small"><i class="fa-solid fa-bolt"></i></span> <span>Run now</span></button></p> <p class="control"><button class="button is-small is-danger"${attr("disabled", !historyTask?.idtask || Number(historyTaskRuntime()?.status) !== 1, true)}${attr("title", !historyTask?.idtask ? "Select a single task to act on it" : Number(historyTaskRuntime()?.status) === 1 ? "Aborta la ejecución en vuelo; la tarea no se deshabilita y conserva su programación" : "No hay ninguna ejecución en vuelo que detener")}><span class="icon is-small"><i class="fa-solid fa-stop"></i></span> <span>Stop now</span></button></p> <p class="control"><button class="button is-small"${attr("disabled", !historyTask?.idtask, true)} title="Reinicia el contador de fallos y levanta la suspensión si el planificador la detuvo. No reactiva una tarea apagada por el usuario"><span class="icon is-small"><i class="fa-solid fa-rotate-left"></i></span> <span>Reset attempts</span></button></p></div>`);
+		}
 		function tab_config($$renderer) {
 			$$renderer.push(`<div>`);
 			Predictive($$renderer, {
@@ -14221,13 +14716,7 @@ function Interval_tasks($$renderer, $$props) {
 				placeholder: "Select the endpoint this task will call",
 				classLabel: "is-small",
 				classInput: "is-small",
-				get options() {
-					return optionsEndpoints;
-				},
-				set options($$value) {
-					optionsEndpoints = $$value;
-					$$settled = false;
-				},
+				options: optionsEndpoints,
 				get selectedValue() {
 					return selectedRow.idendpoint;
 				},
@@ -14473,10 +14962,10 @@ function Interval_tasks($$renderer, $$props) {
 				lang: "json",
 				showFormat: true,
 				get code() {
-					return selectedRow.params;
+					return paramsJson;
 				},
 				set code($$value) {
-					selectedRow.params = $$value;
+					paramsJson = $$value;
 					$$settled = false;
 				}
 			});
@@ -14490,7 +14979,7 @@ function Interval_tasks($$renderer, $$props) {
 		}
 		function tab_response($$renderer) {
 			$$renderer.push(`<p class="heading">Last response</p> `);
-			if (lastResponse()) $$renderer.push(`<!--[0--><p class="help mb-2">Body returned by the last execution (${escape_html(formatMoment(runtime().last_run))}).</p> <pre class="is-size-7 last-response svelte-zqkhiy">${escape_html(lastResponse())}</pre>`);
+			if (lastResponse()) $$renderer.push(`<!--[0--><p class="help mb-2">Body returned by the last execution (${escape_html(formatMoment(runtime()?.last_run))}).</p> <pre class="is-size-7 last-response svelte-zqkhiy">${escape_html(lastResponse())}</pre>`);
 			else $$renderer.push(`<!--[-1--><p class="help">This task has no recorded response yet: it has never run, the last run returned an empty body,
 			or it is running right now.</p>`);
 			$$renderer.push(`<!--]-->`);
@@ -14498,58 +14987,53 @@ function Interval_tasks($$renderer, $$props) {
 		let $$settled = true;
 		let $$inner_renderer;
 		function $$render_inner($$renderer) {
-			{
-				function taskActions($$renderer) {
-					$$renderer.push(`<div class="field has-addons"><p class="control"><button class="button is-small"${attr("disabled", !historyTask?.idtask || historyTaskSuspended(), true)}${attr("title", !historyTask?.idtask ? "Select a single task to act on it" : historyTaskSuspended() ? "The scheduler suspended this task: fix the cause and use Reset attempts" : "Despierta el planificador y ejecuta la tarea inmediatamente")}><span class="icon is-small"><i class="fa-solid fa-bolt"></i></span> <span>Run now</span></button></p> <p class="control"><button class="button is-small is-danger"${attr("disabled", !historyTask?.idtask || Number(historyTaskRuntime()?.status) !== 1, true)}${attr("title", !historyTask?.idtask ? "Select a single task to act on it" : Number(historyTaskRuntime()?.status) === 1 ? "Aborta la ejecución en vuelo; la tarea no se deshabilita y conserva su programación" : "No hay ninguna ejecución en vuelo que detener")}><span class="icon is-small"><i class="fa-solid fa-stop"></i></span> <span>Stop now</span></button></p> <p class="control"><button class="button is-small"${attr("disabled", !historyTask?.idtask, true)} title="Reinicia el contador de fallos y levanta la suspensión si el planificador la detuvo. No reactiva una tarea apagada por el usuario"><span class="icon is-small"><i class="fa-solid fa-rotate-left"></i></span> <span>Reset attempts</span></button></p></div>`);
+			Table($$renderer, {
+				showEditRow: true,
+				showNewButton: canCreate(),
+				showDeleteButton: canDelete(),
+				showEditButton: canEdit(),
+				right_items: [taskActions],
+				oneditrow: (r) => {
+					selectedRow = normalizeParams(defaultValuesIntervalTask(r));
+					paramsJson = JSON.stringify(selectedRow.params ?? {});
+					selectedRow.enabled = !!r.task_enabled;
+					resetTabs();
+					showEditor = true;
+				},
+				onnewrow: () => {
+					selectedRow = normalizeParams(defaultValuesIntervalTask({}));
+					paramsJson = JSON.stringify(selectedRow.params ?? {});
+					resetTabs();
+					showEditor = true;
+				},
+				onselectrows: (selected) => {
+					historyTask = selected?.rows?.length === 1 ? selected.rows[0] : {};
+				},
+				ondeleterow: async (r) => {
+					if (r.rows.length > 0 && confirm("Are you sure you want to delete this task?")) await deleteTasks(r.rows);
+				},
+				get RawDataTable() {
+					return DataTableTasks;
+				},
+				set RawDataTable($$value) {
+					DataTableTasks = $$value;
+					$$settled = false;
+				},
+				get columns() {
+					return columns;
+				},
+				set columns($$value) {
+					columns = $$value;
+					$$settled = false;
+				},
+				get selectionType() {
+					return selectionType;
+				},
+				set selectionType($$value) {
+					selectionType = $$value;
+					$$settled = false;
 				}
-				Table($$renderer, {
-					showEditRow: true,
-					showNewButton: canCreate(),
-					showDeleteButton: canDelete(),
-					showEditButton: canEdit(),
-					right_items: [taskActions],
-					oneditrow: (r) => {
-						selectedRow = normalizeParams(defaultValuesIntervalTask(r));
-						selectedRow.enabled = !!r.task_enabled;
-						resetTabs();
-						showEditor = true;
-					},
-					onnewrow: () => {
-						selectedRow = normalizeParams(defaultValuesIntervalTask({}));
-						resetTabs();
-						showEditor = true;
-					},
-					onselectrows: (selected) => {
-						historyTask = selected?.rows?.length === 1 ? selected.rows[0] : {};
-					},
-					ondeleterow: async (r) => {
-						if (r.rows.length > 0 && confirm("Are you sure you want to delete this task?")) await deleteTasks(r.rows);
-					},
-					get RawDataTable() {
-						return DataTableTasks;
-					},
-					set RawDataTable($$value) {
-						DataTableTasks = $$value;
-						$$settled = false;
-					},
-					get columns() {
-						return columns;
-					},
-					set columns($$value) {
-						columns = $$value;
-						$$settled = false;
-					},
-					get selectionType() {
-						return selectionType;
-					},
-					set selectionType($$value) {
-						selectionType = $$value;
-						$$settled = false;
-					},
-					taskActions,
-					$$slots: { taskActions: true }
-				});
-			}
+			});
 			$$renderer.push(`<!----> `);
 			if (idapp) {
 				$$renderer.push("<!--[0-->");
@@ -14562,20 +15046,10 @@ function Interval_tasks($$renderer, $$props) {
 						$$settled = false;
 					},
 					children: ($$renderer) => {
-						{
-							function r01($$renderer) {
-								$$renderer.push(`<div class="field has-addons">`);
-								if (selectedRow.idtask) $$renderer.push(`<!--[0--><p class="control"><button${attr_class("button is-small is-warning", void 0, { "is-loading": runNowPending })}${attr("disabled", !runtime()?.task_enabled || Boolean(suspensionStatus()) || Number(runtime()?.status) === 1 && !runtime()?.allow_concurrent, true)}${attr("title", !runtime()?.task_enabled ? "Enable and save the task before running it" : suspensionStatus() ? "The scheduler suspended this task: fix the cause and use Reset attempts" : Number(runtime()?.status) === 1 && !runtime()?.allow_concurrent ? "The task is already running and does not allow concurrency" : "Runs the last saved configuration immediately")}><span class="icon is-small"><i class="fa-solid fa-bolt"></i></span> <span>Run now</span></button></p> <p class="control"><button${attr_class("button is-small is-danger", void 0, { "is-loading": stopNowPending })}${attr("disabled", Number(runtime()?.status) !== 1, true)}${attr("title", Number(runtime()?.status) === 1 ? "Aborts the execution in flight; the task is not disabled and keeps its schedule" : "There is no execution in flight to stop")}><span class="icon is-small"><i class="fa-solid fa-stop"></i></span> <span>Stop now</span></button></p>`);
-								else $$renderer.push("<!--[-1-->");
-								$$renderer.push(`<!--]--> <p class="control"><button class="button is-small is-link"><span class="icon is-small"><i class="fa-solid fa-rocket"></i></span> <span>Save &amp; Deploy</span></button></p> <p class="control"><button class="button is-small"><span class="icon is-small"><i class="fa-solid fa-xmark"></i></span> <span>Cancel</span></button></p></div>`);
-							}
-							Level($$renderer, {
-								left: [],
-								right: [r01],
-								r01,
-								$$slots: { r01: true }
-							});
-						}
+						Level($$renderer, {
+							left: [],
+							right: [r01]
+						});
 						$$renderer.push(`<!----> `);
 						if (runtime() && runtimeStatus()) {
 							$$renderer.push(`<!--[0--><div class="box py-3"><div class="level is-mobile mb-2"><div class="level-left"><span class="icon-text"><span class="icon"><i${attr_class(clsx(runtimeStatus().icon), "svelte-zqkhiy")}></i></span> <span class="has-text-weight-semibold">Runtime status</span></span></div> <div class="level-right"><div class="tags">`);
@@ -14587,11 +15061,11 @@ function Interval_tasks($$renderer, $$props) {
 							$$renderer.push(`<!--]--></div></div></div> <p class="help mb-3">${escape_html(runtimeStatus().description)}</p> `);
 							if (suspensionStatus()) {
 								$$renderer.push(`<!--[0--><article class="message is-danger"><div class="message-body">${escape_html(suspensionStatus().description)} `);
-								if (runtime().disabled_reason) $$renderer.push(`<!--[0--><br/><span class="is-size-7">${escape_html(runtime().disabled_reason)}</span>`);
+								if (runtime().disabled_reason) $$renderer.push(`<!--[0--><br/><span class="is-size-7">${escape_html(runtime()?.disabled_reason)}</span>`);
 								else $$renderer.push("<!--[-1-->");
 								$$renderer.push(`<!--]--></div></article>`);
 							} else $$renderer.push("<!--[-1-->");
-							$$renderer.push(`<!--]--> <div class="columns is-multiline is-mobile mb-0"><div class="column is-one-quarter"><p class="heading">Last run</p> <p>${escape_html(formatMoment(runtime().last_run))}</p></div> <div class="column is-one-quarter"><p class="heading">Next run</p> <p>${escape_html(formatMoment(runtime().next_run))}${escape_html(nextIn() ? ` (in ${nextIn()})` : "")}</p></div> <div class="column is-one-quarter"><p class="heading">Last duration</p> <p>${escape_html(runtime().last_exec_time ? `${runtime().last_exec_time} ms` : "—")}</p></div> <div class="column is-one-quarter"><p class="heading">Failed attempts</p> <p${attr_class("", void 0, { "has-text-danger": Number(runtime().max_failed_attempts ?? 0) > 0 && Number(runtime().failed_attempts ?? 0) >= Number(runtime().max_failed_attempts) })}>${escape_html(runtime().failed_attempts ?? 0)} / ${escape_html(runtime().max_failed_attempts ?? 0)}</p></div></div></div>`);
+							$$renderer.push(`<!--]--> <div class="columns is-multiline is-mobile mb-0"><div class="column is-one-quarter"><p class="heading">Last run</p> <p>${escape_html(formatMoment(runtime().last_run))}</p></div> <div class="column is-one-quarter"><p class="heading">Next run</p> <p>${escape_html(formatMoment(runtime()?.next_run))}${escape_html(nextIn() ? ` (in ${nextIn()})` : "")}</p></div> <div class="column is-one-quarter"><p class="heading">Last duration</p> <p>${escape_html(runtime().last_exec_time ? `${runtime().last_exec_time} ms` : "—")}</p></div> <div class="column is-one-quarter"><p class="heading">Failed attempts</p> <p${attr_class("", void 0, { "has-text-danger": Number(runtime().max_failed_attempts ?? 0) > 0 && Number(runtime().failed_attempts ?? 0) >= Number(runtime().max_failed_attempts) })}>${escape_html(runtime()?.failed_attempts ?? 0)} / ${escape_html(runtime()?.max_failed_attempts ?? 0)}</p></div></div></div>`);
 						} else $$renderer.push("<!--[-1-->");
 						$$renderer.push(`<!--]--> <div>`);
 						Tab($$renderer, {
@@ -14660,7 +15134,8 @@ function CellBotStatus($$renderer, $$props) {
 function Bot_bkp($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let uF = new uFetch(url_paths.getBotBackups);
-		let { idbot = void 0, onselect = (d) => {} } = $$props;
+		let { idbot = void 0, onselect = () => {} } = $$props;
+		/** @type {Array<Record<string, unknown>>} */
 		let dataBackups = [];
 		let selectionType = 1;
 		let columns = {
@@ -14685,39 +15160,35 @@ function Bot_bkp($$renderer, $$props) {
 				}
 			} else dataBackups = [];
 		}
+		function restoreBackup($$renderer) {
+			$$renderer.push(`<button${attr_class(`button is-small ${stringify(class_search())}`)}><span>Restore Backup ${escape_html(data_backup?.idbackup || "")}</span> <span class="icon"><i class="fa-regular fa-circle-up"></i></span></button>`);
+		}
 		let $$settled = true;
 		let $$inner_renderer;
 		function $$render_inner($$renderer) {
-			{
-				function restoreBackup($$renderer) {
-					$$renderer.push(`<button${attr_class(`button is-small ${stringify(class_search())}`)}><span>Restore Backup ${escape_html(data_backup?.idbackup || "")}</span> <span class="icon"><i class="fa-regular fa-circle-up"></i></span></button>`);
+			Table($$renderer, {
+				columns,
+				left_items: [restoreBackup],
+				onsearch: fetchData,
+				onselectrows: (selected) => {
+					if (selected.rows && selected.rows.length == 1) data_backup = selected.rows[0];
+					else data_backup = null;
+				},
+				get RawDataTable() {
+					return dataBackups;
+				},
+				set RawDataTable($$value) {
+					dataBackups = $$value;
+					$$settled = false;
+				},
+				get selectionType() {
+					return selectionType;
+				},
+				set selectionType($$value) {
+					selectionType = $$value;
+					$$settled = false;
 				}
-				Table($$renderer, {
-					columns,
-					left_items: [restoreBackup],
-					onsearch: fetchData,
-					onselectrows: (selected) => {
-						if (selected.rows && selected.rows.length == 1) data_backup = selected.rows[0];
-						else data_backup = null;
-					},
-					get RawDataTable() {
-						return dataBackups;
-					},
-					set RawDataTable($$value) {
-						dataBackups = $$value;
-						$$settled = false;
-					},
-					get selectionType() {
-						return selectionType;
-					},
-					set selectionType($$value) {
-						selectionType = $$value;
-						$$settled = false;
-					},
-					restoreBackup,
-					$$slots: { restoreBackup: true }
-				});
-			}
+			});
 		}
 		do {
 			$$settled = true;
@@ -14733,6 +15204,7 @@ function Bot_logs($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { idbot = void 0, hours = 24 } = $$props;
 		let uF = new uFetch(url_paths.getBotLogs);
+		/** @type {Array<Record<string, unknown>>} */
 		let dataLogs = [];
 		let columns = {
 			id: { hidden: true },
@@ -14809,9 +15281,13 @@ function Bots($$renderer, $$props) {
 		const canEdit = derived(() => currentUserHasPermission(currentUser(), permEnv, "bots", "edit"));
 		const canDelete = derived(() => currentUserHasPermission(currentUser(), permEnv, "bots", "delete"));
 		let showEditor = false;
+		/** @type {BotRow} */
 		let selectedRow = defaultValuesBot({});
+		let paramsJson = JSON.stringify(selectedRow.params ?? {});
+		/** @type {Array<BotRow>} */
 		let DataTableBots = [];
 		let customToken = "";
+		/** @type {Array<{name: string, value: string|number}>} */
 		let optionsEnvironment = Environment.map((e) => {
 			return {
 				name: e.value,
@@ -14823,6 +15299,10 @@ function Bots($$renderer, $$props) {
 		/**
 		* Pestañas del editor. `component` apunta a los snippets declarados en el marcado, y el
 		* índice de Backups se deshabilita mientras el bot no exista todavía en la base.
+		*/
+		/**
+		* @typedef {import('../../../types/models.js').BotRow} BotRow
+		* @typedef {import('../../../types/models.js').BotStatusChangedEvent} BotStatusChangedEvent
 		*/
 		let activeTab = 0;
 		const TAB_BACKUPS = 3;
@@ -14867,7 +15347,10 @@ function Bots($$renderer, $$props) {
 			tabList[TAB_BACKUPS].disabled = !selectedRow.idbot;
 			tabList[TAB_LOGS].disabled = !selectedRow.idbot;
 		}
-		/** `params` llega como objeto desde la API, pero se normaliza por si viniera serializado. */
+		/** `params` llega como objeto desde la API, pero se normaliza por si viniera serializado.
+		* @param {BotRow} row
+		* @returns {BotRow}
+		*/
 		function normalizeParams(row) {
 			if (typeof row.params === "string") try {
 				row.params = JSON.parse(row.params || "{}");
@@ -14877,8 +15360,11 @@ function Bots($$renderer, $$props) {
 			else if (!row.params || typeof row.params !== "object") row.params = {};
 			return row;
 		}
-		let healthStatus = derived(() => health ? BotRuntimeStatus[health.runtime_status] || BotRuntimeStatusFallback : null);
+		let healthStatus = derived(() => health ? BotRuntimeStatus[health.runtime_status ?? ""] || BotRuntimeStatusFallback : null);
 		/** Formatea una fecha del servidor; devuelve '—' si no hay valor. */
+		/**
+		* @param {string|number|null|undefined} value
+		*/
 		function formatMoment(value) {
 			if (!value) return "—";
 			const date = new Date(value);
@@ -14942,13 +15428,17 @@ function Bots($$renderer, $$props) {
 			} catch (error) {
 				console.error("loadBots error >>>>>>>>>>>>>", error);
 				notify.push({
-					message: error.message || "Failed to load bots",
+					message: getErrorMessage(error) || "Failed to load bots",
 					color: "danger"
 				});
 				DataTableBots = [];
 			}
 			else console.log("idapp not found");
 		}
+		/**
+		* @param {number|string} idbot
+		* @returns {Promise<BotRow|null>}
+		*/
 		async function getBot(idbot) {
 			try {
 				let jresp = await (await uF.get({
@@ -14971,12 +15461,15 @@ function Bots($$renderer, $$props) {
 			} catch (error) {
 				console.error("getBot error >>>>>>>>>>>>>", error);
 				notify.push({
-					message: error.message || "Failed to load bot details",
+					message: getErrorMessage(error) || "Failed to load bot details",
 					color: "danger"
 				});
 				return null;
 			}
 		}
+		/**
+		* @param {Array<BotRow>} bots
+		*/
 		async function deleteBots(bots) {
 			try {
 				for (let bot of bots) {
@@ -14994,7 +15487,7 @@ function Bots($$renderer, $$props) {
 			} catch (error) {
 				console.error("deleteBots error >>>>>>>>>>>>>", error);
 				notify.push({
-					message: error.message || "Failed to delete bot(s)",
+					message: getErrorMessage(error) || "Failed to delete bot(s)",
 					color: "danger"
 				});
 			}
@@ -15008,15 +15501,18 @@ function Bots($$renderer, $$props) {
 			if (!evt || !evt.idbot) return;
 			const idx = DataTableBots.findIndex((r) => r.idbot === evt.idbot);
 			if (idx !== -1) {
+				/** @type {BotRow} */
 				const row = { ...DataTableBots[idx] };
+				const rowRec = row;
+				const evtRec = evt;
 				for (const key of Object.keys(evt)) {
 					if (key === "ts" || key === "idbot" || key === "idapp") continue;
-					row[key] = evt[key];
+					rowRec[key] = evtRec[key];
 				}
 				DataTableBots[idx] = row;
 			}
 			if (showEditor && selectedRow.idbot === evt.idbot) health = {
-				...health,
+				...health ?? {},
 				...evt
 			};
 		});
@@ -15034,6 +15530,9 @@ function Bots($$renderer, $$props) {
 			unsubBotStatus();
 			unsubBotChanged();
 		});
+		function r01($$renderer) {
+			$$renderer.push(`<div class="field has-addons"><p class="control"><button class="button is-small is-link"><span class="icon is-small"><i class="fa-solid fa-rocket"></i></span> <span>Save &amp; Deploy</span></button></p> <p class="control"><button class="button is-small"><span class="icon is-small"><i class="fa-solid fa-xmark"></i></span> <span>Cancel</span></button></p></div>`);
+		}
 		function tab_general($$renderer) {
 			$$renderer.push(`<div class="columns"><div class="column is-one-third">`);
 			Basic$1($$renderer, {
@@ -15063,13 +15562,7 @@ function Bots($$renderer, $$props) {
 				label: "Environment",
 				classLabel: "is-small",
 				classInput: "is-small",
-				get options() {
-					return optionsEnvironment;
-				},
-				set options($$value) {
-					optionsEnvironment = $$value;
-					$$settled = false;
-				},
+				options: optionsEnvironment,
 				get selectedValue() {
 					return selectedRow.environment;
 				},
@@ -15128,10 +15621,10 @@ function Bots($$renderer, $$props) {
 				lang: "json",
 				showFormat: true,
 				get code() {
-					return selectedRow.params;
+					return paramsJson;
 				},
 				set code($$value) {
-					selectedRow.params = $$value;
+					paramsJson = $$value;
 					$$settled = false;
 				}
 			});
@@ -15160,6 +15653,7 @@ function Bots($$renderer, $$props) {
 					onselect: (backup) => {
 						if (backup && backup.idbot == selectedRow.idbot) {
 							selectedRow = normalizeParams(defaultValuesBot(snapshot(backup)));
+							paramsJson = JSON.stringify(selectedRow.params ?? {});
 							notify.push({
 								message: `Bot ${selectedRow.name} loaded from backup. Save to persist.`,
 								color: "success"
@@ -15203,8 +15697,9 @@ function Bots($$renderer, $$props) {
 				showDeleteButton: canDelete(),
 				showEditButton: canEdit(),
 				oneditrow: async (r) => {
-					let fullBot = await getBot(r.idbot);
+					let fullBot = await getBot(r.idbot ?? 0);
 					selectedRow = normalizeParams(defaultValuesBot(fullBot || r));
+					paramsJson = JSON.stringify(selectedRow.params ?? {});
 					health = fullBot || r;
 					resetTabs();
 					if (health?.disabled_by === "system" && selectedRow.enabled === false) selectedRow.enabled = true;
@@ -15212,6 +15707,7 @@ function Bots($$renderer, $$props) {
 				},
 				onnewrow: () => {
 					selectedRow = normalizeParams(defaultValuesBot({ idapp }));
+					paramsJson = JSON.stringify(selectedRow.params ?? {});
 					health = null;
 					resetTabs();
 					showEditor = true;
@@ -15246,28 +15742,21 @@ function Bots($$renderer, $$props) {
 						$$settled = false;
 					},
 					children: ($$renderer) => {
-						{
-							function r01($$renderer) {
-								$$renderer.push(`<div class="field has-addons"><p class="control"><button class="button is-small is-link"><span class="icon is-small"><i class="fa-solid fa-rocket"></i></span> <span>Save &amp; Deploy</span></button></p> <p class="control"><button class="button is-small"><span class="icon is-small"><i class="fa-solid fa-xmark"></i></span> <span>Cancel</span></button></p></div>`);
-							}
-							Level($$renderer, {
-								left: [],
-								right: [r01],
-								r01,
-								$$slots: { r01: true }
-							});
-						}
+						Level($$renderer, {
+							left: [],
+							right: [r01]
+						});
 						$$renderer.push(`<!----> <div>`);
 						if (health && healthStatus()) {
 							$$renderer.push(`<!--[0--><div class="box"><div class="level is-mobile mb-2"><div class="level-left"><div class="level-item"><span class="icon-text"><span${attr_class(`icon ${stringify(healthStatus().color)}`)}><i${attr_class(clsx(healthStatus().icon))}></i></span> <span class="has-text-weight-semibold">Runtime status: ${escape_html(healthStatus().label)}</span></span></div></div> <div class="level-right"><div class="level-item">`);
 							if (healthStatus().needsAction) $$renderer.push(`<!--[0--><span class="tag is-danger">Needs attention</span>`);
 							else $$renderer.push(`<!--[-1--><span class="tag is-light">No action needed</span>`);
 							$$renderer.push(`<!--]--></div></div></div> <p class="help mb-3">${escape_html(healthStatus().description)}</p> `);
-							if (health.disabled_by === "system") $$renderer.push(`<!--[0--><div class="notification is-warning is-light py-2 px-3 mb-3"><span class="icon-text"><span class="icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span> <span>The system disabled this bot${escape_html(health.disabled_reason ? ` (${health.disabled_reason})` : "")}. Fix the token or the code and save: it has already been switched back to <strong>Enabled</strong> for you.</span></span></div>`);
+							if (health?.disabled_by === "system") $$renderer.push(`<!--[0--><div class="notification is-warning is-light py-2 px-3 mb-3"><span class="icon-text"><span class="icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span> <span>The system disabled this bot${escape_html(health?.disabled_reason ? ` (${health.disabled_reason})` : "")}. Fix the token or the code and save: it has already been switched back to <strong>Enabled</strong> for you.</span></span></div>`);
 							else if (health.disabled_by === "user") $$renderer.push(`<!--[1--><p class="help mb-3">This bot was disabled manually. It will not start again until you enable it.</p>`);
 							else $$renderer.push("<!--[-1-->");
-							$$renderer.push(`<!--]--> <div class="columns is-multiline is-mobile mb-0"><div class="column is-one-quarter"><p class="heading">Consecutive failures</p> <p>${escape_html(health.failure_count ?? 0)}</p></div> <div class="column is-one-quarter"><p class="heading">Last error type</p> <p>${escape_html(health.last_error_type || "—")}</p></div> <div class="column is-one-quarter"><p class="heading">Last failure</p> <p>${escape_html(formatMoment(health.last_failure_at))}</p></div> <div class="column is-one-quarter"><p class="heading">Next retry</p> <p>${escape_html(formatMoment(health.next_retry_at))}</p></div> <div class="column is-one-quarter"><p class="heading">Last started</p> <p>${escape_html(formatMoment(health.last_started_at))}</p></div> <div class="column is-one-quarter"><p class="heading">Last healthy</p> <p>${escape_html(formatMoment(health.last_healthy_at))}</p></div> <div class="column is-one-quarter"><p class="heading">Disabled by</p> <p>${escape_html(health.disabled_by || "—")}</p></div> <div class="column is-one-quarter"><p class="heading">Provider</p> <p>${escape_html(health.provider || "—")}</p></div></div> `);
-							if (health.last_error_message) $$renderer.push(`<!--[0--><div><p class="heading">Last error message</p> <pre class="is-size-7">${escape_html(health.last_error_message)}</pre></div>`);
+							$$renderer.push(`<!--]--> <div class="columns is-multiline is-mobile mb-0"><div class="column is-one-quarter"><p class="heading">Consecutive failures</p> <p>${escape_html(health?.failure_count ?? 0)}</p></div> <div class="column is-one-quarter"><p class="heading">Last error type</p> <p>${escape_html(health?.last_error_type || "—")}</p></div> <div class="column is-one-quarter"><p class="heading">Last failure</p> <p>${escape_html(formatMoment(health?.last_failure_at))}</p></div> <div class="column is-one-quarter"><p class="heading">Next retry</p> <p>${escape_html(formatMoment(health?.next_retry_at))}</p></div> <div class="column is-one-quarter"><p class="heading">Last started</p> <p>${escape_html(formatMoment(health?.last_started_at))}</p></div> <div class="column is-one-quarter"><p class="heading">Last healthy</p> <p>${escape_html(formatMoment(health?.last_healthy_at))}</p></div> <div class="column is-one-quarter"><p class="heading">Disabled by</p> <p>${escape_html(health?.disabled_by || "—")}</p></div> <div class="column is-one-quarter"><p class="heading">Provider</p> <p>${escape_html(health?.provider || "—")}</p></div></div> `);
+							if (health?.last_error_message) $$renderer.push(`<!--[0--><div><p class="heading">Last error message</p> <pre class="is-size-7">${escape_html(health?.last_error_message)}</pre></div>`);
 							else $$renderer.push("<!--[-1-->");
 							$$renderer.push(`<!--]--></div>`);
 						} else $$renderer.push("<!--[-1-->");
@@ -15330,7 +15819,7 @@ function CellStatusCode($$renderer, $$props) {
 		});
 		let isAttack = derived(() => messageObj()?.type === "possible_attack");
 		let titleText = derived(() => [`HTTP ${value ?? ""} ${httpStatusText(value)}`, isAttack() ? "Possible attack detected" : ""].filter(Boolean).join("\n"));
-		$$renderer.push(`<td><div class="tags has-addons"${attr("titletext", titleText())}>`);
+		$$renderer.push(`<td><div class="tags has-addons"${attr("title", titleText())}>`);
 		if (value != null && value !== "") $$renderer.push(`<!--[0--><span${attr_class(`tag ${stringify(statusClass())}`)}>${escape_html(value)}</span>`);
 		else $$renderer.push(`<!--[-1--><span class="tag is-light">—</span>`);
 		$$renderer.push(`<!--]--> `);
@@ -15476,15 +15965,61 @@ function Request_detail($$renderer, $$props) {
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/logs/trace_view.svelte
 function Trace_view($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
+		/**
+		* @typedef {object} TraceRequest
+		* @property {string} timestamp
+		* @property {number} [status_code]
+		* @property {string} [method]
+		* @property {string} [url]
+		* @property {number} [response_time]
+		*/
+		/**
+		* @typedef {object} TraceError
+		* @property {string} timestamp
+		* @property {number} [status_code]
+		* @property {string} [method]
+		* @property {string} [url]
+		* @property {number} [response_time]
+		* @property {string} message
+		*/
+		/**
+		* @typedef {object} TraceSlowHop
+		* @property {string} [url]
+		* @property {string} [idendpoint]
+		* @property {string} [method]
+		* @property {number} [hits]
+		* @property {number} [avg_response_time]
+		* @property {number} [min_response_time]
+		* @property {number} [max_response_time]
+		*/
+		/**
+		* @typedef {object} TraceSummary
+		* @property {number} total_requests
+		* @property {number} errors_total
+		* @property {number} slow_requests_total
+		* @property {number} unique_endpoints
+		* @property {number|null} worst_status_code
+		* @property {string} first_timestamp
+		* @property {string} last_timestamp
+		* @property {Record<string, number>} by_status_family
+		* @property {TraceRequest|null} first_problematic_request
+		* @property {TraceRequest|null} slowest_request
+		*/
 		let { show = false, trace_id = "" } = $$props;
 		new Notifications$1();
 		let errors = [];
 		let slowest = [];
+		/**
+		* @param {string|number|null|undefined} v
+		*/
 		function fmtTs(v) {
 			if (v == null) return "—";
 			const d = DateTime.fromISO(String(v));
 			return d.isValid ? d.toFormat("yyyy-MM-dd HH:mm:ss") : String(v);
 		}
+		/**
+		* @param {string|number|null|undefined} v
+		*/
 		function fmtMs(v) {
 			if (v == null) return "—";
 			if (Number.isFinite(Number(v))) return `${Number(v).toLocaleString("en-US")} ms`;
@@ -15517,7 +16052,7 @@ function Trace_view($$renderer, $$props) {
 						const each_array_1 = ensure_array_like(errors);
 						for (let $$index_1 = 0, $$length = each_array_1.length; $$index_1 < $$length; $$index_1++) {
 							let err = each_array_1[$$index_1];
-							$$renderer.push(`<tr><td class="is-size-7">${escape_html(fmtTs(err.timestamp))}</td><td class="is-size-7"><span class="tag is-danger"${attr("title", httpStatusText(err.status_code))}>${escape_html(err.status_code ?? "—")}</span></td><td class="is-size-7">${escape_html(err.method ?? "—")}</td><td class="is-size-7" style="word-break: break-all;">${escape_html(err.url ?? "—")}</td><td class="has-text-right is-size-7">${escape_html(fmtMs(err.response_time))}</td><td class="is-size-7" style="word-break: break-all;">${escape_html(err.message ?? "—")}</td></tr>`);
+							$$renderer.push(`<tr><td class="is-size-7">${escape_html(fmtTs(err.timestamp))}</td><td class="is-size-7"><span class="tag is-danger"${attr("title", err.status_code != null ? httpStatusText(String(err.status_code)) : void 0)}>${escape_html(err.status_code ?? "—")}</span></td><td class="is-size-7">${escape_html(err.method ?? "—")}</td><td class="is-size-7" style="word-break: break-all;">${escape_html(err.url ?? "—")}</td><td class="has-text-right is-size-7">${escape_html(fmtMs(err.response_time))}</td><td class="is-size-7" style="word-break: break-all;">${escape_html(err.message ?? "—")}</td></tr>`);
 						}
 						$$renderer.push(`<!--]--></tbody></table></div>`);
 					}
@@ -15554,6 +16089,9 @@ function Trace_view($$renderer, $$props) {
 function Logs($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
+		/**
+		* @typedef {import('../../../types/models.js').RequestLogRow} RequestLogRow
+		*/
 		let { idapp = void 0 } = $$props;
 		let includeAllApps = false;
 		let environment = "prd";
@@ -15561,6 +16099,7 @@ function Logs($$renderer, $$props) {
 		let presetHours = 24;
 		let startDate = "";
 		let endDate = "";
+		/** @type {Array<string>} */
 		let statusClasses = [];
 		let exactCodes = "";
 		let method = "";
@@ -15570,11 +16109,15 @@ function Logs($$renderer, $$props) {
 		let eventName = "";
 		let limit = 500;
 		let fullDetail = true;
+		/** @type {Array<RequestLogRow>} */
 		let logs = [];
 		let loading = false;
+		/** @type {Array<{id: string|number, value: string}>} */
 		let endpointsOptions = [];
+		/** @type {Record<string, string>} */
 		let appNameById = {};
 		let showDetail = false;
+		/** @type {RequestLogRow|null} */
 		let selectedRow = null;
 		let selectedAppName = "";
 		let showTrace = false;
@@ -15631,25 +16174,34 @@ function Logs($$renderer, $$props) {
 			const tokens = String(exactCodes || "").split(",").map((s) => s.trim()).filter((s) => /^(\d{3}|[1-5]xx)$/i.test(s));
 			return [...statusClasses, ...tokens];
 		});
-		let reloadTimer = null;
+		/** @type {ReturnType<typeof setTimeout>|undefined} */
+		let reloadTimer;
 		onDestroy(() => {
 			clearTimeout(reloadTimer);
 		});
+		/**
+		* @param {{row: RequestLogRow}} param
+		*/
 		function onRowClick({ row }) {
 			selectedRow = row;
-			selectedAppName = appNameById[row?.idapp] ?? row?.idapp ?? "";
+			selectedAppName = appNameById[String(row?.idapp ?? "")] ?? row?.idapp ?? "";
 			showDetail = true;
 		}
+		/**
+		* @param {{row: RequestLogRow}} param
+		*/
 		function openTrace({ row }) {
 			traceToInspect = row?.trace_id || "";
 			if (traceToInspect) showTrace = true;
 		}
 		function handleHoursChange(e) {
-			const value = Math.floor(Number(e.target.value));
+			const input = e.target;
+			const value = Math.floor(Number(input.value));
 			presetHours = Number.isFinite(value) && value > 0 ? value : 24;
 		}
 		function handleLimitChange(e) {
-			const value = Math.floor(Number(e.target.value));
+			const input = e.target;
+			const value = Math.floor(Number(input.value));
 			limit = Number.isFinite(value) && value > 0 && value <= 999999 ? value : 1e3;
 		}
 		function handleExactCodesInput(e) {
@@ -15984,9 +16536,17 @@ function CellToken($$renderer, $$props) {
 	});
 }
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/apikeys/index.svelte
+function lt01($$renderer) {
+	$$renderer.push(`<div class="buttons are-small"></div>`);
+}
 function Apikeys($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
+		/**
+		* @typedef {import('../../../types/models.js').ApiKeyRow} ApiKeyRow
+		* @typedef {import('../../../types/models.js').IntervalTaskRow} IntervalTaskRow
+		*/
+		/** @type {{idapp?: number}} */
 		let { idapp = void 0 } = $$props;
 		const uF = new uFetch();
 		const permEnv = getDefaultEnvironment();
@@ -15995,6 +16555,7 @@ function Apikeys($$renderer, $$props) {
 		const canEdit = derived(() => currentUserHasPermission(currentUser(), permEnv, "apiclients", "edit"));
 		const canDelete = derived(() => currentUserHasPermission(currentUser(), permEnv, "apiclients", "delete"));
 		let showEditor = false;
+		/** @type {ApiKeyRow} */
 		let selectedRow = {
 			idkey: "",
 			idclient: "",
@@ -16019,6 +16580,7 @@ function Apikeys($$renderer, $$props) {
 			value: "dsdf"
 		}];
 		const clientLabel = derived(() => (optionsClients || []).find((c) => String(c.value) === String(selectedRow?.idclient))?.name || selectedRow?.idclient || "");
+		/** @type {Array<ApiKeyRow>} */
 		let DataTableAPIs = [];
 		let columns = {
 			idkey: { hidden: true },
@@ -16064,10 +16626,10 @@ function Apikeys($$renderer, $$props) {
 		};
 		async function loadAPIKeys() {
 			if (idapp) {
-				let jresp = await GetAPIKeys(idapp, store_get($$store_subs ??= {}, "$userStore", userStore).token);
+				let jresp = await GetAPIKeys(idapp);
 				if (Array.isArray(jresp)) DataTableAPIs = jresp;
 				else DataTableAPIs = [];
-				let clients = await GetAPIClients();
+				let clients = await GetAPIClients({});
 				if (Array.isArray(clients)) optionsClients = clients.map((c) => {
 					return {
 						name: `${c.username} - ${c.first_name} ${c.last_name} - ${c.email} - ${c.document_id}`,
@@ -16077,6 +16639,9 @@ function Apikeys($$renderer, $$props) {
 				else optionsClients = [];
 			} else console.log("idapp not found");
 		}
+		/**
+		* @param {Array<IntervalTaskRow>} tasks
+		*/
 		async function deleteTasks(tasks) {
 			let idtasks = tasks.map((t) => {
 				return t.idtask;
@@ -16100,59 +16665,58 @@ function Apikeys($$renderer, $$props) {
 				idapp
 			};
 		}
+		function r01($$renderer) {
+			$$renderer.push(`<div class="field has-addons">`);
+			if (isEditing()) $$renderer.push(`<!--[0--><p class="control"><button class="button is-small is-warning is-light" title="Re-sign the token with the current application JWT key"><span class="icon is-small"><i class="fa-solid fa-rotate"></i></span> <span>Regenerate JWT</span></button></p> <p class="control"><button class="button is-small is-link"><span class="icon is-small"><i class="fa-solid fa-save"></i></span> <span>Save</span></button></p>`);
+			else $$renderer.push(`<!--[-1--><p class="control"><button class="button is-small is-link"><span class="icon is-small"><i class="fa-solid fa-rocket"></i></span> <span>Save &amp; Deploy</span></button></p>`);
+			$$renderer.push(`<!--]--> <p class="control"><button class="button is-small"><span class="icon is-small"><i class="fa-solid fa-xmark"></i></span> <span>${escape_html(isEditing() ? "Close" : "Cancel")}</span></button></p></div>`);
+		}
 		let $$settled = true;
 		let $$inner_renderer;
 		function $$render_inner($$renderer) {
-			{
-				function lt01($$renderer) {
-					$$renderer.push(`<div class="buttons are-small"></div>`);
+			Table($$renderer, {
+				left_items: [lt01],
+				showEditRow: true,
+				showNewButton: canCreate(),
+				showDeleteButton: canDelete(),
+				showEditButton: canEdit(),
+				oneditrow: (r) => {
+					selectedRow.idkey = r.idkey || "";
+					selectedRow.enabled = Boolean(r.enabled);
+					selectedRow.startAt = r.startAt || "";
+					selectedRow.endAt = r.endAt || "";
+					selectedRow.idclient = r.idclient || "";
+					selectedRow.token = r.token || "";
+					selectedRow.description = r.description || "";
+					selectedRow.idapp = idapp;
+					snapshot(selectedRow);
+					jwtCopied = false;
+					showEditor = true;
+				},
+				onnewrow: () => {
+					fnDefaulValues();
+					snapshot(selectedRow);
+					jwtCopied = false;
+					showEditor = true;
+				},
+				ondeleterow: async (r) => {
+					if (r.rows.length > 0 && confirm("Are you sure you want to delete this task?")) await deleteTasks(r.rows);
+				},
+				get RawDataTable() {
+					return DataTableAPIs;
+				},
+				set RawDataTable($$value) {
+					DataTableAPIs = $$value;
+					$$settled = false;
+				},
+				get columns() {
+					return columns;
+				},
+				set columns($$value) {
+					columns = $$value;
+					$$settled = false;
 				}
-				Table($$renderer, {
-					left_items: [lt01],
-					showEditRow: true,
-					showNewButton: canCreate(),
-					showDeleteButton: canDelete(),
-					showEditButton: canEdit(),
-					oneditrow: (r) => {
-						selectedRow.idkey = r.idkey || "";
-						selectedRow.enabled = Boolean(r.enabled);
-						selectedRow.startAt = r.startAt || "";
-						selectedRow.endAt = r.endAt || "";
-						selectedRow.idclient = r.idclient || "";
-						selectedRow.token = r.token || "";
-						selectedRow.description = r.description || "";
-						selectedRow.idapp = idapp;
-						snapshot(selectedRow);
-						jwtCopied = false;
-						showEditor = true;
-					},
-					onnewrow: () => {
-						fnDefaulValues();
-						snapshot(selectedRow);
-						jwtCopied = false;
-						showEditor = true;
-					},
-					ondeleterow: async (r) => {
-						if (r.rows.length > 0 && confirm("Are you sure you want to delete this task?")) await deleteTasks(r.rows);
-					},
-					get RawDataTable() {
-						return DataTableAPIs;
-					},
-					set RawDataTable($$value) {
-						DataTableAPIs = $$value;
-						$$settled = false;
-					},
-					get columns() {
-						return columns;
-					},
-					set columns($$value) {
-						columns = $$value;
-						$$settled = false;
-					},
-					lt01,
-					$$slots: { lt01: true }
-				});
-			}
+			});
 			$$renderer.push(`<!----> `);
 			if (idapp && selectedRow) {
 				$$renderer.push("<!--[0-->");
@@ -16165,20 +16729,10 @@ function Apikeys($$renderer, $$props) {
 						$$settled = false;
 					},
 					children: ($$renderer) => {
-						{
-							function r01($$renderer) {
-								$$renderer.push(`<div class="field has-addons">`);
-								if (isEditing()) $$renderer.push(`<!--[0--><p class="control"><button class="button is-small is-warning is-light" title="Re-sign the token with the current application JWT key"><span class="icon is-small"><i class="fa-solid fa-rotate"></i></span> <span>Regenerate JWT</span></button></p> <p class="control"><button class="button is-small is-link"><span class="icon is-small"><i class="fa-solid fa-save"></i></span> <span>Save</span></button></p>`);
-								else $$renderer.push(`<!--[-1--><p class="control"><button class="button is-small is-link"><span class="icon is-small"><i class="fa-solid fa-rocket"></i></span> <span>Save &amp; Deploy</span></button></p>`);
-								$$renderer.push(`<!--]--> <p class="control"><button class="button is-small"><span class="icon is-small"><i class="fa-solid fa-xmark"></i></span> <span>${escape_html(isEditing() ? "Close" : "Cancel")}</span></button></p></div>`);
-							}
-							Level($$renderer, {
-								left: [],
-								right: [r01],
-								r01,
-								$$slots: { r01: true }
-							});
-						}
+						Level($$renderer, {
+							left: [],
+							right: [r01]
+						});
 						$$renderer.push(`<!----> <div>`);
 						if (isEditing()) $$renderer.push(`<!--[0--><div class="field has-addons"><p class="control"><span class="button is-static is-small">API Client</span></p> <p class="control is-expanded"><input class="input is-small" type="text" readonly=""${attr("value", clientLabel())}/></p></div>`);
 						else {
@@ -16187,15 +16741,9 @@ function Apikeys($$renderer, $$props) {
 								label: "API Client",
 								classLabel: "is-small",
 								classInput: "is-small",
+								options: optionsClients,
 								onselect: (e) => {
 									console.log(e, selectedRow);
-								},
-								get options() {
-									return optionsClients;
-								},
-								set options($$value) {
-									optionsClients = $$value;
-									$$settled = false;
 								},
 								get selectedValue() {
 									return selectedRow.idclient;
@@ -16307,6 +16855,7 @@ function Users($$renderer, $$props) {
 		let showEditor = false;
 		let showChangePassword = false;
 		let isEditing = false;
+		/** @type {Array<Record<string, unknown>>} */
 		let DataTableUsers = [];
 		let selectedRow = getDefaultValues();
 		let passwordData = {
@@ -16396,6 +16945,9 @@ function Users($$renderer, $$props) {
 				decorator: { component: DateTime_1 }
 			}
 		};
+		/**
+		* @returns {import('../../../types/models.js').ApiClientForm}
+		*/
 		function getDefaultValues() {
 			return {
 				idclient: "",
@@ -16456,11 +17008,14 @@ function Users($$renderer, $$props) {
 			} catch (error) {
 				console.error("changePassword error:", error);
 				notify.push({
-					message: error.message || "Failed to change password",
+					message: getErrorMessage(error) || "Failed to change password",
 					color: "danger"
 				});
 			}
 		}
+		/**
+		* @param {import('../../../types/models.js').ApiClientForm|null} [row]
+		*/
 		function openEditor(row = null) {
 			if (row) {
 				isEditing = true;
@@ -16486,6 +17041,41 @@ function Users($$renderer, $$props) {
 				selectedRow = getDefaultValues();
 			}
 			showEditor = true;
+		}
+		function r01($$renderer) {
+			$$renderer.push(`<div class="field has-addons"><p class="control"><button class="button is-small is-link"><span class="icon is-small"><i class="fa-solid fa-rocket"></i></span> <span>Save &amp; Deploy</span></button></p> <p class="control"><button class="button is-small"><span class="icon is-small"><i class="fa-solid fa-xmark"></i></span> <span>Cancel</span></button></p></div>`);
+		}
+		function titleModal($$renderer) {
+			$$renderer.push(`<span>Change Password: ${escape_html(selectedRow.username)}</span>`);
+		}
+		function bodyDialogModal($$renderer) {
+			Basic$1($$renderer, {
+				type: "password",
+				label: "New Password",
+				get value() {
+					return passwordData.newPassword;
+				},
+				set value($$value) {
+					passwordData.newPassword = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----> `);
+			Basic$1($$renderer, {
+				type: "password",
+				label: "Repeat New Password",
+				get value() {
+					return passwordData.repeatNewPassword;
+				},
+				set value($$value) {
+					passwordData.repeatNewPassword = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----> `);
+			if (!passwordMatch() && passwordData.newPassword && passwordData.repeatNewPassword) $$renderer.push(`<!--[0--><div class="notification is-warning is-light py-2 px-3"><span class="icon-text"><span class="icon"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>You must repeat the new password twice.</span></span></div>`);
+			else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]-->`);
 		}
 		let $$settled = true;
 		let $$inner_renderer;
@@ -16528,17 +17118,10 @@ function Users($$renderer, $$props) {
 						$$settled = false;
 					},
 					children: ($$renderer) => {
-						{
-							function r01($$renderer) {
-								$$renderer.push(`<div class="field has-addons"><p class="control"><button class="button is-small is-link"><span class="icon is-small"><i class="fa-solid fa-rocket"></i></span> <span>Save &amp; Deploy</span></button></p> <p class="control"><button class="button is-small"><span class="icon is-small"><i class="fa-solid fa-xmark"></i></span> <span>Cancel</span></button></p></div>`);
-							}
-							Level($$renderer, {
-								left: [],
-								right: [r01],
-								r01,
-								$$slots: { r01: true }
-							});
-						}
+						Level($$renderer, {
+							left: [],
+							right: [r01]
+						});
 						$$renderer.push(`<!----> <div><div class="columns"><div class="column is-one-third">`);
 						Basic$1($$renderer, {
 							label: "Username:",
@@ -16718,68 +17301,28 @@ function Users($$renderer, $$props) {
 					$$slots: { default: true }
 				});
 			} else $$renderer.push("<!--[-1-->");
-			$$renderer.push(`<!--]--> `);
-			{
-				function titleModal($$renderer) {
-					$$renderer.push(`<span>Change Password: ${escape_html(selectedRow.username)}</span>`);
+			$$renderer.push(`<!--]-->  `);
+			Modal_1($$renderer, {
+				title: titleModal,
+				body: bodyDialogModal,
+				onaccept: async () => {
+					await changePassword();
+				},
+				oncancel: () => {
+					showChangePassword = false;
+					passwordData = {
+						newPassword: "",
+						repeatNewPassword: ""
+					};
+				},
+				get show() {
+					return showChangePassword;
+				},
+				set show($$value) {
+					showChangePassword = $$value;
+					$$settled = false;
 				}
-				function bodyDialogModal($$renderer) {
-					Basic$1($$renderer, {
-						type: "password",
-						label: "New Password",
-						get value() {
-							return passwordData.newPassword;
-						},
-						set value($$value) {
-							passwordData.newPassword = $$value;
-							$$settled = false;
-						}
-					});
-					$$renderer.push(`<!----> `);
-					Basic$1($$renderer, {
-						type: "password",
-						label: "Repeat New Password",
-						get value() {
-							return passwordData.repeatNewPassword;
-						},
-						set value($$value) {
-							passwordData.repeatNewPassword = $$value;
-							$$settled = false;
-						}
-					});
-					$$renderer.push(`<!----> `);
-					if (!passwordMatch() && passwordData.newPassword && passwordData.repeatNewPassword) $$renderer.push(`<!--[0--><div class="notification is-warning is-light py-2 px-3"><span class="icon-text"><span class="icon"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>You must repeat the new password twice.</span></span></div>`);
-					else $$renderer.push("<!--[-1-->");
-					$$renderer.push(`<!--]-->`);
-				}
-				Modal_1($$renderer, {
-					title: titleModal,
-					body: bodyDialogModal,
-					onaccept: async () => {
-						await changePassword();
-					},
-					oncancel: () => {
-						showChangePassword = false;
-						passwordData = {
-							newPassword: "",
-							repeatNewPassword: ""
-						};
-					},
-					get show() {
-						return showChangePassword;
-					},
-					set show($$value) {
-						showChangePassword = $$value;
-						$$settled = false;
-					},
-					titleModal,
-					bodyDialogModal,
-					$$slots: {
-						titleModal: true,
-						bodyDialogModal: true
-					}
-				});
-			}
+			});
 			$$renderer.push(`<!---->`);
 		}
 		do {
@@ -16794,6 +17337,7 @@ function Users($$renderer, $$props) {
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/system_users/PermissionEditor.svelte
 function PermissionEditor($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
+		/** @type {{ctrl: import('../../../types/models.js').UserCtrl}} */
 		let { ctrl = {} } = $$props;
 		const environments = [
 			"dev",
@@ -16882,7 +17426,18 @@ function PermissionEditor($$renderer, $$props) {
 				actions: ["read", "edit"]
 			}
 		];
-		let activeTab = "prd";
+		/**
+		* `Tab` trabaja con el indice del tab activo, no con su id. El default es
+		* `prd` (ultimo elemento de `environments`).
+		*/
+		let activeTab = environments.indexOf("prd");
+		const activeEnvironment = derived(() => environments[activeTab] ?? "prd");
+		/**
+		* @param {string} environment
+		* @param {string} resource
+		* @param {string} action
+		* @returns {boolean}
+		*/
 		function getPermission(environment, resource, action) {
 			return ctrl?.env?.[environment]?.[resource]?.[action] === true;
 		}
@@ -16897,10 +17452,10 @@ function PermissionEditor($$renderer, $$props) {
 						id: e,
 						label: e.toUpperCase()
 					})),
-					get selected() {
+					get active() {
 						return activeTab;
 					},
-					set selected($$value) {
+					set active($$value) {
 						activeTab = $$value;
 						$$settled = false;
 					}
@@ -16919,7 +17474,7 @@ function PermissionEditor($$renderer, $$props) {
 					for (let $$index = 0, $$length = each_array_1.length; $$index < $$length; $$index++) {
 						let act = each_array_1[$$index];
 						$$renderer.push(`<td class="has-text-centered">`);
-						if (res.actions.includes(act)) $$renderer.push(`<!--[0--><input type="checkbox"${attr("checked", getPermission(activeTab, res.key, act), true)}/>`);
+						if (res.actions.includes(act)) $$renderer.push(`<!--[0--><input type="checkbox"${attr("checked", getPermission(activeEnvironment(), res.key, act), true)}/>`);
 						else $$renderer.push(`<!--[-1--><span class="has-text-grey-light">—</span>`);
 						$$renderer.push(`<!--]--></td>`);
 					}
@@ -16947,6 +17502,7 @@ function System_users($$renderer, $$props) {
 		let showChangePassword = false;
 		let showResetPassword = false;
 		let isEditing = false;
+		/** @type {Array<Record<string, unknown>>} */
 		let DataTableUsers = [];
 		let selectedRow = getDefaultValues();
 		let passwordData = {
@@ -16992,6 +17548,9 @@ function System_users($$renderer, $$props) {
 				decorator: { component: DateTime_1 }
 			}
 		};
+		/**
+		* @returns {import('../../../types/models.js').SystemUserForm}
+		*/
 		function getDefaultValues() {
 			return {
 				iduser: 0,
@@ -17055,7 +17614,7 @@ function System_users($$renderer, $$props) {
 			} catch (error) {
 				console.error("changePassword error:", error);
 				notify.push({
-					message: error.message || "Failed to change password",
+					message: getErrorMessage(error) || "Failed to change password",
 					color: "danger"
 				});
 			}
@@ -17100,11 +17659,14 @@ function System_users($$renderer, $$props) {
 			} catch (error) {
 				console.error("resetPassword error:", error);
 				notify.push({
-					message: error.message || "Failed to reset password",
+					message: getErrorMessage(error) || "Failed to reset password",
 					color: "danger"
 				});
 			}
 		}
+		/**
+		* @param {import('../../../types/models.js').SystemUserForm|null} [row]
+		*/
 		function openEditor(row = null) {
 			if (row) {
 				isEditing = true;
@@ -17131,6 +17693,92 @@ function System_users($$renderer, $$props) {
 				selectedRow = getDefaultValues();
 			}
 			showEditor = true;
+		}
+		function r01($$renderer) {
+			$$renderer.push(`<div class="field has-addons">`);
+			if (canCreate() || canEdit()) $$renderer.push(`<!--[0--><p class="control"><button class="button is-small is-link"><span class="icon is-small"><i class="fa-solid fa-rocket"></i></span> <span>Save &amp; Deploy</span></button></p>`);
+			else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--> `);
+			if (isEditing && canDelete()) $$renderer.push(`<!--[0--><p class="control"><button class="button is-small is-danger is-outlined"><span class="icon is-small"><i class="fa-solid fa-trash"></i></span> <span>Delete</span></button></p>`);
+			else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--> <p class="control"><button class="button is-small"><span class="icon is-small"><i class="fa-solid fa-xmark"></i></span> <span>Cancel</span></button></p></div>`);
+		}
+		function titleModal($$renderer) {
+			$$renderer.push(`<span>Change Password: ${escape_html(selectedRow.username)}</span>`);
+		}
+		function bodyDialogModal($$renderer) {
+			Basic$1($$renderer, {
+				type: "password",
+				label: "Current Password",
+				get value() {
+					return passwordData.oldPassword;
+				},
+				set value($$value) {
+					passwordData.oldPassword = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----> `);
+			Basic$1($$renderer, {
+				type: "password",
+				label: "New Password",
+				get value() {
+					return passwordData.newPassword;
+				},
+				set value($$value) {
+					passwordData.newPassword = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----> `);
+			Basic$1($$renderer, {
+				type: "password",
+				label: "Repeat New Password",
+				get value() {
+					return passwordData.repeatNewPassword;
+				},
+				set value($$value) {
+					passwordData.repeatNewPassword = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----> `);
+			if (!passwordMatch() && passwordData.newPassword && passwordData.repeatNewPassword) $$renderer.push(`<!--[0--><div class="notification is-warning is-light py-2 px-3"><span class="icon-text"><span class="icon"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>You must repeat the new password twice.</span></span></div>`);
+			else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]-->`);
+		}
+		function resetTitleModal($$renderer) {
+			$$renderer.push(`<span>Reset Password (temporary): ${escape_html(selectedRow.username)}</span>`);
+		}
+		function resetBodyDialogModal($$renderer) {
+			$$renderer.push(`<div class="notification is-warning is-light py-2 px-3"><span class="icon-text"><span class="icon"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>The user will need to change this password on their next login.</span></span></div> `);
+			Basic$1($$renderer, {
+				type: "password",
+				label: "Temporary Password",
+				get value() {
+					return resetPwdData.newPassword;
+				},
+				set value($$value) {
+					resetPwdData.newPassword = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----> `);
+			Basic$1($$renderer, {
+				type: "password",
+				label: "Repeat Temporary Password",
+				get value() {
+					return resetPwdData.repeat;
+				},
+				set value($$value) {
+					resetPwdData.repeat = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----> `);
+			if (resetPwdData.newPassword && resetPwdData.newPassword !== resetPwdData.repeat) $$renderer.push(`<!--[0--><div class="notification is-warning is-light py-2 px-3"><span class="icon-text"><span class="icon"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>Passwords do not match.</span></span></div>`);
+			else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]-->`);
 		}
 		let $$settled = true;
 		let $$inner_renderer;
@@ -17173,23 +17821,10 @@ function System_users($$renderer, $$props) {
 						$$settled = false;
 					},
 					children: ($$renderer) => {
-						{
-							function r01($$renderer) {
-								$$renderer.push(`<div class="field has-addons">`);
-								if (canCreate() || canEdit()) $$renderer.push(`<!--[0--><p class="control"><button class="button is-small is-link"><span class="icon is-small"><i class="fa-solid fa-rocket"></i></span> <span>Save &amp; Deploy</span></button></p>`);
-								else $$renderer.push("<!--[-1-->");
-								$$renderer.push(`<!--]--> `);
-								if (isEditing && canDelete()) $$renderer.push(`<!--[0--><p class="control"><button class="button is-small is-danger is-outlined"><span class="icon is-small"><i class="fa-solid fa-trash"></i></span> <span>Delete</span></button></p>`);
-								else $$renderer.push("<!--[-1-->");
-								$$renderer.push(`<!--]--> <p class="control"><button class="button is-small"><span class="icon is-small"><i class="fa-solid fa-xmark"></i></span> <span>Cancel</span></button></p></div>`);
-							}
-							Level($$renderer, {
-								left: [],
-								right: [r01],
-								r01,
-								$$slots: { r01: true }
-							});
-						}
+						Level($$renderer, {
+							left: [],
+							right: [r01]
+						});
 						$$renderer.push(`<!----> <div><div class="columns"><div class="column is-one-third">`);
 						Basic$1($$renderer, {
 							label: "Username:",
@@ -17351,144 +17986,51 @@ function System_users($$renderer, $$props) {
 					$$slots: { default: true }
 				});
 			} else $$renderer.push("<!--[-1-->");
-			$$renderer.push(`<!--]--> `);
-			{
-				function titleModal($$renderer) {
-					$$renderer.push(`<span>Change Password: ${escape_html(selectedRow.username)}</span>`);
+			$$renderer.push(`<!--]-->  `);
+			Modal_1($$renderer, {
+				title: titleModal,
+				body: bodyDialogModal,
+				onaccept: async () => {
+					await changePassword();
+				},
+				oncancel: () => {
+					showChangePassword = false;
+					passwordData = {
+						oldPassword: "",
+						newPassword: "",
+						repeatNewPassword: ""
+					};
+				},
+				get show() {
+					return showChangePassword;
+				},
+				set show($$value) {
+					showChangePassword = $$value;
+					$$settled = false;
 				}
-				function bodyDialogModal($$renderer) {
-					Basic$1($$renderer, {
-						type: "password",
-						label: "Current Password",
-						get value() {
-							return passwordData.oldPassword;
-						},
-						set value($$value) {
-							passwordData.oldPassword = $$value;
-							$$settled = false;
-						}
-					});
-					$$renderer.push(`<!----> `);
-					Basic$1($$renderer, {
-						type: "password",
-						label: "New Password",
-						get value() {
-							return passwordData.newPassword;
-						},
-						set value($$value) {
-							passwordData.newPassword = $$value;
-							$$settled = false;
-						}
-					});
-					$$renderer.push(`<!----> `);
-					Basic$1($$renderer, {
-						type: "password",
-						label: "Repeat New Password",
-						get value() {
-							return passwordData.repeatNewPassword;
-						},
-						set value($$value) {
-							passwordData.repeatNewPassword = $$value;
-							$$settled = false;
-						}
-					});
-					$$renderer.push(`<!----> `);
-					if (!passwordMatch() && passwordData.newPassword && passwordData.repeatNewPassword) $$renderer.push(`<!--[0--><div class="notification is-warning is-light py-2 px-3"><span class="icon-text"><span class="icon"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>You must repeat the new password twice.</span></span></div>`);
-					else $$renderer.push("<!--[-1-->");
-					$$renderer.push(`<!--]-->`);
+			});
+			$$renderer.push(`<!---->  `);
+			Modal_1($$renderer, {
+				title: resetTitleModal,
+				body: resetBodyDialogModal,
+				onaccept: async () => {
+					await resetPassword();
+				},
+				oncancel: () => {
+					showResetPassword = false;
+					resetPwdData = {
+						newPassword: "",
+						repeat: ""
+					};
+				},
+				get show() {
+					return showResetPassword;
+				},
+				set show($$value) {
+					showResetPassword = $$value;
+					$$settled = false;
 				}
-				Modal_1($$renderer, {
-					title: titleModal,
-					body: bodyDialogModal,
-					onaccept: async () => {
-						await changePassword();
-					},
-					oncancel: () => {
-						showChangePassword = false;
-						passwordData = {
-							oldPassword: "",
-							newPassword: "",
-							repeatNewPassword: ""
-						};
-					},
-					get show() {
-						return showChangePassword;
-					},
-					set show($$value) {
-						showChangePassword = $$value;
-						$$settled = false;
-					},
-					titleModal,
-					bodyDialogModal,
-					$$slots: {
-						titleModal: true,
-						bodyDialogModal: true
-					}
-				});
-			}
-			$$renderer.push(`<!----> `);
-			{
-				function resetTitleModal($$renderer) {
-					$$renderer.push(`<span>Reset Password (temporary): ${escape_html(selectedRow.username)}</span>`);
-				}
-				function resetBodyDialogModal($$renderer) {
-					$$renderer.push(`<div class="notification is-warning is-light py-2 px-3"><span class="icon-text"><span class="icon"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>The user will need to change this password on their next login.</span></span></div> `);
-					Basic$1($$renderer, {
-						type: "password",
-						label: "Temporary Password",
-						get value() {
-							return resetPwdData.newPassword;
-						},
-						set value($$value) {
-							resetPwdData.newPassword = $$value;
-							$$settled = false;
-						}
-					});
-					$$renderer.push(`<!----> `);
-					Basic$1($$renderer, {
-						type: "password",
-						label: "Repeat Temporary Password",
-						get value() {
-							return resetPwdData.repeat;
-						},
-						set value($$value) {
-							resetPwdData.repeat = $$value;
-							$$settled = false;
-						}
-					});
-					$$renderer.push(`<!----> `);
-					if (resetPwdData.newPassword && resetPwdData.newPassword !== resetPwdData.repeat) $$renderer.push(`<!--[0--><div class="notification is-warning is-light py-2 px-3"><span class="icon-text"><span class="icon"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>Passwords do not match.</span></span></div>`);
-					else $$renderer.push("<!--[-1-->");
-					$$renderer.push(`<!--]-->`);
-				}
-				Modal_1($$renderer, {
-					title: resetTitleModal,
-					body: resetBodyDialogModal,
-					onaccept: async () => {
-						await resetPassword();
-					},
-					oncancel: () => {
-						showResetPassword = false;
-						resetPwdData = {
-							newPassword: "",
-							repeat: ""
-						};
-					},
-					get show() {
-						return showResetPassword;
-					},
-					set show($$value) {
-						showResetPassword = $$value;
-						$$settled = false;
-					},
-					resetTitleModal,
-					resetBodyDialogModal,
-					$$slots: {
-						resetTitleModal: true,
-						resetBodyDialogModal: true
-					}
-				});
-			}
+			});
 			$$renderer.push(`<!---->`);
 		}
 		do {
@@ -17504,6 +18046,7 @@ function System_users($$renderer, $$props) {
 function CellAction($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = void 0, row = void 0 } = $$props;
+		/** @type {Record<string, string>} */
 		const ACTION_CLASS = {
 			login: "is-info",
 			login_failed: "is-danger",
@@ -17528,6 +18071,7 @@ function CellAction($$renderer, $$props) {
 function CellEntity($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { value = void 0, row = void 0 } = $$props;
+		/** @type {Record<string, string>} */
 		const ENTITY_CLASS = {
 			app: "is-link",
 			appvar: "is-info",
@@ -17550,16 +18094,25 @@ function CellEntity($$renderer, $$props) {
 function Audit_detail($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let { show = false, detail = null, loading = false } = $$props;
+		/**
+		* @param {string|null|undefined} iso
+		* @returns {string}
+		*/
 		function fmtISO(iso) {
 			if (!iso) return "—";
 			const s = String(iso).replace(" ", "T").replace(/\s*([+-]\d{2}:\d{2}|Z)\s*$/, "Z");
 			const d = new Date(s);
 			if (!isNaN(d.getTime())) {
+				/** @param {number} n */
 				const p = (n) => String(n).padStart(2, "0");
 				return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 			}
 			return String(iso);
 		}
+		/**
+		* @param {unknown} value
+		* @returns {boolean}
+		*/
 		function hasContent(value) {
 			if (value === null || value === void 0) return false;
 			if (typeof value === "string") return value.trim() !== "";
@@ -17571,6 +18124,9 @@ function Audit_detail($$renderer, $$props) {
 		let hasAfter = derived(() => hasContent(detail?.after_data));
 		let hasSnapshots = derived(() => hasBefore() || hasAfter());
 		let statusText = derived(() => detail?.status ? "Success" : detail?.status === false ? "Failed" : "");
+		function r01($$renderer) {
+			$$renderer.push(`<div class="field has-addons"><p class="control"><button class="button is-small"><span class="icon is-small"><i class="fa-solid fa-xmark"></i></span> <span>Close</span></button></p></div>`);
+		}
 		let $$settled = true;
 		let $$inner_renderer;
 		function $$render_inner($$renderer) {
@@ -17583,17 +18139,10 @@ function Audit_detail($$renderer, $$props) {
 					$$settled = false;
 				},
 				children: ($$renderer) => {
-					{
-						function r01($$renderer) {
-							$$renderer.push(`<div class="field has-addons"><p class="control"><button class="button is-small"><span class="icon is-small"><i class="fa-solid fa-xmark"></i></span> <span>Close</span></button></p></div>`);
-						}
-						Level($$renderer, {
-							left: [],
-							right: [r01],
-							r01,
-							$$slots: { r01: true }
-						});
-					}
+					Level($$renderer, {
+						left: [],
+						right: [r01]
+					});
 					$$renderer.push(`<!----> `);
 					if (loading) $$renderer.push(`<!--[0--><div class="has-text-centered py-6"><span class="icon is-large has-text-info"><i class="fas fa-spinner fa-pulse"></i></span></div>`);
 					else if (detail) {
@@ -17698,6 +18247,9 @@ function Audit_detail($$renderer, $$props) {
 	});
 }
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/audit_logs/index.svelte
+function pruneTitle($$renderer) {
+	$$renderer.push(`<span>Confirm audit pruning</span>`);
+}
 function Audit_logs($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		let notify = new Notifications$1();
@@ -17840,6 +18392,33 @@ function Audit_logs($$renderer, $$props) {
 			30,
 			90
 		];
+		/**
+		* @typedef {object} AuditLogRow
+		* @property {string} [action]
+		* @property {string} [entity_type]
+		* @property {string} [entity_id]
+		* @property {string} [actor_kind]
+		* @property {string} [actor_username]
+		* @property {string} [target_username]
+		* @property {string} [environment]
+		* @property {boolean} [status]
+		* @property {string} [message]
+		* @property {string} [trace_id]
+		* @property {number|string} [id]
+		*/
+		/**
+		* @typedef {object} AuditLogStats
+		* @property {number} total
+		* @property {number} failures
+		* @property {Array<{action: string, count: number}>} by_action
+		* @property {Array<{entity_type: string, count: number}>} by_entity
+		* @property {Array<{actor_username: string, count: number}>} by_actor
+		*/
+		/**
+		* @typedef {object} AuditLogSearchResult
+		* @property {Array<AuditLogRow>} rows
+		* @property {number} total
+		*/
 		let action = "";
 		let entityType = "";
 		let entityId = "";
@@ -17865,6 +18444,10 @@ function Audit_logs($$renderer, $$props) {
 		let detailLoading = false;
 		let showPrune = false;
 		let pruning = false;
+		/**
+		* @param {unknown} n
+		* @returns {boolean}
+		*/
 		function isNumeric(n) {
 			return Number.isFinite(Number(n));
 		}
@@ -17881,7 +18464,12 @@ function Audit_logs($$renderer, $$props) {
 			const de = new Date(e);
 			return !isNaN(ds.getTime()) && !isNaN(de.getTime()) && ds < de;
 		}
+		/**
+		* @param {number} [forOffset]
+		* @returns {{limit: number, offset: number, action?: string, entity_type?: string, entity_id?: string, actor_kind?: string, actor_username?: string, target_username?: string, environment?: string, status?: string, from?: string, to?: string}}
+		*/
 		function buildQuery(forOffset = 0) {
+			/** @type {{limit: number, offset: number, action?: string, entity_type?: string, entity_id?: string, actor_kind?: string, actor_username?: string, target_username?: string, environment?: string, status?: string, from?: string, to?: string}} */
 			const q = {
 				limit: normalizedLimit(),
 				offset: forOffset
@@ -17908,6 +18496,10 @@ function Audit_logs($$renderer, $$props) {
 			}
 			return q;
 		}
+		/**
+		* @param {AuditLogRow} row
+		* @returns {AuditLogRow}
+		*/
 		function decorateRow(row) {
 			return {
 				...row,
@@ -17939,7 +18531,7 @@ function Audit_logs($$renderer, $$props) {
 					total = 0;
 					offset = 0;
 					notify.push({
-						message: e.message || "Failed to load audit logs",
+						message: getErrorMessage(e) || "Failed to load audit logs",
 						color: "danger"
 					});
 				}
@@ -17965,12 +18557,15 @@ function Audit_logs($$renderer, $$props) {
 		async function refreshAll() {
 			await Promise.all([loadAudit(), loadStats()]);
 		}
+		/**
+		* @param {{row: AuditLogRow}} param
+		*/
 		async function onRowClick({ row }) {
 			showDetail = true;
 			detailData = null;
 			detailLoading = true;
 			try {
-				const detail = await GetAuditLogDetail(row?.id);
+				const detail = await GetAuditLogDetail(row?.id ?? "");
 				detailData = detail && !detail.error ? detail : row;
 			} catch (e) {
 				console.error(e);
@@ -18000,7 +18595,7 @@ function Audit_logs($$renderer, $$props) {
 			} catch (e) {
 				console.error(e);
 				notify.push({
-					message: e.message || "Failed to prune audit logs",
+					message: getErrorMessage(e) || "Failed to prune audit logs",
 					color: "danger"
 				});
 			} finally {
@@ -18008,11 +18603,13 @@ function Audit_logs($$renderer, $$props) {
 			}
 		}
 		function handlePresetHoursChange(e) {
-			const value = Math.floor(Number(e.target.value));
+			const input = e.target;
+			const value = Math.floor(Number(input.value));
 			presetHours = Number.isFinite(value) && value > 0 ? value : 24;
 		}
 		function handleLimitChange(e) {
-			const value = Math.floor(Number(e.target.value));
+			const input = e.target;
+			const value = Math.floor(Number(input.value));
 			limit = Number.isFinite(value) && value > 0 ? value : 100;
 		}
 		let columns = {
@@ -18071,6 +18668,13 @@ function Audit_logs($$renderer, $$props) {
 		}
 		function loadMoreButton($$renderer) {
 			if (offset < total) $$renderer.push(`<!--[0--><button class="button is-small is-link is-outlined"${attr("disabled", loading, true)}><span class="icon is-small"><i${attr_class(`fa-solid fa-angle-double-down`)}></i></span> <span>Load older (next ${escape_html(normalizedLimit())})</span></button>`);
+			else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]-->`);
+		}
+		function pruneBody($$renderer) {
+			$$renderer.push(`<div class="notification is-warning is-light py-2 px-3"><span class="icon-text"><span class="icon"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>This permanently deletes all audit events older than the configured retention (default 365
+				days). This cannot be undone.</span></span></div> `);
+			if (pruning) $$renderer.push(`<!--[0--><p class="has-text-grey is-italic is-size-7">Pruning…</p>`);
 			else $$renderer.push("<!--[-1-->");
 			$$renderer.push(`<!--]-->`);
 		}
@@ -18365,38 +18969,20 @@ function Audit_logs($$renderer, $$props) {
 					$$settled = false;
 				}
 			});
-			$$renderer.push(`<!----> `);
-			{
-				function pruneTitle($$renderer) {
-					$$renderer.push(`<span>Confirm audit pruning</span>`);
+			$$renderer.push(`<!---->  `);
+			Modal_1($$renderer, {
+				title: pruneTitle,
+				body: pruneBody,
+				onaccept: confirmPrune,
+				oncancel: () => showPrune = false,
+				get show() {
+					return showPrune;
+				},
+				set show($$value) {
+					showPrune = $$value;
+					$$settled = false;
 				}
-				function pruneBody($$renderer) {
-					$$renderer.push(`<div class="notification is-warning is-light py-2 px-3"><span class="icon-text"><span class="icon"><i class="fa-solid fa-triangle-exclamation"></i></span> <span>This permanently deletes all audit events older than the configured retention (default 365
-					days). This cannot be undone.</span></span></div> `);
-					if (pruning) $$renderer.push(`<!--[0--><p class="has-text-grey is-italic is-size-7">Pruning…</p>`);
-					else $$renderer.push("<!--[-1-->");
-					$$renderer.push(`<!--]-->`);
-				}
-				Modal_1($$renderer, {
-					title: pruneTitle,
-					body: pruneBody,
-					onaccept: confirmPrune,
-					oncancel: () => showPrune = false,
-					get show() {
-						return showPrune;
-					},
-					set show($$value) {
-						showPrune = $$value;
-						$$settled = false;
-					},
-					pruneTitle,
-					pruneBody,
-					$$slots: {
-						pruneTitle: true,
-						pruneBody: true
-					}
-				});
-			}
+			});
 			$$renderer.push(`<!---->`);
 		}
 		do {
@@ -18541,7 +19127,7 @@ function Application($$renderer, $$props) {
 		async function getListAppsInternal() {
 			try {
 				loading = true;
-				let apps = await getListApps(store_get($$store_subs ??= {}, "$userStore", userStore).token);
+				let apps = await getListApps();
 				if (apps && Array.isArray(apps) && apps.length > 0) options = apps.map((item) => {
 					return {
 						name: item.app,
@@ -18549,12 +19135,12 @@ function Application($$renderer, $$props) {
 					};
 				});
 				else options = [];
-				let status_sys_endp = await restoreSystemEndpoints(false, store_get($$store_subs ??= {}, "$userStore", userStore).token);
+				let status_sys_endp = await restoreSystemEndpoints(false);
 				statusSystemEndpointsStore.set(status_sys_endp);
 			} catch (error) {
 				console.error(error);
 				notify.push({
-					message: error.message,
+					message: getErrorMessage(error),
 					color: "danger"
 				});
 			} finally {
@@ -18576,6 +19162,7 @@ function Application($$renderer, $$props) {
 				label: "Application",
 				classLabel: "is-small",
 				classInput: "is-small",
+				options,
 				onselect: async (e) => {
 					if (store_get($$store_subs ??= {}, "$userStore", userStore)) {
 						storeCacheSize.set({});
@@ -18587,17 +19174,54 @@ function Application($$renderer, $$props) {
 						message: "You do not have authorization",
 						color: "warning"
 					});
-				},
-				get options() {
-					return options;
-				},
-				set options($$value) {
-					options = $$value;
-					$$settled = false;
 				}
 			});
 			$$renderer.push(`<!----> `);
 			if (loading) $$renderer.push(`<!--[0--><span class="icon is-small has-text-grey"><i class="fa-solid fa-spinner fa-spin"></i></span>`);
+			else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--></div>`);
+		}
+		function titleModal($$renderer) {
+			$$renderer.push(`<span>${escape_html(`Change Password: ${password_change.username}`)}</span>`);
+		}
+		function bodyDialogModal($$renderer) {
+			Basic$1($$renderer, {
+				label: "Current password",
+				type: "password",
+				get value() {
+					return password_change.oldPassword;
+				},
+				set value($$value) {
+					password_change.oldPassword = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----> `);
+			Basic$1($$renderer, {
+				label: "New Password",
+				type: "password",
+				get value() {
+					return password_change.newPassword;
+				},
+				set value($$value) {
+					password_change.newPassword = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----> `);
+			Basic$1($$renderer, {
+				label: "Repeat new Password",
+				type: "password",
+				get value() {
+					return password_change.repeatNewPassword;
+				},
+				set value($$value) {
+					password_change.repeatNewPassword = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!----> <div>`);
+			if (!changepwd_compare_verify()) $$renderer.push(`<!--[0--><span class="icon-text has-text-warning is-small"><span class="icon"><i class="fas fa-exclamation-triangle"></i></span> <span>You must repeat the new password twice.</span></span>`);
 			else $$renderer.push("<!--[-1-->");
 			$$renderer.push(`<!--]--></div>`);
 		}
@@ -18672,92 +19296,40 @@ function Application($$renderer, $$props) {
 				},
 				$$slots: { default: true }
 			});
-			$$renderer.push(`<!----> `);
-			{
-				function titleModal($$renderer) {
-					$$renderer.push(`<span>${escape_html(`Change Password: ${password_change.username}`)}</span>`);
-				}
-				function bodyDialogModal($$renderer) {
-					Basic$1($$renderer, {
-						label: "Current password",
-						type: "password",
-						get value() {
-							return password_change.oldPassword;
-						},
-						set value($$value) {
-							password_change.oldPassword = $$value;
-							$$settled = false;
-						}
-					});
-					$$renderer.push(`<!----> `);
-					Basic$1($$renderer, {
-						label: "New Password",
-						type: "password",
-						get value() {
-							return password_change.newPassword;
-						},
-						set value($$value) {
-							password_change.newPassword = $$value;
-							$$settled = false;
-						}
-					});
-					$$renderer.push(`<!----> `);
-					Basic$1($$renderer, {
-						label: "Repeat new Password",
-						type: "password",
-						get value() {
-							return password_change.repeatNewPassword;
-						},
-						set value($$value) {
-							password_change.repeatNewPassword = $$value;
-							$$settled = false;
-						}
-					});
-					$$renderer.push(`<!----> <div>`);
-					if (!changepwd_compare_verify()) $$renderer.push(`<!--[0--><span class="icon-text has-text-warning is-small"><span class="icon"><i class="fas fa-exclamation-triangle"></i></span> <span>You must repeat the new password twice.</span></span>`);
-					else $$renderer.push("<!--[-1-->");
-					$$renderer.push(`<!--]--></div>`);
-				}
-				Modal_1($$renderer, {
-					title: titleModal,
-					body: bodyDialogModal,
-					onaccept: async () => {
-						if (password_change.newPassword == password_change.repeatNewPassword) {
-							let result = await changeUserPassword(password_change, store_get($$store_subs ??= {}, "$userStore", userStore).token);
-							if (result.success) {
-								password_change = { ...defaultPasswordChange };
-								show_dialog_change_pwd = false;
-								notify.push({
-									message: "Successful update",
-									color: "success"
-								});
-							} else notify.push({
-								message: result.error,
-								color: "danger"
+			$$renderer.push(`<!---->  `);
+			Modal_1($$renderer, {
+				title: titleModal,
+				body: bodyDialogModal,
+				onaccept: async () => {
+					if (password_change.newPassword == password_change.repeatNewPassword) {
+						let result = await changeUserPassword(password_change, store_get($$store_subs ??= {}, "$userStore", userStore).token);
+						if (result.success) {
+							password_change = { ...defaultPasswordChange };
+							show_dialog_change_pwd = false;
+							notify.push({
+								message: "Successful update",
+								color: "success"
 							});
 						} else notify.push({
-							message: "You must repeat the new password twice.",
+							message: result.error,
 							color: "danger"
 						});
-					},
-					oncancel: () => {
-						password_change = { ...defaultPasswordChange };
-					},
-					get show() {
-						return show_dialog_change_pwd;
-					},
-					set show($$value) {
-						show_dialog_change_pwd = $$value;
-						$$settled = false;
-					},
-					titleModal,
-					bodyDialogModal,
-					$$slots: {
-						titleModal: true,
-						bodyDialogModal: true
-					}
-				});
-			}
+					} else notify.push({
+						message: "You must repeat the new password twice.",
+						color: "danger"
+					});
+				},
+				oncancel: () => {
+					password_change = { ...defaultPasswordChange };
+				},
+				get show() {
+					return show_dialog_change_pwd;
+				},
+				set show($$value) {
+					show_dialog_change_pwd = $$value;
+					$$settled = false;
+				}
+			});
 			$$renderer.push(`<!---->`);
 		}
 		do {
@@ -18772,6 +19344,8 @@ function Application($$renderer, $$props) {
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/index.svelte
 function OpenFusionAPI($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
+		/** Instancia usada para emitir notificaciones (el componente `Notify` solo las pinta). */
+		const notify = new Notifications$1();
 		let page = "login";
 		let sessionExpired = false;
 		let failedLogins = 0;
@@ -18791,7 +19365,7 @@ function OpenFusionAPI($$renderer, $$props) {
 			stopJwtWatcher();
 			tokenExpiryWarningShown = false;
 			jwtWatcherInterval = setInterval(() => {
-				const token = get(userStore)?.token;
+				const token = get(userStore).token;
 				if (!token) return;
 				logJwtExpiration(token);
 				const minutesLeft = getJwtExpiresInMinutes(token);
@@ -18802,10 +19376,10 @@ function OpenFusionAPI($$renderer, $$props) {
 					}
 				} else if (isJwtExpiringSoon(token, 5) && !tokenExpiryWarningShown) {
 					tokenExpiryWarningShown = true;
-					Notifications.push({
+					notify.push({
 						message: `⚠️ Tu sesión expirará en aproximadamente ${Math.floor(minutesLeft)} minuto${Math.floor(minutesLeft) !== 1 ? "s" : ""}. Guarda tu trabajo.`,
 						color: "warning",
-						duration: 12e4
+						timeout: 12e4
 					});
 				}
 				if (!isJwtExpiringSoon(token, 5)) tokenExpiryWarningShown = false;
