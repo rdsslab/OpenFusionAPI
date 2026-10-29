@@ -49,6 +49,7 @@ var url_paths = {
 	runNowIntervalTask: "/api/system/interval_tasks/run_now/prd",
 	stopIntervalTaskRun: "/api/system/interval_tasks/stop/prd",
 	resetIntervalTaskAttempts: "/api/system/interval_tasks/reset_attempts/prd",
+	getAsyncJobs: "/api/system/system/async/jobs/prd",
 	getfunctions: "/api/system/api/function_names/prd",
 	serverAPIVersion: "/api/system/server/version/prd",
 	appBackup: "/api/system/app/backup/prd",
@@ -182,6 +183,7 @@ function get(store) {
 * @typedef {import('../../types/models.js').SystemEndpointsStatus} SystemEndpointsStatus
 * @typedef {import('../../types/models.js').ServerModelChangedEvent} ServerModelChangedEvent
 * @typedef {import('../../types/models.js').IntervalTaskEvent} IntervalTaskEvent
+* @typedef {import('../../types/models.js').AsyncJobChangedEvent} AsyncJobChangedEvent
 * @typedef {import('../../types/models.js').BotStatusChangedEvent} BotStatusChangedEvent
 * @typedef {import('../../types/models.js').BotChangedEvent} BotChangedEvent
 * @typedef {import('../../types/models.js').SelectOption} SelectOption
@@ -393,6 +395,21 @@ var GetAPIKeys = async (idapp) => {
 	let apiKeys = [];
 	apiKeys = await checkStatus(await new uFetch(url_paths.APIKeys).get({ data: { idapp } })).json();
 	return apiKeys;
+};
+/**
+* Lista las peticiones asíncronas del ASYNC_WRAPPER de una aplicación
+* (`ofapi_async_jobs`). Solo lectura: el endpoint del sistema excluye los
+* campos pesados (`result`, `response_headers`, `error_message`) y exige
+* sesión admin (access 2). El filtro de estado se aplica en cliente: la
+* vista necesita derivar EXPIRED a partir de `expires_at`, que el backend
+* nunca escribe en la tabla.
+* @param {number|string} idapp
+* @returns {Promise<Array<import('../../types/models.js').AsyncJobRow>>}
+*/
+var GetAsyncJobs = async (idapp) => {
+	if (!idapp) return [];
+	const response = await checkStatus(await new uFetch(url_paths.getAsyncJobs).get({ data: { idapp } })).json();
+	return Array.isArray(response?.jobs) ? response.jobs : [];
 };
 /**
 * @param {JsonBody} data
@@ -7693,7 +7710,7 @@ var ChartWidgets = {
 	TimeSeries
 };
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/version.js
-var version = "9.5.47";
+var version = "9.5.48";
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/login/index.svelte
 function recoveryTitle($$renderer) {
 	$$renderer.push(`<span class="has-text-info svelte-imjmcm"><i class="fa-solid fa-key svelte-imjmcm"></i> Password recovery</span>`);
@@ -8362,6 +8379,63 @@ var IntervalTaskStatusFallback = {
 */
 function getIntervalTaskRuntimeStatus(value) {
 	return Number(value) === 1 ? IntervalTaskStatus[1] : IntervalTaskStatus[0];
+}
+/**
+* Estados que el ejecutor async escribe en la tabla. Todos menos EXPIRED
+* existen como ENUM en la BD: el backend deriva EXPIRED al vuelo cuando
+* `expires_at` ya pasó (lo mismo hace `getAsyncJobStatus` en la GUI).
+*/
+/** @type {Record<string, StatusMeta>} */
+var AsyncJobStatus = {
+	PENDING: {
+		label: "Pending",
+		background: "warning",
+		icon: " fa-solid fa-hourglass-half ",
+		description: "The request was accepted (202) and is waiting for a worker."
+	},
+	RUNNING: {
+		label: "Running",
+		background: "info",
+		icon: " fa-solid fa-play ",
+		description: "A worker is executing the endpoint right now."
+	},
+	COMPLETED: {
+		label: "Completed",
+		background: "success",
+		icon: " fa-solid fa-circle-check ",
+		description: "The endpoint finished; the result is consumable while the job has TTL."
+	},
+	FAILED: {
+		label: "Failed",
+		background: "danger",
+		icon: " fa-solid fa-triangle-exclamation ",
+		description: "The background execution failed."
+	},
+	EXPIRED: {
+		label: "Expired",
+		background: "dark",
+		icon: " fa-solid fa-hourglass-end ",
+		description: "The TTL of this job already elapsed."
+	}
+};
+/** @type {StatusMeta} */
+var AsyncJobStatusFallback = {
+	label: "Unknown",
+	background: "light",
+	icon: " fa-solid fa-circle-question ",
+	description: "Unknown status."
+};
+/**
+* Estado efectivo de un job: EXPIRED se calcula — no se persiste — comparando
+* `expires_at` contra el reloj (mismo criterio que el endpoint del sistema).
+* @param {{status?: string, expires_at?: string}|null|undefined} row
+* @returns {StatusMeta}
+*/
+function getAsyncJobStatus(row) {
+	if (row?.status !== "COMPLETED" && row?.expires_at) {
+		if (new Date(row.expires_at).getTime() <= Date.now()) return AsyncJobStatus.EXPIRED;
+	}
+	return AsyncJobStatus[String(row?.status)] ?? AsyncJobStatusFallback;
 }
 /**
 * Resultado de la última ejecución, separado del estado operativo actual. El payload
@@ -15127,6 +15201,210 @@ function Interval_tasks($$renderer, $$props) {
 		bind_props($$props, { idapp });
 	});
 }
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/async_jobs/cellJobStatus.svelte
+function CellJobStatus($$renderer, $$props) {
+	$$renderer.component(($$renderer) => {
+		let { value = void 0, row = void 0 } = $$props;
+		let status = derived(() => getAsyncJobStatus(row));
+		$$renderer.push(`<td><span${attr_class(`tag is-${stringify(status().background)}`)}${attr("title", status().description)}><span class="icon is-small"><i${attr_class(clsx(status().icon))}></i></span> <span>${escape_html(status().label)}</span></span></td>`);
+		bind_props($$props, {
+			value,
+			row
+		});
+	});
+}
+// node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/async_jobs/index.svelte
+function Async_jobs($$renderer, $$props) {
+	$$renderer.component(($$renderer) => {
+		var $$store_subs;
+		let { idapp = void 0 } = $$props;
+		new uFetch(url_paths.endpoints_get_by_idapp);
+		/** @typedef {import('../../../types/models.js').AsyncJobRow} AsyncJobRow */
+		/** @typedef {import('../../../types/models.js').EndpointRow} EndpointRow */
+		/** @type {Array<AsyncJobRow>} */
+		let dataJobs = [];
+		/** @type {Array<EndpointRow>} */
+		let endpoints = [];
+		let loading = false;
+		let error = "";
+		/** Estado seleccionado en el filtro (null = todos). */
+		/** @type {string|null} */
+		let statusFilter = null;
+		/** @type {AsyncJobRow} */
+		let selectedRow = {};
+		/** @type {string} */
+		let selectedParamsJson = "{}";
+		let showDetail = false;
+		/** Endpoint base de cada job, para mostrar method/url legibles. */
+		let endpointById = derived(() => {
+			/** @type {Record<string, EndpointRow>} */
+			const map = {};
+			for (const ep of endpoints) if (ep?.idendpoint) map[String(ep.idendpoint)] = ep;
+			return map;
+		});
+		/**
+		* Enriquece cada job con lo que la tabla muestra directamente: method/url
+		* del endpoint base, duración y el rendimiento consumido hasta ahora.
+		* @param {AsyncJobRow} r
+		* @returns {AsyncJobRow}
+		*/
+		function decorateJob(r) {
+			const ep = endpointById()[String(r.idendpoint_base)] ?? {};
+			const created = r.created_at ? new Date(r.created_at).getTime() : null;
+			const completed = r.completed_at ? new Date(r.completed_at).getTime() : null;
+			return {
+				...r,
+				method: ep.method ?? "",
+				url: ep.endpoint ?? ep.resource ?? "",
+				resource: ep.resource ?? "",
+				duration_ms: created && completed && completed >= created ? completed - created : void 0,
+				consume: `${r.consume_count ?? 0} / ${r.max_consumes ?? "∞"}`
+			};
+		}
+		derived(() => {
+			return dataJobs.map(decorateJob);
+		});
+		/** @type {Array<AsyncJobRow>} */
+		let tableRows = [];
+		let columns = {
+			id: { label: "Request ID" },
+			method: {
+				label: "Method",
+				decorator: { component: CellMethod }
+			},
+			url: { label: "Endpoint" },
+			status: {
+				label: "Status",
+				decorator: { component: CellJobStatus }
+			},
+			created_at: {
+				label: "Created",
+				decorator: { component: DateTime_1 }
+			},
+			completed_at: {
+				label: "Completed",
+				decorator: { component: DateTime_1 }
+			},
+			duration_ms: { label: "Duration (ms)" },
+			consume: { label: "Consumes (used / max)" },
+			environment: { label: "Env" },
+			params: { hidden: true },
+			idendpoint_base: { hidden: true },
+			idendpoint_async: { hidden: true },
+			expires_at: { hidden: true },
+			fingerprint: { hidden: true },
+			job_token: { hidden: true },
+			ttl_ms: { hidden: true },
+			updated_at: { hidden: true },
+			result_is_binary: { hidden: true },
+			content_type: { hidden: true },
+			consume_count: { hidden: true },
+			max_consumes: { hidden: true },
+			idapp: { hidden: true },
+			resource: { hidden: true }
+		};
+		async function fetchJobs() {
+			if (!idapp) {
+				dataJobs = [];
+				return;
+			}
+			loading = true;
+			error = "";
+			try {
+				dataJobs = await GetAsyncJobs(idapp);
+			} catch (e) {
+				console.error("Error fetching async jobs:", e);
+				error = e?.message ?? String(e);
+				dataJobs = [];
+			} finally {
+				loading = false;
+			}
+		}
+		/**
+		* @param {{row: AsyncJobRow}} e
+		*/
+		function openDetail(e) {
+			selectedRow = e?.row ?? {};
+			selectedParamsJson = JSON.stringify(selectedRow.params ?? {}, null, 2);
+			showDetail = true;
+		}
+		function detailTitle($$renderer) {
+			$$renderer.push(`<span>Async Request ${escape_html(selectedRow?.environment ? `(${selectedRow.environment}) ` : "")}${escape_html(selectedRow?.method ?? "")}
+		${escape_html(selectedRow?.resource ?? "")} <code>${escape_html(selectedRow?.id ?? "")}</code></span>`);
+		}
+		function detailBody($$renderer) {
+			const stMeta = getAsyncJobStatus(selectedRow);
+			$$renderer.push(`<div class="tags has-addons"><span${attr_class(`tag is-${stringify(stMeta.background)}`)}><span class="icon is-small"><i${attr_class(clsx(stMeta.icon))}></i></span> <span>${escape_html(stMeta.label)}</span></span> <span class="tag is-light">Consumes: ${escape_html(selectedRow?.consume_count ?? 0)} / ${escape_html(selectedRow?.max_consumes ?? "∞")}</span> `);
+			if (selectedRow?.expires_at) $$renderer.push(`<!--[0--><span class="tag is-light">Expires: ${escape_html(new Date(selectedRow.expires_at).toLocaleString())}</span>`);
+			else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--></div> <table class="table is-narrow is-fullwidth mb-3"><tbody><tr><td>Request ID</td><td><code>${escape_html(selectedRow?.id ?? "—")}</code></td></tr><tr><td>Endpoint base</td><td><code>${escape_html(selectedRow?.idendpoint_base ?? "—")}</code></td></tr><tr><td>Endpoint async</td><td><code>${escape_html(selectedRow?.idendpoint_async ?? "—")}</code></td></tr><tr><td>Created</td><td>${escape_html(selectedRow?.created_at ? new Date(selectedRow.created_at).toLocaleString() : "—")}</td></tr><tr><td>Updated</td><td>${escape_html(selectedRow?.updated_at ? new Date(selectedRow.updated_at).toLocaleString() : "—")}</td></tr><tr><td>Completed</td><td>${escape_html(selectedRow?.completed_at ? new Date(selectedRow.completed_at).toLocaleString() : "—")}</td></tr><tr><td>TTL</td><td>${escape_html(selectedRow?.ttl_ms ?? "∞")}${escape_html(selectedRow?.expires_at ? ` (expires at ${new Date(selectedRow.expires_at).toLocaleString()})` : "")}</td></tr></tbody></table> <p class="is-size-7 has-text-grey mb-1">Params received (query + body):</p> <pre class="is-size-7">${escape_html(selectedParamsJson)}</pre>`);
+		}
+		let $$settled = true;
+		let $$inner_renderer;
+		function $$render_inner($$renderer) {
+			$$renderer.push(`<div class="box py-3">`);
+			if (!idapp) $$renderer.push(`<!--[0--><p class="has-text-grey">Select an application to see its async requests.</p>`);
+			else {
+				$$renderer.push(`<!--[-1--><div class="level"><div class="level-left"><span class="icon-text"><span class="icon"><i class="fa-solid fa-clapperboard"></i></span> <span><strong>Async Requests</strong></span></span> `);
+				if (loading) $$renderer.push(`<!--[0--><span class="tag is-info is-light ml-2">Loading…</span>`);
+				else $$renderer.push("<!--[-1-->");
+				$$renderer.push(`<!--]--> `);
+				if (error) $$renderer.push(`<!--[0--><span class="tag is-danger is-light ml-2"${attr("title", error)}>Error loading jobs</span>`);
+				else $$renderer.push("<!--[-1-->");
+				$$renderer.push(`<!--]--></div> <div class="level-right"><div class="tags has-addons"><a${attr_class(`tag is-info`)} href="#all">All</a> <!--[-->`);
+				const each_array = ensure_array_like(Object.entries(AsyncJobStatus));
+				for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
+					let [key, meta] = each_array[$$index];
+					$$renderer.push(`<a${attr_class(`tag ${statusFilter === key ? `is-${meta.background}` : "is-light"}`)}${attr("href", "#" + key)}>${escape_html(meta.label)}</a>`);
+				}
+				$$renderer.push(`<!--]--> <button class="tag is-dark"${attr("disabled", loading, true)} title="Refresh"><span class="icon is-small"><i class="fa-solid fa-rotate-right"></i></span></button></div></div></div> `);
+				Table($$renderer, {
+					onclickrow: openDetail,
+					onsearch: fetchJobs,
+					get RawDataTable() {
+						return tableRows;
+					},
+					set RawDataTable($$value) {
+						tableRows = $$value;
+						$$settled = false;
+					},
+					get columns() {
+						return columns;
+					},
+					set columns($$value) {
+						columns = $$value;
+						$$settled = false;
+					}
+				});
+				$$renderer.push(`<!---->`);
+			}
+			$$renderer.push(`<!--]--></div>  `);
+			Modal_1($$renderer, {
+				title: detailTitle,
+				body: detailBody,
+				label_accept: "Close",
+				onaccept: () => showDetail = false,
+				oncancel: () => showDetail = false,
+				get show() {
+					return showDetail;
+				},
+				set show($$value) {
+					showDetail = $$value;
+					$$settled = false;
+				}
+			});
+			$$renderer.push(`<!---->`);
+		}
+		do {
+			$$settled = true;
+			$$inner_renderer = $$renderer.copy();
+			$$render_inner($$inner_renderer);
+		} while (!$$settled);
+		$$renderer.subsume($$inner_renderer);
+		if ($$store_subs) unsubscribe_stores($$store_subs);
+		bind_props($$props, { idapp });
+	});
+}
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/Application/widgets/bots/cellBotStatus.svelte
 function CellBotStatus($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
@@ -19110,6 +19388,13 @@ function Application($$renderer, $$props) {
 						menu_item_selected = "/interval_tasks";
 					}
 				});
+				if (currentUserHasPermission(currentUser(), permEnv, "endpoints", "read")) appItems.push({
+					label: "Async Requests",
+					icon: " fa-solid fa-clapperboard ",
+					onclick: () => {
+						menu_item_selected = "/asyncrequests";
+					}
+				});
 				appItems.push({
 					label: "Logs",
 					icon: " fa-solid fa-scroll ",
@@ -19279,8 +19564,11 @@ function Application($$renderer, $$props) {
 					} else if (menu_item_selected == "/interval_tasks") {
 						$$renderer.push("<!--[3-->");
 						Interval_tasks($$renderer, { idapp });
-					} else if (menu_item_selected == "/apikeys") {
+					} else if (menu_item_selected == "/asyncrequests") {
 						$$renderer.push("<!--[4-->");
+						Async_jobs($$renderer, { idapp });
+					} else if (menu_item_selected == "/apikeys") {
+						$$renderer.push("<!--[5-->");
 						Apikeys($$renderer, {
 							get idapp() {
 								return idapp;
@@ -19291,7 +19579,7 @@ function Application($$renderer, $$props) {
 							}
 						});
 					} else if (menu_item_selected == "/bots") {
-						$$renderer.push("<!--[5-->");
+						$$renderer.push("<!--[6-->");
 						Bots($$renderer, {
 							get idapp() {
 								return idapp;
@@ -19302,16 +19590,16 @@ function Application($$renderer, $$props) {
 							}
 						});
 					} else if (menu_item_selected == "/system-users") {
-						$$renderer.push("<!--[6-->");
+						$$renderer.push("<!--[7-->");
 						System_users($$renderer, {});
 					} else if (menu_item_selected == "/users") {
-						$$renderer.push("<!--[7-->");
+						$$renderer.push("<!--[8-->");
 						Users($$renderer, {});
 					} else if (menu_item_selected == "/audit") {
-						$$renderer.push("<!--[8-->");
+						$$renderer.push("<!--[9-->");
 						Audit_logs($$renderer, {});
 					} else if (menu_item_selected == "/logs") {
-						$$renderer.push("<!--[9-->");
+						$$renderer.push("<!--[10-->");
 						Logs($$renderer, { idapp });
 					} else {
 						$$renderer.push("<!--[-1-->");
