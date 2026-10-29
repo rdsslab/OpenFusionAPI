@@ -7693,7 +7693,7 @@ var ChartWidgets = {
 	TimeSeries
 };
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/version.js
-var version = "9.5.41";
+var version = "9.5.47";
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/login/index.svelte
 function recoveryTitle($$renderer) {
 	$$renderer.push(`<span class="has-text-info svelte-imjmcm"><i class="fa-solid fa-key svelte-imjmcm"></i> Password recovery</span>`);
@@ -8499,7 +8499,7 @@ function SaveDeploy($$renderer, $$props) {
 			message: ""
 		}, dirty = false } = $$props;
 		function r01($$renderer) {
-			$$renderer.push(`<div class="field has-addons"><p class="control"><button class="button is-small is-warning"><span class="icon is-small"><i class="fa-solid fa-rocket"></i></span> <span>Save &amp; Deploy</span></button></p> <p class="control"><button class="button is-small"><span class="icon is-small"><i class="fa-solid fa-xmark"></i></span> <span>Cancel</span></button></p></div>`);
+			$$renderer.push(`<div class="field has-addons"><p class="control"><button class="button is-small is-warning"><span class="icon is-small"><i class="fa-solid fa-rocket"></i></span> <span>Save &amp; Deploy</span></button></p> <p class="control"><button class="button is-small"><span class="icon is-small"><i class="fa-solid fa-xmark"></i></span> <span>Close</span></button></p></div>`);
 		}
 		let $$settled = true;
 		let $$inner_renderer;
@@ -13043,6 +13043,11 @@ function Editor($$renderer, $$props) {
 			error: false
 		};
 		let dirty = false;
+		/** true durante la fase de carga, mientras los handlers ejecutan su onchange() de inicialización. */
+		let initializing = false;
+		/** Temporizador que detecta el reposo tras la última mutación de la fase de carga. */
+		/** @type {ReturnType<typeof setTimeout>|undefined} */
+		let settleTimer;
 		/**
 		* @param {any} data
 		*/
@@ -13138,6 +13143,8 @@ function Editor($$renderer, $$props) {
 			return epRec;
 		}
 		async function setValuesEndpoint() {
+			initializing = true;
+			dirty = false;
 			if (app && app.endpoints && idendpoint) {
 				let ep_found = app.endpoints.find((ep) => ep.idendpoint == idendpoint);
 				if (ep_found) {
@@ -13147,6 +13154,18 @@ function Editor($$renderer, $$props) {
 				} else clearValues();
 			} else clearValues();
 		}
+		/**
+		* Captura el snapshot inicial (baseline) cuando el endpoint deja de
+		* mutar tras la carga. Los handlers disparan onchange() en ráfaga al
+		* montarse y algunos completan su inicialización después (llamadas de
+		* red), por lo que un retardo fijo era insuficiente: se espera 500 ms de
+		* silencio para considerar terminada la inicialización.
+		*/
+		/**
+		* dirty=true solo cuando el endpoint difiere del snapshot inicial, es
+		* decir, el usuario hizo un cambio real después de abrir el editor.
+		* Vuelve a false si deshace sus cambios hasta volver al estado inicial.
+		*/
 		async function saveEndpoint() {
 			deploying.show = true;
 			deploying.message = "Saving Endpoint...";
@@ -13160,6 +13179,8 @@ function Editor($$renderer, $$props) {
 						message: "Endpoint saved and deployed successfully.",
 						color: "success"
 					});
+					snapshot(endpoint);
+					dirty = false;
 					/** @type {any} */ onsave();
 				} else {
 					deploying.error = true;
@@ -13392,7 +13413,7 @@ function Editor($$renderer, $$props) {
 		function onChangeValueHandler(v = void 0) {
 			console.trace("onChangeValueHandler", v);
 			if (v) {
-				dirty = true;
+				if (!initializing) dirty = true;
 				endpoint.data_test = v.data_test;
 				endpoint.code = v.code;
 				endpoint.docs = v.docs;
@@ -13991,6 +14012,11 @@ function Editor($$renderer, $$props) {
 							} else await saveEndpoint();
 						},
 						oncancel: () => {
+							if (settleTimer) {
+								clearTimeout(settleTimer);
+								settleTimer = void 0;
+							}
+							initializing = false;
 							dirty = false;
 							idendpoint = void 0;
 							showEditor = false;
