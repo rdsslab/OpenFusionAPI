@@ -1,5 +1,5 @@
-import { C as escape_html, S as run, _ as snapshot, a as derived, b as fallback, d as stringify, f as unsubscribe_stores, g as subscribe_to_store, i as bind_props, l as spread_props, n as attr_style, o as ensure_array_like, p as html, r as attributes, s as head, t as attr_class, u as store_get, v as attr, x as noop, y as clsx } from "../../../chunks/server.js";
-import { n as onDestroy, t as createEventDispatcher } from "../../../chunks/index-server.js";
+import { S as escape_html, _ as snapshot, a as derived, b as noop, d as stringify, f as unsubscribe_stores, g as subscribe_to_store, i as bind_props, l as spread_props, n as attr_style, o as ensure_array_like, p as html, r as attributes, s as head, t as attr_class, u as store_get, v as attr, x as run, y as clsx } from "../../../chunks/server.js";
+import { t as onDestroy } from "../../../chunks/index-server.js";
 import uFetch from "@rdsslab/uFetch";
 import { DateTime } from "luxon";
 import "events";
@@ -531,6 +531,17 @@ var GetAppVars = async (idapp, setStoreListAppVars = false) => {
 	})).json();
 	if (setStoreListAppVars && resp && Array.isArray(resp)) listAppVars.set(resp);
 	return resp;
+};
+/**
+* @param {JsonBody} data
+* @param {string} [token]
+*/
+var UpsertAppVar = async (data, token) => {
+	if (data) return await checkStatus(await new uFetch().post({
+		url: url_paths.appvar,
+		data
+	})).json();
+	else return {};
 };
 var getListApps = async () => {
 	return await checkStatus(await new uFetch().get({ url: url_paths.apps_get_list })).json();
@@ -2730,35 +2741,32 @@ function Tab($$renderer, $$props) {
 // node_modules/@rdsslab/svelte-components/dist/EditorCode/EditorCode.svelte
 function EditorCode($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
-		const dispatch = createEventDispatcher();
-		/** @type {any} */
-		let code = fallback($$props["code"], "");
-		let left = fallback($$props["left"], null);
-		let right = fallback($$props["right"], null);
-		let lang = fallback($$props["lang"], "json");
-		let showFormat = fallback($$props["showFormat"], false);
-		let showSelectLang = fallback($$props["showSelectLang"], false);
-		let isReadOnly = fallback($$props["isReadOnly"], false);
-		let showHiddenButton = fallback($$props["showHiddenButton"], true);
-		let showResetButton = fallback($$props["showResetButton"], false);
-		let showCode = fallback($$props["showCode"], true);
 		/**
-		* `data-testid` para distinguir varios EditorCode en la misma pagina.
+		* @param {any} code - Código del editor: texto, objeto, número o booleano.
+		* @param {any} left - Snippet (o array de snippets) para la columna izquierda.
+		* @param {any} right - Snippet (o array de snippets) para la columna derecha.
+		* @param {any} lang - Lenguaje del editor.
+		* @param {boolean} showFormat - Mostrar botón de formateo.
+		* @param {boolean} showSelectLang - Mostrar selector de lenguaje.
+		* @param {boolean} isReadOnly - Editor de solo lectura.
+		* @param {boolean} showHiddenButton - Mostrar botón ocultar/mostrar código.
+		* @param {boolean} showResetButton - Mostrar botón de reset.
+		* @param {any} containerTestId - `data-testid` del contenedor.
+		* @param {any} onchange - Callback de cambio.
+		* @param {boolean} showCode - ¿Está visible el código?
 		*
-		* No hay forma de distinguir uno suelto por su contenido: los valores son
-		* justamente lo que se esta probando, asi que un selector basado en el texto
-		* cambiaria en el momento en que la prueba necesita comprobar que cambio.
+		* `code` y `lang` son `$bindable` para que `bind:code={...}` /
+		* `bind:lang={...}` del padre reciban los cambios del editor.
 		*/
-		let containerTestId = fallback($$props["containerTestId"], null);
-		let onchange = fallback($$props["onchange"], null);
+		let { code = void 0, left = null, right = null, lang = "json", showFormat = false, showSelectLang = false, isReadOnly = false, showHiddenButton = true, showResetButton = false, containerTestId = null, onchange = null, showCode = true } = $$props;
+		let formatError = false;
+		let isDarkMode = false;
 		let editorView = null;
 		let lastCode = "";
-		let formatError = false;
 		let renderedFromValue = null;
 		let debounceTimer = null;
 		const DEBOUNCE_MS = 350;
 		let mediaQuery = null;
-		let isDarkMode = false;
 		function createExtensions() {
 			const langExt = languages[lang] || [];
 			return [
@@ -2901,12 +2909,8 @@ function EditorCode($$renderer, $$props) {
 			if (payload.lang === "number") {
 				if (payload.typeof === "number" && !Number.isNaN(payload.code)) {
 					if (typeof onchange === "function") onchange(payload);
-					dispatch("change", payload);
 				}
-			} else {
-				if (typeof onchange === "function") onchange(payload);
-				dispatch("change", payload);
-			}
+			} else if (typeof onchange === "function") onchange(payload);
 		}
 		function reconfigureExtensions() {
 			if (!editorView) return;
@@ -2999,17 +3003,8 @@ function EditorCode($$renderer, $$props) {
 		$$renderer.push(`<!----> <div${attr_class(clsx(showCode ? "" : "is-hidden"))}${attr("data-testid", containerTestId)}><div></div></div>`);
 		bind_props($$props, {
 			code,
-			left,
-			right,
 			lang,
-			showFormat,
-			showSelectLang,
-			isReadOnly,
-			showHiddenButton,
-			showResetButton,
 			showCode,
-			containerTestId,
-			onchange,
 			setCode,
 			getCode,
 			reset
@@ -7710,7 +7705,7 @@ var ChartWidgets = {
 	TimeSeries
 };
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/version.js
-var version = "9.5.48";
+var version = "9.5.53";
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/login/index.svelte
 function recoveryTitle($$renderer) {
 	$$renderer.push(`<span class="has-text-info svelte-imjmcm"><i class="fa-solid fa-key svelte-imjmcm"></i> Password recovery</span>`);
@@ -8640,7 +8635,7 @@ function TextArea($$renderer, $$props) {
 function Basic($$renderer, $$props) {
 	$$renderer.component(($$renderer) => {
 		var $$store_subs;
-		new Notifications$1();
+		let notify = new Notifications$1();
 		let uf = new uFetch();
 		/**
 		* @type {{idapp?: number|string, onsavedeploy?: (app: import('../../../types/models.js').AppRow) => void}}
@@ -8657,6 +8652,87 @@ function Basic($$renderer, $$props) {
 			enabled: false,
 			description: ""
 		};
+		/** @type {Array<import('../../../types/models.js').AppVarRow>} */
+		let recoveryVars = [];
+		/** @type {{emailTransport: string, emailFrom: string, telegramToken: string, emailEnabled: boolean, telegramEnabled: boolean}} */
+		let recoveryForm = {
+			emailTransport: "",
+			emailFrom: "",
+			telegramToken: "",
+			emailEnabled: false,
+			telegramEnabled: false
+		};
+		/**
+		* Sincroniza recoveryVars desde recoveryForm antes de guardar.
+		* Mapea cada AppVar de recuperación al valor del formulario.
+		*/
+		function syncRecoveryVarsFromForm() {
+			recoveryVars = recoveryVars.map((rv) => {
+				switch (rv.name) {
+					case "$_VAR_EMAIL_TRANSPORT":
+						rv.value = recoveryForm.emailTransport;
+						rv.type = "json";
+						break;
+					case "$_VAR_EMAIL_FROM":
+						rv.value = recoveryForm.emailFrom;
+						rv.type = "string";
+						break;
+					case "$_VAR_TELEGRAM_TOKEN":
+						rv.value = recoveryForm.telegramToken;
+						rv.type = "string";
+						break;
+					case "$_VAR_RESET_EMAIL_ENABLED":
+						rv.value = recoveryForm.emailEnabled ? "true" : "false";
+						rv.type = "string";
+						break;
+					case "$_VAR_RESET_TELEGRAM_ENABLED":
+						rv.value = recoveryForm.telegramEnabled ? "true" : "false";
+						rv.type = "string";
+				}
+				return rv;
+			});
+		}
+		/**
+		* Guarda todas las AppVars de recuperación (environment prd).
+		* Se invoca al presionar el botón principal "Save & deploy".
+		*/
+		async function saveAllRecoveryVars() {
+			if (!idapp) return;
+			syncRecoveryVarsFromForm();
+			let saved = 0;
+			let errors = 0;
+			for (const rv of recoveryVars) {
+				let appvar = { ...rv };
+				try {
+					let result = await UpsertAppVar(appvar, store_get($$store_subs ??= {}, "$userStore", userStore).token);
+					if (result && result.idvar) {
+						appvar.idvar = result.idvar;
+						saved++;
+					} else {
+						errors++;
+						notify.push({
+							message: `Error saving ${rv.name}: ${result?.message || result?.error || "Unknown error"}`,
+							color: "danger"
+						});
+					}
+				} catch (error) {
+					errors++;
+					console.error(error);
+					notify.push({
+						message: `Error saving ${rv.name}: ${getErrorMessage(error)}`,
+						color: "danger"
+					});
+				}
+			}
+			if (errors === 0 && saved > 0) notify.push({
+				message: "Password recovery variables saved successfully.",
+				color: "success"
+			});
+			else if (errors > 0) notify.push({
+				message: `${saved} saved, ${errors} failed.`,
+				color: "warning"
+			});
+		}
 		function clearDataVars() {
 			console.log("clearDataVars No hay datos");
 		}
@@ -8696,6 +8772,7 @@ function Basic($$renderer, $$props) {
 				left: [backup_restore_app],
 				onsavedeploy: async () => {
 					await SaveApp();
+					if (app.app === "system") await saveAllRecoveryVars();
 				},
 				oncancel: () => {},
 				get deploying() {
@@ -8729,7 +8806,67 @@ function Basic($$renderer, $$props) {
 					$$settled = false;
 				}
 			});
-			$$renderer.push(`<!----></div>`);
+			$$renderer.push(`<!----> `);
+			if (app.app === "system") {
+				$$renderer.push("<!--[0-->");
+				function recoveryLeft($$renderer) {
+					$$renderer.push(`<span>SMTP Transport</span>`);
+				}
+				function recoveryRight($$renderer) {
+					$$renderer.push(`<span>application/json</span>`);
+				}
+				$$renderer.push(`<div class="field"><label class="label">Password Recovery Configuration</label> <p class="help">OTP-based password recovery via email or Telegram. Only visible for the "system" application. Environment: prd. Saved on "Save &amp; deploy".</p></div> <div class="field"><label class="label">SMTP Transport (JSON)</label> <p class="control is-expanded">`);
+				EditorCode($$renderer, {
+					left: recoveryLeft,
+					right: recoveryRight,
+					lang: "json",
+					isReadOnly: false,
+					showFormat: true,
+					get code() {
+						return recoveryForm.emailTransport;
+					},
+					set code($$value) {
+						recoveryForm.emailTransport = $$value;
+						$$settled = false;
+					}
+				});
+				$$renderer.push(`<!----></p> <p class="help">JSON configuration for nodemailer SMTP transport. The backend reads <code>$_VAR_EMAIL_TRANSPORT</code>.</p></div> <div class="field"><label class="label">Example SMTP Transport JSON</label> <div class="control"><pre style="background:#f5f5f5;padding:10px;border:1px solid #ddd;font-size:12px;overflow:auto;white-space:pre-wrap;">{
+  "host": "smtp.example.com",
+  "port": 587,
+  "secure": false,
+  "auth": {
+    "user": "user@example.com",
+    "pass": "your-password"
+  }
+}</pre></div> <p class="help">Paste your SMTP transport configuration as JSON above.</p></div> <div class="field has-addons"><p class="control is-expanded">`);
+				Basic$1($$renderer, {
+					label: "Email From",
+					type: "text",
+					placeholder: "sender@example.com",
+					get value() {
+						return recoveryForm.emailFrom;
+					},
+					set value($$value) {
+						recoveryForm.emailFrom = $$value;
+						$$settled = false;
+					}
+				});
+				$$renderer.push(`<!----></p></div> <div class="field has-addons"><p class="control is-expanded">`);
+				Basic$1($$renderer, {
+					label: "Telegram Bot Token",
+					type: "password",
+					placeholder: "Bot token from @BotFather",
+					get value() {
+						return recoveryForm.telegramToken;
+					},
+					set value($$value) {
+						recoveryForm.telegramToken = $$value;
+						$$settled = false;
+					}
+				});
+				$$renderer.push(`<!----></p></div> <div class="field has-addons"><p class="control"><label class="label">Email Channel Enabled</label></p> <p class="control"><input type="button"${attr("value", recoveryForm.emailEnabled ? "On" : "Off")}${attr_class(clsx(recoveryForm.emailEnabled ? "button is-success is-selected is-small" : "button is-danger is-small"))}/></p></div> <div class="field has-addons"><p class="control"><label class="label">Telegram Channel Enabled</label></p> <p class="control"><input type="button"${attr("value", recoveryForm.telegramEnabled ? "On" : "Off")}${attr_class(clsx(recoveryForm.telegramEnabled ? "button is-success is-selected is-small" : "button is-danger is-small"))}/></p></div>`);
+			} else $$renderer.push("<!--[-1-->");
+			$$renderer.push(`<!--]--></div>`);
 		}
 		do {
 			$$settled = true;
@@ -9594,11 +9731,17 @@ function Variable($$renderer, $$props) {
 							showSelectLang: true,
 							left: left_Editor,
 							right: right_Editor,
-							showCode,
 							showFormat: true,
 							isReadOnly,
 							onchange: (e) => {
 								internalOnchange(av.name ?? "", e.code);
+							},
+							get showCode() {
+								return av.showCode;
+							},
+							set showCode($$value) {
+								av.showCode = $$value;
+								$$settled = false;
 							},
 							get code() {
 								return av.value;
@@ -9615,7 +9758,31 @@ function Variable($$renderer, $$props) {
 								$$settled = false;
 							}
 						});
-						$$renderer.push(`<!----> <hr class="reset_margin svelte-d7zei4"/>`);
+						$$renderer.push(`<!----> `);
+						if (av.showCode) {
+							$$renderer.push("<!--[0-->");
+							if (!isReadOnly) {
+								$$renderer.push(`<!--[0--><div class="field"><label class="label is-small"${attr("for", `appvar-note-${stringify(av.idvar)}`)}>Note</label> `);
+								TextArea$1($$renderer, {
+									id: `appvar-note-${stringify(av.idvar)}`,
+									label: "Note",
+									placeholder: "Free-text note for operators (metadata only, not resolved as value)",
+									rows: 3,
+									disabled: isReadOnly,
+									get value() {
+										return av.note;
+									},
+									set value($$value) {
+										av.note = $$value;
+										$$settled = false;
+									}
+								});
+								$$renderer.push(`<!----></div>`);
+							} else if (av.note) $$renderer.push(`<!--[1--><div class="field"><label class="label is-small"${attr("for", `appvar-note-${stringify(av.idvar)}`)}>Note</label> <div class="control"><p class="help is-small"${attr("id", `appvar-note-${stringify(av.idvar)}`)}>${escape_html(av.note)}</p></div></div>`);
+							else $$renderer.push("<!--[-1-->");
+							$$renderer.push(`<!--]-->`);
+						} else $$renderer.push("<!--[-1-->");
+						$$renderer.push(`<!--]--> <hr class="reset_margin svelte-d7zei4"/>`);
 					}
 				} else {
 					$$renderer.push("<!--[!-->");

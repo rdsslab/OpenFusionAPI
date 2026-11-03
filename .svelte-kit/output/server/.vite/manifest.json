@@ -57,8 +57,8 @@
     "src": "node_modules/@sveltejs/kit/src/runtime/app/server/remote/index.js",
     "isEntry": true,
     "imports": [
-      "_internal.js",
-      "_server-errors.js"
+      "_server-errors.js",
+      "_internal.js"
     ]
   },
   "node_modules/@sveltejs/kit/src/runtime/components/error.svelte": {
@@ -67,9 +67,9 @@
     "src": "node_modules/@sveltejs/kit/src/runtime/components/error.svelte",
     "isEntry": true,
     "imports": [
-      "_server-errors.js",
       "_server.js",
-      "_index-server.js"
+      "_index-server.js",
+      "_server-errors.js"
     ]
   },
   "node_modules/@sveltejs/kit/src/runtime/components/layout.svelte": {
@@ -117,8 +117,8 @@
     "src": "src/routes/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_internal.js",
       "_server.js",
+      "_internal.js",
       "_index-server.js"
     ],
     "css": [

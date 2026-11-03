@@ -39,7 +39,23 @@ function set_assets(path) {
 }
 // node_modules/@sveltejs/kit/src/runtime/server/dev.js
 var symbol = Symbol.for("sveltekit.global_state");
-globalThis[symbol] ??= {};
+var state = globalThis[symbol] ??= {};
+/**
+* Persist a value across dev server reloads, in case a freshly-invalidated module
+* reads global state that is not set until a request is handled
+* @param {symbol} key
+* @param {any} value
+*/
+function save(key, value) {
+	state[key] = value;
+}
+/**
+* Restore a value after a dev server reload
+* @param {symbol} key
+*/
+function restore(key) {
+	return state[key];
+}
 // node_modules/@sveltejs/kit/src/runtime/utils.js
 var text_encoder = new TextEncoder();
 /**
@@ -685,6 +701,22 @@ function coerce_form_value(type, value) {
 /** Pass this to set_nested_value to delete the last part of the given path */
 var DELETE_KEY = {};
 /**
+* Groups `FormData` entries by name in a single pass. Calling `data.getAll(name)`
+* for each name is O(n²) in the number of entries, which is a DoS vector.
+* @param {FormData} data
+* @returns {Map<string, FormDataEntryValue[]>}
+*/
+function group_formdata(data) {
+	/** @type {Map<string, FormDataEntryValue[]>} */
+	const grouped = /* @__PURE__ */ new Map();
+	for (const [name, value] of data) {
+		const values = grouped.get(name);
+		if (values) values.push(value);
+		else grouped.set(name, [value]);
+	}
+	return grouped;
+}
+/**
 * Convert `FormData` into a POJO
 * @param {string} form_id
 * @param {FormData} data
@@ -692,9 +724,7 @@ var DELETE_KEY = {};
 function convert_formdata(form_id, data) {
 	/** @type {Record<string, any>} */
 	const result = {};
-	for (const field_name of data.keys()) {
-		/** @type {any[]} */
-		const values = data.getAll(field_name);
+	for (const [field_name, values] of group_formdata(data)) {
 		const field = parse_form_key(form_id, field_name);
 		const entries = values.filter((entry) => typeof entry === "string" || entry.name !== "" || entry.size > 0);
 		if (entries.length === 0 && !field.is_array) continue;
@@ -1790,7 +1820,7 @@ function redirect_response(status, location) {
 * @param {Response} response
 */
 function with_version_header(response) {
-	response.headers.set("x-sveltekit-version", "1793273432080");
+	response.headers.set("x-sveltekit-version", "1793690982310");
 	return response;
 }
 /**
@@ -2612,6 +2642,6 @@ function format_response(status, request) {
 	} else log += requested;
 	return log;
 }
-export { parse_remote_arg as $, ENDPOINT_METHODS as A, invalid_export as At, cookie_path_mismatch as B, text_encoder as Bt, has_prerendered_path as C, decode_pathname as Ct, throw_devalue_error as D, relative_pathname as Dt, serialize_uses as E, normalize_path as Et, SVELTE_KIT_ASSETS as F, has_resolution_suffix as Ft, streaming_without_csr as G, prerendering as Gt, form_action_error_without_ssr as H, assets as Ht, handle_error_and_jsonify as I, strip_data_suffix as It, normalize_error as J, transform_page_chunk_comments as K, set_building as Kt, cache_control_empty_directive as L, strip_resolution_suffix as Lt, MUTATIVE_METHODS as M, add_data_suffix as Mt, PAGE_METHODS as N, add_resolution_suffix as Nt, with_version_header as O, resolve$1 as Ot, REROUTED_URL_HEADER as P, has_data_suffix as Pt, fetch_cache_url as Q, cache_control_invalid_directive as R, base64_encode as Rt, get_node_type as S, SCHEME as St, redirect_response as T, make_trackable as Tt, load_tracking_after_return as U, set_assets as Ut, form_action_data_without_ssr as V, app_dir as Vt, ssr_fetch_eager as W, enable_verbose_errors as Wt, TRAILING_SLASH_PARAM as X, INVALIDATED_PARAM as Y, create_remote_key as Z, handle_action_request as _, disallow_on_server as _t, set_hooks as a, init_transport as at, uneval_action_response as b, resolve as bt, fix_stack_trace as c, uneval as ct, get_remote_action as d, create_field_proxy as dt, stringify_remote_arg as et, get_remote_id as f, deep_set as ft, handle_action_json_request as g, split_path as gt, action_json_redirect as h, parse_form_key as ht, read_implementation as i, has_custom_transporters as it, IN_WEBCONTAINER as j, invalid_export_location as jt, BODY_DEPENDENT_METHODS as k, find_route as kt, set_fix_stack_trace as l, is_form_content_type as lt, handle_remote_form_post as m, normalize_issue as mt, hooks as n, validate_load_response as nt, set_manifest as o, parse as ot, handle_remote_call as p, flatten_issues as pt, get_status as q, set_prerendering as qt, manifest as r, encoders as rt, set_read_implementation as s, stringify as st, format_response as t, validate_depends as tt, collect_remote_data as u, negotiate as ut, is_action_json_request as v, noop as vt, method_not_allowed as w, disable_search as wt, count_non_ssi_comments as x, app_environment_deprecated as xt, is_action_request as y, once as yt, content_type_invalid as z, stream_text as zt };
+export { parse_remote_arg as $, ENDPOINT_METHODS as A, find_route as At, cookie_path_mismatch as B, stream_text as Bt, has_prerendered_path as C, SCHEME as Ct, throw_devalue_error as D, normalize_path as Dt, serialize_uses as E, make_trackable as Et, SVELTE_KIT_ASSETS as F, has_data_suffix as Ft, streaming_without_csr as G, assets as Gt, form_action_error_without_ssr as H, restore as Ht, handle_error_and_jsonify as I, has_resolution_suffix as It, normalize_error as J, prerendering as Jt, transform_page_chunk_comments as K, set_assets as Kt, cache_control_empty_directive as L, strip_data_suffix as Lt, MUTATIVE_METHODS as M, invalid_export_location as Mt, PAGE_METHODS as N, add_data_suffix as Nt, with_version_header as O, relative_pathname as Ot, REROUTED_URL_HEADER as P, add_resolution_suffix as Pt, fetch_cache_url as Q, cache_control_invalid_directive as R, strip_resolution_suffix as Rt, get_node_type as S, app_environment_deprecated as St, redirect_response as T, disable_search as Tt, load_tracking_after_return as U, save as Ut, form_action_data_without_ssr as V, text_encoder as Vt, ssr_fetch_eager as W, app_dir as Wt, TRAILING_SLASH_PARAM as X, set_prerendering as Xt, INVALIDATED_PARAM as Y, set_building as Yt, create_remote_key as Z, handle_action_request as _, split_path as _t, set_hooks as a, init_transport as at, uneval_action_response as b, once as bt, fix_stack_trace as c, uneval as ct, get_remote_action as d, create_field_proxy as dt, stringify_remote_arg as et, get_remote_id as f, deep_set as ft, handle_action_json_request as g, parse_form_key as gt, action_json_redirect as h, normalize_issue as ht, read_implementation as i, has_custom_transporters as it, IN_WEBCONTAINER as j, invalid_export as jt, BODY_DEPENDENT_METHODS as k, resolve$1 as kt, set_fix_stack_trace as l, is_form_content_type as lt, handle_remote_form_post as m, group_formdata as mt, hooks as n, validate_load_response as nt, set_manifest as o, parse as ot, handle_remote_call as p, flatten_issues as pt, get_status as q, enable_verbose_errors as qt, manifest as r, encoders as rt, set_read_implementation as s, stringify as st, format_response as t, validate_depends as tt, collect_remote_data as u, negotiate as ut, is_action_json_request as v, disallow_on_server as vt, method_not_allowed as w, decode_pathname as wt, count_non_ssi_comments as x, resolve as xt, is_action_request as y, noop as yt, content_type_invalid as z, base64_encode as zt };
 
 //# sourceMappingURL=internal.js.map

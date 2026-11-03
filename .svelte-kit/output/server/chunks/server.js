@@ -56,16 +56,6 @@ function deferred() {
 		reject
 	};
 }
-/**
-* @template V
-* @param {V} value
-* @param {V | (() => V)} fallback
-* @param {boolean} [lazy]
-* @returns {V}
-*/
-function fallback(value, fallback, lazy = false) {
-	return value === void 0 ? lazy ? fallback() : fallback : value;
-}
 // node_modules/svelte/src/internal/shared/attributes.js
 /**
 * `<div translate={false}>` should be rendered as `<div translate="no">` and _not_
@@ -1578,6 +1568,6 @@ function derived(fn) {
 		return updated_value;
 	};
 }
-export { escape_html as C, run as S, snapshot as _, derived as a, fallback as b, render as c, stringify as d, unsubscribe_stores as f, subscribe_to_store as g, ssr_context as h, bind_props as i, spread_props as l, getContext as m, attr_style as n, ensure_array_like as o, html as p, attributes as r, head as s, attr_class as t, store_get as u, attr as v, noop as x, clsx$1 as y };
+export { escape_html as S, snapshot as _, derived as a, noop as b, render as c, stringify as d, unsubscribe_stores as f, subscribe_to_store as g, ssr_context as h, bind_props as i, spread_props as l, getContext as m, attr_style as n, ensure_array_like as o, html as p, attributes as r, head as s, attr_class as t, store_get as u, attr as v, run as x, clsx$1 as y };
 
 //# sourceMappingURL=server.js.map

@@ -1,5 +1,5 @@
-import { $ as parse_remote_arg, Gt as prerendering, I as handle_error_and_jsonify, M as MUTATIVE_METHODS, Vt as app_dir, Z as create_remote_key, dt as create_field_proxy, et as stringify_remote_arg, ft as deep_set, gt as split_path, ht as parse_form_key, mt as normalize_issue, ot as parse, pt as flatten_issues, st as stringify, vt as noop } from "./chunks/internal.js";
 import { A as remote_cookie_forbidden, B as remote_requested_context, D as remote_command_method, F as remote_query_live_no_value, H as remote_requested_invalid_query, I as remote_query_live_not_iterable, L as remote_query_prerender, N as remote_headers_forbidden, O as remote_command_readonly, P as remote_invalid_validator, R as remote_request_property, U as remote_requested_wrong_method, V as remote_requested_invalid_limit, W as server_api_unavailable, j as remote_cookie_path_relative, k as remote_command_render, z as remote_requested_async_validator } from "./chunks/server-errors.js";
+import { $ as parse_remote_arg, I as handle_error_and_jsonify, Jt as prerendering, M as MUTATIVE_METHODS, Wt as app_dir, Z as create_remote_key, _t as split_path, dt as create_field_proxy, et as stringify_remote_arg, ft as deep_set, gt as parse_form_key, ht as normalize_issue, mt as group_formdata, ot as parse, pt as flatten_issues, st as stringify, yt as noop } from "./chunks/internal.js";
 import { error } from "@sveltejs/kit";
 import { HandledHttpError, ValidationError } from "@sveltejs/kit/internal";
 import { get_request_store, with_request_store } from "@sveltejs/kit/internal/server";
@@ -430,11 +430,11 @@ function handle_issues(output, issues, form_data, form_id) {
 	output.issues = issues.map((issue) => normalize_issue(issue, true));
 	if (form_data) {
 		output.input = {};
-		for (const field_name of form_data.keys()) {
+		for (const [field_name, entries] of group_formdata(form_data)) {
 			const field = parse_form_key(form_id, field_name);
 			const path = split_path(field.name);
 			if (path.some((part) => part.startsWith("_"))) continue;
-			const values = form_data.getAll(field_name).filter((value) => typeof value === "string");
+			const values = entries.filter((value) => typeof value === "string");
 			deep_set(output.input, path, field.is_array ? values : values[0]);
 		}
 	}
@@ -1013,10 +1013,10 @@ function batch(validate_or_fn, maybe_fn) {
 		const { event, state } = get_request_store();
 		return new Promise((resolve, reject) => {
 			const batches = state.remote.batches ??= /* @__PURE__ */ new Map();
-			let batched = batches.get(__.id);
+			let batched = batches.get(__);
 			if (!batched) {
 				batched = /* @__PURE__ */ new Map();
-				batches.set(__.id, batched);
+				batches.set(__, batched);
 			}
 			const entry = batched.get(payload);
 			if (entry) {
@@ -1035,7 +1035,7 @@ function batch(validate_or_fn, maybe_fn) {
 			});
 			if (batched.size > 1) return;
 			setTimeout(async () => {
-				batches.delete(__.id);
+				batches.delete(__);
 				const entries = Array.from(batched.values());
 				try {
 					return await run_remote_function(event, {
