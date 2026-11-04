@@ -7705,7 +7705,7 @@ var ChartWidgets = {
 	TimeSeries
 };
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/version.js
-var version = "9.5.53";
+var version = "9.5.59";
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/login/index.svelte
 function recoveryTitle($$renderer) {
 	$$renderer.push(`<span class="has-text-info svelte-imjmcm"><i class="fa-solid fa-key svelte-imjmcm"></i> Password recovery</span>`);
@@ -9006,13 +9006,10 @@ function Dashboard($$renderer, $$props) {
 		};
 		function topErrorsTooltipFormatter(params) {
 			return (Array.isArray(params) ? params : [params]).map((p) => {
-				const date = new Date(
-					/** @type {Array} */
-					p.value[0]
-				);
+				const date = new Date(p.value[0]);
 				const pad = (n) => String(n).padStart(2, "0");
 				const formattedDate = `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-				return `URL: ${p.seriesName}<br/>${formattedDate}<br/>Errores: ${/** @type {Array} */ p.value[1]}`;
+				return `URL: ${p.seriesName}<br/>${formattedDate}<br/>Errores: ${p.value[1]}`;
 			}).join("<br/><br/>");
 		}
 		const STATUS_CLASSES = [
@@ -9068,15 +9065,9 @@ function Dashboard($$renderer, $$props) {
 		* @returns {Array<DashboardChartPoint>}
 		*/
 		function insertSortedPoint(dataArray, point) {
-			const t = new Date(
-				/** @type {Array<string|number>} */
-				point.value[0]
-			).getTime();
+			const t = new Date(point.value[0]).getTime();
 			let i = dataArray.length - 1;
-			while (i >= 0 && new Date(
-				/** @type {Array<string|number>} */
-				dataArray[i].value[0]
-			).getTime() > t) i--;
+			while (i >= 0 && new Date(dataArray[i].value[0]).getTime() > t) i--;
 			const result = [...dataArray];
 			result.splice(
 				i + 1,
@@ -9119,14 +9110,8 @@ function Dashboard($$renderer, $$props) {
 			minuteDate.setSeconds(0, 0);
 			const t = minuteDate.getTime();
 			let i = dataArray.length - 1;
-			while (i >= 0 && new Date(
-				/** @type {Array<string|number>} */
-				dataArray[i].value[0]
-			).getTime() > t) i--;
-			if (i >= 0 && new Date(
-				/** @type {Array<string|number>} */
-				dataArray[i].value[0]
-			).getTime() === t) {
+			while (i >= 0 && new Date(dataArray[i].value[0]).getTime() > t) i--;
+			if (i >= 0 && new Date(dataArray[i].value[0]).getTime() === t) {
 				const updated = [...dataArray];
 				const pt = updated[i];
 				pt.value = [pt.value[0], pt.value[1] + 1];
@@ -9134,16 +9119,11 @@ function Dashboard($$renderer, $$props) {
 				return updated;
 			}
 			const updated = [...dataArray];
-			updated.splice(
-				i + 1,
-				0,
-				/** @type {DashboardChartPoint} */
-				{
-					name: minuteDate.toISOString(),
-					value: [minuteDate, 1],
-					other: "Nada"
-				}
-			);
+			updated.splice(i + 1, 0, {
+				name: minuteDate.toISOString(),
+				value: [minuteDate, 1],
+				other: "Nada"
+			});
 			return updated;
 		}
 		/**
@@ -9158,14 +9138,8 @@ function Dashboard($$renderer, $$props) {
 			else bucketDate.setSeconds(0, 0);
 			const t = bucketDate.getTime();
 			let i = dataArray.length - 1;
-			while (i >= 0 && new Date(
-				/** @type {Array<string|number>} */
-				dataArray[i].value[0]
-			).getTime() > t) i--;
-			if (i >= 0 && new Date(
-				/** @type {Array<string|number>} */
-				dataArray[i].value[0]
-			).getTime() === t) {
+			while (i >= 0 && new Date(dataArray[i].value[0]).getTime() > t) i--;
+			if (i >= 0 && new Date(dataArray[i].value[0]).getTime() === t) {
 				const updated = [...dataArray];
 				const pt = updated[i];
 				pt.value = [pt.value[0], pt.value[1] + 1];
@@ -9173,16 +9147,11 @@ function Dashboard($$renderer, $$props) {
 				return updated;
 			}
 			const updated = [...dataArray];
-			updated.splice(
-				i + 1,
-				0,
-				/** @type {DashboardChartPoint} */
-				{
-					name: bucketDate.toISOString(),
-					value: [bucketDate, 1],
-					other: "Nada"
-				}
-			);
+			updated.splice(i + 1, 0, {
+				name: bucketDate.toISOString(),
+				value: [bucketDate, 1],
+				other: "Nada"
+			});
 			return updated;
 		}
 		function statusClassForCode(status_code) {
@@ -9285,12 +9254,7 @@ function Dashboard($$renderer, $$props) {
 				if (point) data_request_series = upsertSeriesPoint(data_request_series, event.idendpoint, point.other, point);
 				if (Number(event.statusCode) >= 400) data_top_error_endpoints = data_top_error_endpoints.map((series) => series.idendpoint === event.idendpoint ? {
 					...series,
-					data: incrementBucketPoint(
-						series.data || [],
-						/** @type {string|number} */
-						event.dateTime,
-						"hour"
-					)
+					data: incrementBucketPoint(series.data || [], event.dateTime, "hour")
 				} : series);
 			}
 		}
@@ -9298,25 +9262,13 @@ function Dashboard($$renderer, $$props) {
 			const events = pendingAggregateEvents;
 			pendingAggregateEvents = [];
 			for (const event of events) {
-				data_logs_per_minute = incrementMinutePoint(
-					data_logs_per_minute,
-					/** @type {string|number} */
-					event.dateTime
-				);
+				data_logs_per_minute = incrementMinutePoint(data_logs_per_minute, event.dateTime);
 				let status_class = statusClassForCode(event.statusCode);
 				data_status_class = data_status_class.map((series, index) => STATUS_CLASSES[index].key === status_class ? {
 					...series,
-					data: incrementMinutePoint(
-						series.data || [],
-						/** @type {string|number} */
-						event.dateTime
-					)
+					data: incrementMinutePoint(series.data || [], event.dateTime)
 				} : series);
-				data_status_summary = incrementStatusSummary(
-					data_status_summary,
-					/** @type {string|number} */
-					event.statusCode
-				);
+				data_status_summary = incrementStatusSummary(data_status_summary, event.statusCode);
 			}
 		}
 		const endpointThrottle = createLeadingTrailingThrottle(2e3, flushEndpointCharts);
@@ -9612,13 +9564,13 @@ function Dashboard($$renderer, $$props) {
 			refreshes on its own — at most once every 5 seconds — when a new request matching those classes
 			arrives. Copy a Trace ID to follow that request end to end in the endpoint's logs.</p></div> <div class="column is-half-desktop is-full-tablet"><p class="title is-6">Unused Endpoints (last 7 days)</p> `);
 			if (data_unused_endpoints.length) {
-				$$renderer.push(`<!--[0--><ul><!--[-->`);
+				$$renderer.push(`<!--[0--><!--[-->`);
 				const each_array_1 = ensure_array_like(data_unused_endpoints);
 				for (let $$index_1 = 0, $$length = each_array_1.length; $$index_1 < $$length; $$index_1++) {
 					let ep = each_array_1[$$index_1];
-					$$renderer.push(`<li>${escape_html(ep.resource)} (${escape_html(ep.method)})</li>`);
+					$$renderer.push(`<div class="control"><div class="tags has-addons"><span class="tag is-dark">${escape_html(ep.method)}</span> <span class="tag">${escape_html(ep.resource)}</span></div></div> <br/>`);
 				}
-				$$renderer.push(`<!--]--></ul>`);
+				$$renderer.push(`<!--]-->`);
 			} else $$renderer.push(`<!--[-1--><p class="help">No unused endpoints in this window.</p>`);
 			$$renderer.push(`<!--]--> <p class="help has-text-centered">Endpoints with zero requests in the last 7 days for the selected environment</p></div></div>`);
 		}
@@ -13687,7 +13639,7 @@ function Editor($$renderer, $$props) {
 				}
 				else cadena = String(valor);
 			} catch {
-				cadena = "[Error al convertir valor]";
+				cadena = "[Error converting value]";
 			}
 			return cadena.substring(0, maxLength);
 		}
@@ -14627,7 +14579,7 @@ function History($$renderer, $$props) {
 		let $$settled = true;
 		let $$inner_renderer;
 		function $$render_inner($$renderer) {
-			$$renderer.push(`<div class="mb-2"><span class="tag is-link is-light">Task ${escape_html(task?.idtask ?? "?")}</span> <span class="tag is-light">[${escape_html(task?.method ?? "")}] ${escape_html(task?.url ?? "")}</span> <span class="tag is-light">History limit: ${escape_html(task?.history_limit ?? 50)}</span> `);
+			$$renderer.push(`<div class="mb-2"><div class="field is-grouped is-grouped-multiline"><div class="control"><div class="tags has-addons"><span class="tag is-dark">Task</span> <span class="tag">${escape_html(task?.idtask ?? "?")}</span></div></div> <div class="control"><div class="tags has-addons"><span class="tag is-dark">${escape_html(task?.method ?? "")}</span> <span class="tag">${escape_html(task?.url ?? "")}</span></div></div> <div class="control"><div class="tags has-addons"><span class="tag is-dark">History limit</span> <span class="tag">${escape_html(task?.history_limit ?? 50)}</span></div></div></div> `);
 			if (loading) $$renderer.push(`<!--[0--><span class="tag is-info is-light">Loading…</span>`);
 			else $$renderer.push("<!--[-1-->");
 			$$renderer.push(`<!--]--></div> `);
@@ -14974,7 +14926,7 @@ function Interval_tasks($$renderer, $$props) {
 			$$renderer.push(`<!--]--> <p class="control"><button class="button is-small is-link"><span class="icon is-small"><i class="fa-solid fa-rocket"></i></span> <span>Save &amp; Deploy</span></button></p> <p class="control"><button class="button is-small"><span class="icon is-small"><i class="fa-solid fa-xmark"></i></span> <span>Cancel</span></button></p></div>`);
 		}
 		function taskActions($$renderer) {
-			$$renderer.push(`<div class="field has-addons"><p class="control"><button class="button is-small"${attr("disabled", !historyTask?.idtask || historyTaskSuspended(), true)}${attr("title", !historyTask?.idtask ? "Select a single task to act on it" : historyTaskSuspended() ? "The scheduler suspended this task: fix the cause and use Reset attempts" : "Despierta el planificador y ejecuta la tarea inmediatamente")}><span class="icon is-small"><i class="fa-solid fa-bolt"></i></span> <span>Run now</span></button></p> <p class="control"><button class="button is-small is-danger"${attr("disabled", !historyTask?.idtask || Number(historyTaskRuntime()?.status) !== 1, true)}${attr("title", !historyTask?.idtask ? "Select a single task to act on it" : Number(historyTaskRuntime()?.status) === 1 ? "Aborta la ejecución en vuelo; la tarea no se deshabilita y conserva su programación" : "No hay ninguna ejecución en vuelo que detener")}><span class="icon is-small"><i class="fa-solid fa-stop"></i></span> <span>Stop now</span></button></p> <p class="control"><button class="button is-small"${attr("disabled", !historyTask?.idtask, true)} title="Reinicia el contador de fallos y levanta la suspensión si el planificador la detuvo. No reactiva una tarea apagada por el usuario"><span class="icon is-small"><i class="fa-solid fa-rotate-left"></i></span> <span>Reset attempts</span></button></p></div>`);
+			$$renderer.push(`<div class="field has-addons"><p class="control"><button class="button is-small"${attr("disabled", !historyTask?.idtask || historyTaskSuspended(), true)}${attr("title", !historyTask?.idtask ? "Select a single task to act on it" : historyTaskSuspended() ? "The scheduler suspended this task: fix the cause and use Reset attempts" : "Despierta el planificador y ejecuta la tarea inmediatamente")}><span class="icon is-small"><i class="fa-solid fa-bolt"></i></span> <span>Run now</span></button></p> <p class="control"><button class="button is-small is-danger"${attr("disabled", !historyTask?.idtask || Number(historyTaskRuntime()?.status) !== 1, true)}${attr("title", !historyTask?.idtask ? "Select a single task to act on it" : Number(historyTaskRuntime()?.status) === 1 ? "Abort the in-flight execution; the task is not disabled and keeps its schedule" : "No in-flight execution to stop")}><span class="icon is-small"><i class="fa-solid fa-stop"></i></span> <span>Stop now</span></button></p> <p class="control"><button class="button is-small"${attr("disabled", !historyTask?.idtask, true)} title="Reinicia el contador de fallos y levanta la suspensión si el planificador la detuvo. No reactiva una tarea apagada por el usuario"><span class="icon is-small"><i class="fa-solid fa-rotate-left"></i></span> <span>Reset attempts</span></button></p></div>`);
 		}
 		function tab_config($$renderer) {
 			$$renderer.push(`<div>`);
@@ -15323,7 +15275,7 @@ function Interval_tasks($$renderer, $$props) {
 							if (suspensionStatus()) $$renderer.push(`<!--[0--><span${attr_class(`tag is-${stringify(suspensionStatus().background)}`, "svelte-zqkhiy")}><span class="icon is-small"><i${attr_class(clsx(suspensionStatus().icon), "svelte-zqkhiy")}></i></span> <span>${escape_html(suspensionStatus().label)}</span></span>`);
 							else $$renderer.push("<!--[-1-->");
 							$$renderer.push(`<!--]--> <span${attr_class(`tag is-${stringify(runtimeStatus().background)}`, "svelte-zqkhiy")}>${escape_html(runtimeStatus().label)}</span> `);
-							if (lastResultStatus()) $$renderer.push(`<!--[0--><span${attr_class(`tag is-${stringify(lastResultStatus().background)}`, "svelte-zqkhiy")}>Last result: ${escape_html(lastResultStatus().label)}</span>`);
+							if (lastResultStatus()) $$renderer.push(`<!--[0--><div class="control"><div class="tags has-addons"><span class="tag is-dark">Last result</span> <span${attr_class(`tag is-${stringify(lastResultStatus().background)}`, "svelte-zqkhiy")}>${escape_html(lastResultStatus().label)}</span></div></div>`);
 							else $$renderer.push("<!--[-1-->");
 							$$renderer.push(`<!--]--></div></div></div> <p class="help mb-3">${escape_html(runtimeStatus().description)}</p> `);
 							if (suspensionStatus()) {
@@ -16855,7 +16807,7 @@ function Logs($$renderer, $$props) {
 				]);
 				for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
 					let h = each_array[$$index];
-					$$renderer.push(`<button${attr_class(`button is-small ${presetHours === h ? "is-info" : "is-light"}`)}>${escape_html(h < 24 ? `${h}h` : h === 24 ? "24h" : h === 48 ? "2d" : h === 72 ? "3d" : "7d")}</button>`);
+					$$renderer.push(`<button${attr_class(`button is-small ${presetHours === h ? "is-success" : "is-dark"}`)}>${escape_html(h < 24 ? `${h}h` : h === 24 ? "24h" : h === 48 ? "2d" : h === 72 ? "3d" : "7d")}</button>`);
 				}
 				$$renderer.push(`<!--]--></div>`);
 			} else {
@@ -19153,14 +19105,14 @@ function Audit_logs($$renderer, $$props) {
 		let $$inner_renderer;
 		function $$render_inner($$renderer) {
 			if (stats) {
-				$$renderer.push(`<!--[0--><div class="box p-3 mb-3"><div class="field is-grouped is-grouped-multiline is-align-items-center"><span class="control"><span class="tag is-medium is-light mr-1">Window:</span></span> <!--[-->`);
+				$$renderer.push(`<!--[0--><div class="box p-3 mb-3"><div class="field is-grouped is-grouped-multiline is-align-items-center"><span class="control"><span class="tag is-small is-light mr-1">Window:</span></span> <!--[-->`);
 				const each_array = ensure_array_like(STATS_WINDOWS);
 				for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
 					let d = each_array[$$index];
-					$$renderer.push(`<p class="control"><button${attr_class(`button is-small ${statsDays === d ? "is-info" : "is-light"}`)}>${escape_html(d)}d</button></p>`);
+					$$renderer.push(`<div class="control"><div class="tags has-addons"><button class="tag is-dark">${escape_html(d)}</button> <button${attr_class(`tag ${statsDays === d ? "is-success" : "is-ligth"}`)}>days</button></div></div>`);
 				}
-				$$renderer.push(`<!--]--> <span class="control"><span class="tag is-medium is-info">${escape_html(stats.total)} events</span></span> `);
-				if (stats.failures > 0) $$renderer.push(`<!--[0--><span class="control"><span class="tag is-medium is-danger">${escape_html(stats.failures)} failures</span></span>`);
+				$$renderer.push(`<!--]--> <span class="control"><div class="tags has-addons"><span class="tag is-info">${escape_html(stats.total)}</span> <span class="tag is-dark">events</span></div></span> `);
+				if (stats.failures > 0) $$renderer.push(`<!--[0--><span class="control"><div class="tags has-addons"><span class="tag is-danger">${escape_html(stats.failures)}</span> <span class="tag is-dark">failures</span></div></span>`);
 				else $$renderer.push("<!--[-1-->");
 				$$renderer.push(`<!--]--> `);
 				if (loadingStats) $$renderer.push(`<!--[0--><span class="icon is-small has-text-grey"><i class="fas fa-spinner fa-pulse"></i></span>`);
@@ -19171,7 +19123,7 @@ function Audit_logs($$renderer, $$props) {
 					const each_array_1 = ensure_array_like(stats.by_action);
 					for (let $$index_1 = 0, $$length = each_array_1.length; $$index_1 < $$length; $$index_1++) {
 						let b = each_array_1[$$index_1];
-						$$renderer.push(`<span class="tag is-info is-light">${escape_html(b.action)} <b>${escape_html(b.count)}</b></span>`);
+						$$renderer.push(`<div class="control"><div class="tags has-addons"><span class="tag is-dark">${escape_html(b.action)}</span> <span class="tag is-info">${escape_html(b.count)}</span></div></div>`);
 					}
 					$$renderer.push(`<!--]--></div>`);
 				} else $$renderer.push("<!--[-1-->");
@@ -19181,7 +19133,7 @@ function Audit_logs($$renderer, $$props) {
 					const each_array_2 = ensure_array_like(stats.by_entity);
 					for (let $$index_2 = 0, $$length = each_array_2.length; $$index_2 < $$length; $$index_2++) {
 						let b = each_array_2[$$index_2];
-						$$renderer.push(`<span class="tag is-success is-light">${escape_html(b.entity_type)} <b>${escape_html(b.count)}</b></span>`);
+						$$renderer.push(`<div class="control"><div class="tags has-addons"><span class="tag is-dark">${escape_html(b.entity_type)}</span> <span class="tag is-info">${escape_html(b.count)}</span></div></div>`);
 					}
 					$$renderer.push(`<!--]--></div>`);
 				} else $$renderer.push("<!--[-1-->");
@@ -19191,7 +19143,7 @@ function Audit_logs($$renderer, $$props) {
 					const each_array_3 = ensure_array_like(stats.by_actor);
 					for (let $$index_3 = 0, $$length = each_array_3.length; $$index_3 < $$length; $$index_3++) {
 						let b = each_array_3[$$index_3];
-						$$renderer.push(`<span class="tag is-warning is-light">${escape_html(b.actor_username)} <b>${escape_html(b.count)}</b></span>`);
+						$$renderer.push(`<div class="control"><div class="tags has-addons"><span class="tag is-dark">${escape_html(b.actor_username)}</span> <span class="tag is-info">${escape_html(b.count)}</span></div></div>`);
 					}
 					$$renderer.push(`<!--]--></div>`);
 				} else $$renderer.push("<!--[-1-->");
@@ -19346,7 +19298,7 @@ function Audit_logs($$renderer, $$props) {
 				]);
 				for (let $$index_4 = 0, $$length = each_array_4.length; $$index_4 < $$length; $$index_4++) {
 					let h = each_array_4[$$index_4];
-					$$renderer.push(`<button${attr_class(`button is-small ${presetHours === h ? "is-info" : "is-light"}`)}>${escape_html(h < 24 ? `${h}h` : h === 24 ? "24h" : h === 48 ? "2d" : h === 72 ? "3d" : "7d")}</button>`);
+					$$renderer.push(`<button${attr_class(`button is-small ${presetHours === h ? "is-success" : "is-dark"}`)}>${escape_html(h < 24 ? `${h}h` : h === 24 ? "24h" : h === 48 ? "2d" : h === 72 ? "3d" : "7d")}</button>`);
 				}
 				$$renderer.push(`<!--]--></div>`);
 			} else {
@@ -19858,7 +19810,7 @@ function OpenFusionAPI($$renderer, $$props) {
 				} else if (isJwtExpiringSoon(token, 5) && !tokenExpiryWarningShown) {
 					tokenExpiryWarningShown = true;
 					notify.push({
-						message: `⚠️ Tu sesión expirará en aproximadamente ${Math.floor(minutesLeft)} minuto${Math.floor(minutesLeft) !== 1 ? "s" : ""}. Guarda tu trabajo.`,
+						message: `⚠️ Your session will expire in approximately ${Math.floor(minutesLeft)} minute${Math.floor(minutesLeft) !== 1 ? "s" : ""}. Save your work.`,
 						color: "warning",
 						timeout: 12e4
 					});
