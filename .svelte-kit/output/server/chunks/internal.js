@@ -1820,7 +1820,7 @@ function redirect_response(status, location) {
 * @param {Response} response
 */
 function with_version_header(response) {
-	response.headers.set("x-sveltekit-version", "1793964762214");
+	response.headers.set("x-sveltekit-version", "1793985778386");
 	return response;
 }
 /**
