@@ -358,6 +358,7 @@ function getErrorMessage(error) {
 /**
 * Verifica el status HTTP de una respuesta.
 * Si es 401, emite el evento `unauthorized` al authEventStore y lanza un error.
+* Si es 403, lanza un error de "forbidden" para que el llamante pueda notificarlo.
 * @param {Response} response
 * @returns {Response} La misma respuesta si no hay error
 */
@@ -366,6 +367,7 @@ function checkStatus(response) {
 		authEventStore.set({ type: "unauthorized" });
 		throw new Error("Session expired or unauthorized (401)");
 	}
+	if (response && response.status === 403) throw new Error("Forbidden: you do not have permission to perform this action (403)");
 	return response;
 }
 /**
@@ -730,7 +732,9 @@ function hasPermission(userCtrl, environment, resource, action) {
 	const envPerms = userCtrl.env?.[environment];
 	if (!envPerms) return false;
 	const resourcePerms = envPerms[resource];
-	if (resourcePerms && resourcePerms[action] === true) return true;
+	if (!resourcePerms) return false;
+	if (resourcePerms[action] === true) return true;
+	if (resourcePerms["*"] === true) return true;
 	const wildcardPerms = envPerms["*"];
 	if (wildcardPerms && wildcardPerms[action] === true) return true;
 	return false;
@@ -7705,7 +7709,7 @@ var ChartWidgets = {
 	TimeSeries
 };
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/version.js
-var version = "9.5.59";
+var version = "9.5.67";
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/login/index.svelte
 function recoveryTitle($$renderer) {
 	$$renderer.push(`<span class="has-text-info svelte-imjmcm"><i class="fa-solid fa-key svelte-imjmcm"></i> Password recovery</span>`);
@@ -8164,6 +8168,10 @@ var listAccessMethod = [
 	{
 		value: "Basic & Bearer",
 		id: 3
+	},
+	{
+		value: "Local only",
+		id: 4
 	}
 ];
 /** @type {Record<string, {color: string, icon: string}>} */
@@ -9533,6 +9541,7 @@ function Dashboard($$renderer, $$props) {
 			for the selected app and environment</p></div> <div class="column is-full"><p class="title is-6">Request Log by Status Code (${escape_html(selectedStatusClasses.length ? selectedStatusClasses.join(", ") : "no status selected")}, last ${escape_html(selectedHours)}h)</p> `);
 			Table($$renderer, {
 				RawDataTable: data_error_requests,
+				storageKey: "dashboard-error-requests-prd",
 				columns: {
 					timestamp: {
 						label: "Date/Time",
@@ -9610,9 +9619,11 @@ function Variable($$renderer, $$props) {
 		/** @type {Record<string, unknown>} */
 		let appVarsInternal = {};
 		let appVarsFiltered = derived(() => {
+			let base = Array.isArray(appVars) ? appVars : [];
+			if (environment) base = base.filter((item) => item && item.environment === environment);
 			let term = search_var.trim().toLowerCase();
-			if (!term || !Array.isArray(appVars) || appVars.length === 0) return appVars;
-			return appVars.filter((item) => {
+			if (!term || base.length === 0) return base;
+			return base.filter((item) => {
 				let name = item && item.name ? String(item.name).toLowerCase() : "";
 				let value = item && item.value != null && item.value !== "" ? String(item.value).toLowerCase() : "";
 				return name.includes(term) || value.includes(term);
@@ -9827,17 +9838,17 @@ function Variables($$renderer, $$props) {
 		let Datavars = {};
 		/** @type {Array<AppVarRow>} */
 		let DataAppVars = [];
-		let env_dev = derived(() => {
+		derived(() => {
 			return DataAppVars && Array.isArray(DataAppVars) ? DataAppVars.filter((item) => {
 				return item.environment == "dev";
 			}) : [];
 		});
-		let env_qa = derived(() => {
+		derived(() => {
 			return DataAppVars && Array.isArray(DataAppVars) ? DataAppVars.filter((item) => {
 				return item.environment == "qa";
 			}) : [];
 		});
-		let env_prd = derived(() => {
+		derived(() => {
 			return DataAppVars && Array.isArray(DataAppVars) ? DataAppVars.filter((item) => {
 				return item.environment == "prd";
 			}) : [];
@@ -9967,10 +9978,10 @@ function Variables($$renderer, $$props) {
 						$$settled = false;
 					},
 					get appVars() {
-						return env_dev();
+						return DataAppVars;
 					},
 					set appVars($$value) {
-						env_dev($$value);
+						DataAppVars = $$value;
 						$$settled = false;
 					}
 				});
@@ -9997,10 +10008,10 @@ function Variables($$renderer, $$props) {
 						$$settled = false;
 					},
 					get appVars() {
-						return env_qa();
+						return DataAppVars;
 					},
 					set appVars($$value) {
-						env_qa($$value);
+						DataAppVars = $$value;
 						$$settled = false;
 					}
 				});
@@ -10027,10 +10038,10 @@ function Variables($$renderer, $$props) {
 						$$settled = false;
 					},
 					get appVars() {
-						return env_prd();
+						return DataAppVars;
 					},
 					set appVars($$value) {
-						env_prd($$value);
+						DataAppVars = $$value;
 						$$settled = false;
 					}
 				});
@@ -17789,6 +17800,16 @@ function PermissionEditor($$renderer, $$props) {
 				]
 			},
 			{
+				key: "apikeys",
+				label: "API Keys",
+				actions: [
+					"read",
+					"create",
+					"edit",
+					"delete"
+				]
+			},
+			{
 				key: "endpoints",
 				label: "Endpoints",
 				actions: [
@@ -17811,6 +17832,16 @@ function PermissionEditor($$renderer, $$props) {
 			{
 				key: "appvars",
 				label: "App Variables",
+				actions: [
+					"read",
+					"create",
+					"edit",
+					"delete"
+				]
+			},
+			{
+				key: "appgroups",
+				label: "App Groups",
 				actions: [
 					"read",
 					"create",
@@ -17869,7 +17900,7 @@ function PermissionEditor($$renderer, $$props) {
 		function $$render_inner($$renderer) {
 			$$renderer.push(`<div class="permission-editor svelte-1ai4tmu"><div class="field mb-4"><label class="checkbox"><input type="checkbox"${attr("checked", ctrl.as_admin === true, true)}/> <strong>Super Admin</strong> <span class="tag is-info is-light ml-2">Bypass all permissions</span></label></div> `);
 			if (ctrl.as_admin !== true) {
-				$$renderer.push("<!--[0-->");
+				$$renderer.push(`<!--[0--><div class="field mb-3"><label class="checkbox"><input type="checkbox"${attr("checked", ctrl.authenticated === true, true)}/> <strong>Authenticated (no granular permission)</strong> <span class="tag is-info is-light ml-2">Any valid session may access without resource permission</span></label></div> `);
 				Tab($$renderer, {
 					tabs: environments.map((e) => ({
 						id: e,
@@ -19440,6 +19471,47 @@ function Application($$renderer, $$props) {
 			repeatNewPassword: ""
 		};
 		let password_change = defaultPasswordChange;
+		/**
+		* `true` si el usuario en sesión puede restaurar los endpoints del sistema.
+		* Requiere `settings:edit` o ser `as_admin`.
+		*/
+		function canManageSystemEndpoints() {
+			const u = currentUser();
+			if (!u) return false;
+			if (u?.ctrl?.as_admin === true) return true;
+			return currentUserHasPermission(u, permEnv, "settings", "edit");
+		}
+		/**
+		* Restaura los endpoints del sistema solo si el usuario tiene permiso.
+		* Devuelve el estado (o null si no hay permiso) y nunca lanza por 403.
+		*/
+		async function restoreSystemEndpointsIfAllowed(restore) {
+			if (!canManageSystemEndpoints()) {
+				statusSystemEndpointsStore.set({
+					valid: false,
+					message: "No tiene permiso para restaurar endpoints del sistema (requiere settings:edit o as_admin)."
+				});
+				return null;
+			}
+			try {
+				const status = await restoreSystemEndpoints(restore);
+				statusSystemEndpointsStore.set(status);
+				return status;
+			} catch (error) {
+				const msg = getErrorMessage(error);
+				if (String(msg).includes("403")) {
+					statusSystemEndpointsStore.set({
+						valid: false,
+						message: "No tiene permiso para restaurar endpoints del sistema (403)."
+					});
+					notify.push({
+						message: msg,
+						color: "warning"
+					});
+				} else throw error;
+				return null;
+			}
+		}
 		let changepwd_compare_verify = derived(() => {
 			return password_change.newPassword == password_change.repeatNewPassword;
 		});
@@ -19486,7 +19558,7 @@ function Application($$renderer, $$props) {
 						menu_item_selected = "/appvars";
 					}
 				});
-				if (currentUserHasPermission(currentUser(), permEnv, "apiclients", "read")) appItems.push({
+				if (currentUserHasPermission(currentUser(), permEnv, "apikeys", "read")) appItems.push({
 					label: "API Keys",
 					icon: " fa-solid fa-key ",
 					onclick: () => {
@@ -19507,14 +19579,14 @@ function Application($$renderer, $$props) {
 						menu_item_selected = "/interval_tasks";
 					}
 				});
-				if (currentUserHasPermission(currentUser(), permEnv, "endpoints", "read")) appItems.push({
+				if (currentUserHasPermission(currentUser(), permEnv, "settings", "read")) appItems.push({
 					label: "Async Requests",
 					icon: " fa-solid fa-clapperboard ",
 					onclick: () => {
 						menu_item_selected = "/asyncrequests";
 					}
 				});
-				appItems.push({
+				if (currentUserHasPermission(currentUser(), permEnv, "logs", "read")) appItems.push({
 					label: "Logs",
 					icon: " fa-solid fa-scroll ",
 					onclick: () => {
@@ -19541,7 +19613,7 @@ function Application($$renderer, $$props) {
 					menu_item_selected = "/users";
 				}
 			});
-			if (currentUser()?.ctrl?.as_admin === true) adminItems.push({
+			if (currentUserHasPermission(currentUser(), permEnv, "logs", "read")) adminItems.push({
 				label: "Audit Logs",
 				icon: " fa-solid fa-magnifying-glass-chart ",
 				onclick: () => {
@@ -19565,8 +19637,7 @@ function Application($$renderer, $$props) {
 					};
 				});
 				else options = [];
-				let status_sys_endp = await restoreSystemEndpoints(false);
-				statusSystemEndpointsStore.set(status_sys_endp);
+				await restoreSystemEndpointsIfAllowed(false);
 			} catch (error) {
 				console.error(error);
 				notify.push({
