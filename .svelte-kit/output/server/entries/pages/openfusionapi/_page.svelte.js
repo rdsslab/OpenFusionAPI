@@ -7709,7 +7709,7 @@ var ChartWidgets = {
 	TimeSeries
 };
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/version.js
-var version = "9.5.67";
+var version = "9.6.0";
 // node_modules/@rdsslab/libopenfusionapigui/dist/OpenFusionAPI/login/index.svelte
 function recoveryTitle($$renderer) {
 	$$renderer.push(`<span class="has-text-info svelte-imjmcm"><i class="fa-solid fa-key svelte-imjmcm"></i> Password recovery</span>`);
@@ -8823,7 +8823,8 @@ function Basic($$renderer, $$props) {
 				function recoveryRight($$renderer) {
 					$$renderer.push(`<span>application/json</span>`);
 				}
-				$$renderer.push(`<div class="field"><label class="label">Password Recovery Configuration</label> <p class="help">OTP-based password recovery via email or Telegram. Only visible for the "system" application. Environment: prd. Saved on "Save &amp; deploy".</p></div> <div class="field"><label class="label">SMTP Transport (JSON)</label> <p class="control is-expanded">`);
+				$$renderer.push(`<div class="field"><label class="label">Password Recovery Configuration</label> <p class="help">OTP-based password recovery via email or Telegram. Only visible for the "system"
+				application. Environment: prd. Saved on "Save &amp; deploy".</p></div> <div class="field"><label class="label">SMTP Transport (JSON)</label> <p class="control is-expanded">`);
 				EditorCode($$renderer, {
 					left: recoveryLeft,
 					right: recoveryRight,
@@ -14292,11 +14293,24 @@ function Endpoints($$renderer, $$props) {
 		};
 		let showMigrateModal = false;
 		let migrateTargetEnv = "";
+		/** @type {Record<'dev'|'qa'|'prd', boolean>} */
+		let visibleEnvs = {
+			dev: false,
+			qa: false,
+			prd: true
+		};
 		const permEnv = getDefaultEnvironment();
 		const currentUser = derived(() => store_get($$store_subs ??= {}, "$userStore", userStore)?.user);
 		const canCreate = derived(() => currentUserHasPermission(currentUser(), permEnv, "endpoints", "create"));
 		const canEdit = derived(() => currentUserHasPermission(currentUser(), permEnv, "endpoints", "edit"));
 		const canDelete = derived(() => currentUserHasPermission(currentUser(), permEnv, "endpoints", "delete"));
+		let filteredEndpoints = derived(() => {
+			if (!app.endpoints || !Array.isArray(app.endpoints)) return [];
+			return app.endpoints.filter((ep) => {
+				const env = ep.environment;
+				return env && visibleEnvs[env] === true;
+			});
+		});
 		let migrateConfirmCheck = false;
 		/** @type {Array<string|number>} */
 		let selectedEndpointsForMigration = [];
@@ -14347,6 +14361,18 @@ function Endpoints($$renderer, $$props) {
 			$$renderer.push(`<span><button title="Generate Documentation" class="button is-small"><span class="icon is-small"><i class="fa-solid fa-file-export"></i></span> <span>Doc</span></button></span>`);
 		}
 		function rt3($$renderer) {
+			$$renderer.push(`<div class="field has-addons"><p class="control"><button${attr_class("button is-small", void 0, {
+				"is-info": visibleEnvs.dev,
+				"is-outlined": !visibleEnvs.dev
+			})} title="Show/hide DEV endpoints"><span class="icon is-small"><i class="fa-solid fa-bug"></i></span> <span>DEV</span></button></p> <p class="control"><button${attr_class("button is-small", void 0, {
+				"is-warning": visibleEnvs.qa,
+				"is-outlined": !visibleEnvs.qa
+			})} title="Show/hide QA endpoints"><span class="icon is-small"><i class="fa-solid fa-eye"></i></span> <span>QA</span></button></p> <p class="control"><button${attr_class("button is-small", void 0, {
+				"is-success": visibleEnvs.prd,
+				"is-outlined": !visibleEnvs.prd
+			})} title="Show/hide PRD endpoints"><span class="icon is-small"><i class="fa-solid fa-check"></i></span> <span>PRD</span></button></p></div>`);
+		}
+		function rt4($$renderer) {
 			$$renderer.push(`<span><button class="button is-small" title="Migrate selected endpoints to another environment"><span class="icon is-small"><i class="fa-solid fa-route"></i></span> <span>Migrate</span></button></span>`);
 		}
 		let $$settled = true;
@@ -14362,8 +14388,9 @@ function Endpoints($$renderer, $$props) {
 				left_items: [lt01],
 				right_items: [
 					rt3,
-					rt2,
-					rt1
+					rt4,
+					rt1,
+					rt2
 				],
 				ondeleterow: (data) => {
 					if (confirm("Do you want to delete the endpoints selected?")) {
@@ -14397,10 +14424,10 @@ function Endpoints($$renderer, $$props) {
 					});
 				},
 				get RawDataTable() {
-					return app.endpoints;
+					return filteredEndpoints();
 				},
 				set RawDataTable($$value) {
-					app.endpoints = $$value;
+					filteredEndpoints($$value);
 					$$settled = false;
 				},
 				get selectionType() {

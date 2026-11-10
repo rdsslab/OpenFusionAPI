@@ -267,6 +267,15 @@ function resolve_params_missing(_values) {
 	throw new Error("https://svelte.dev/e/kit/resolve_params_missing");
 }
 /**
+* Cannot use `resolve(...)` with an absolute or protocol-relative URL (got "%id%")
+* @param {{ "id": string }} _values
+* @returns {never}
+*/
+function resolve_url_input(_values) {
+	if (verbose) throw_error("resolve_url_input", `Cannot use \`resolve(...)\` with an absolute or protocol-relative URL (got "${_values.id}")`, resolve_url_input);
+	throw new Error("https://svelte.dev/e/kit/resolve_url_input");
+}
+/**
 * Missing parameter `%name%` in route `%id%`
 * @param {{ "name": string; "id": string }} _values
 * @returns {never}
@@ -466,6 +475,13 @@ function find_route(path, routes, matchers) {
 * @type {RegExp}
 */
 var SCHEME = /^[a-z][a-z\d+\-.]*:/i;
+/**
+* Whether the string starts with a scheme (`https:`) or authority (`//example.com`)
+* @param {string} str
+*/
+function has_scheme_or_authority(str) {
+	return SCHEME.test(str) || str.startsWith("//");
+}
 var internal = new URL("a://");
 /**
 * @param {string} base
@@ -602,14 +618,19 @@ function depends_special_scheme(_values) {
 // node_modules/@sveltejs/kit/src/runtime/app/paths/server.js
 /** @type {typeof import('./client.js').resolve} */
 function resolve(id, params) {
+	if (has_scheme_or_authority(id)) resolve_url_input({ id });
 	let resolved;
 	if (id[0] === "/") {
 		if (id.includes("[") && !params) resolve_params_missing({ id });
 		resolved = resolve_route(id, params ?? {});
 	} else resolved = "/" + id;
+	return prefix_path(resolved);
+}
+/** @param {string} resolved */
+function prefix_path(resolved) {
 	{
 		const store = try_get_request_store();
-		if (store && !store.state.prerendering?.fallback) return ((store.event.isDataRequest ? add_data_suffix(store.event.url.pathname) : store.event.url.pathname).slice(0).split("/").slice(2).map(() => "..").join("/") || ".") + resolved;
+		if (store && !store.state.prerendering?.fallback) return (store.event.url.pathname.slice(0).split("/").slice(2).map(() => "..").join("/") || ".") + resolved;
 	}
 	return "" + resolved;
 }
@@ -817,7 +838,7 @@ async function deserialize_binary_form(request, form_id) {
 	/** @type {Array<{ offset: number, size: number }>} */
 	const file_spans = [];
 	const [data, meta] = devalue.parse(text_decoder.decode(data_buffer), { File: ([name, type, size, last_modified, index]) => {
-		if (typeof name !== "string" || typeof type !== "string" || !Number.isSafeInteger(size) || size < 0 || !Number.isSafeInteger(last_modified) || !Number.isSafeInteger(index) || index < 0) throw deserialize_error("invalid file metadata");
+		if (typeof name !== "string" || typeof type !== "string" || !Number.isSafeInteger(size) || size < 0 || !Number.isSafeInteger(last_modified) || !Number.isSafeInteger(index) || index < 0 || file_offsets === void 0) throw deserialize_error("invalid file metadata");
 		let offset = file_offsets[index];
 		if (offset === void 0) throw deserialize_error("duplicate file offset table index");
 		file_offsets[index] = void 0;
@@ -1677,7 +1698,8 @@ function handle_error_and_jsonify(event, state, error) {
 			status: 400,
 			message: "Bad Request"
 		},
-		issues: error.issues
+		issues: error.issues,
+		remote: error.remote
 	};
 	else {
 		caught = {
@@ -1753,6 +1775,25 @@ function log_handle_error_hook_failure(error, hook_error) {
 	if (error instanceof SvelteKitError) console.error(`Original error: ${error.status} ${error.text}: ${error.message}`);
 	else console.error("Original error:", error);
 }
+/**
+* @param {import('@sveltejs/kit/hooks').CaughtError & { event: import('@sveltejs/kit').RequestEvent }} input
+*/
+function default_handle_error({ kind, error, issues, remote }) {
+	if (kind === "validation") {
+		let fn;
+		if (remote?.name && remote.file) fn = `${remote.name} (${remote.file})`;
+		else if (remote?.name) fn = remote.name;
+		console.error(`Remote function ${fn ? fn + " " : ""}schema validation failed:`, issues);
+		return;
+	}
+	if (kind !== "unknown") return;
+	let e = error;
+	while (e instanceof Error) {
+		if (e.stack) console.error(e.stack);
+		e = e.cause;
+	}
+	if (e) console.error(String(e));
+}
 // node_modules/@sveltejs/kit/src/constants.js
 /**
 * A fake asset path used in `vite dev` and `vite preview`, so that we can
@@ -1817,10 +1858,18 @@ function redirect_response(status, location) {
 	});
 }
 /**
+* Whether the response is being prerendered, either because we're running the prerenderer
+* or because a `+server.js` endpoint inherits the prerender option of the page fetching it
+* @param {import('types').RequestState} state
+*/
+function is_prerendering(state) {
+	return !!state.prerendering || state.prerender_default === true;
+}
+/**
 * @param {Response} response
 */
 function with_version_header(response) {
-	response.headers.set("x-sveltekit-version", "1794265564823");
+	response.headers.set("x-sveltekit-version", "1794352002756");
 	return response;
 }
 /**
@@ -2094,8 +2143,7 @@ function try_serialize(data, fn, route_id) {
 }
 // node_modules/@sveltejs/kit/src/runtime/server/remote-functions.js
 /** @import { RequestEvent } from '@sveltejs/kit' */
-/** @import { RemoteForm } from '$app/server' */
-/** @import { RemoteFormInternals, RemoteFunctionData, RemoteFunctionResponse, RemoteInternals, RequestState, ServerActionResult } from 'types' */
+/** @import { RemoteFormInternals, RemoteFunctionData, RemoteFunctionResponse, RemoteInternals, RequestState, ServerActionResult, SSRManifest } from 'types' */
 /**
 * How long (in milliseconds) to wait after the last message was sent before
 * sending a `: keep-alive` SSE comment, to prevent proxies/load balancers with
@@ -2209,17 +2257,43 @@ async function handle_remote_call(event, state, id) {
 	});
 }
 /**
+*
+* @param {string} id
+* @param {SSRManifest} manifest
+* @returns {Promise<{ fn: ((...args: any[]) => any) & { __: RemoteInternals }, name: string, additional_args: string } | undefined>}
+*/
+async function get_remote_function(id, manifest) {
+	const first_slash = id.indexOf("/");
+	if (first_slash === -1) return;
+	const second_slash = id.indexOf("/", first_slash + 1);
+	const hash = id.substring(0, first_slash);
+	/** @type {string} */
+	let name;
+	let additional_args = "";
+	if (second_slash === -1) name = id.substring(first_slash + 1);
+	else {
+		name = id.substring(first_slash + 1, second_slash);
+		additional_args = id.substring(second_slash + 1);
+	}
+	const remotes = manifest.remotes;
+	if (!Object.hasOwn(remotes, hash)) return;
+	const module = await remotes[hash]();
+	if (!Object.hasOwn(module.default, name)) return;
+	return {
+		fn: module.default[name],
+		name,
+		additional_args
+	};
+}
+/**
 * @param {RequestEvent} event
 * @param {RequestState} state
 * @param {string} id
 */
 async function handle_remote_call_internal(event, state, id) {
-	const [hash, name, additional_args] = id.split("/");
-	const remotes = manifest.remotes;
-	if (!Object.hasOwn(remotes, hash)) error(404);
-	const module = await remotes[hash]();
-	const fn = Object.hasOwn(module.default, name) ? module.default[name] : void 0;
-	if (!fn) error(404);
+	const remote = await get_remote_function(id, manifest);
+	if (!remote) error(404);
+	const { fn, additional_args } = remote;
 	/** @type {RemoteInternals} */
 	const internals = fn.__;
 	event.tracing.current.setAttributes({
@@ -2419,12 +2493,10 @@ async function handle_remote_form_post(event, state, id) {
 */
 async function handle_remote_form_post_internal(event, state, id) {
 	const location = get_action_location(event.url);
-	const [hash, name, ...rest] = id.split("/");
-	const action_id = rest.join("/");
-	const remotes = manifest.remotes;
-	const module = Object.hasOwn(remotes, hash) ? await remotes[hash]() : void 0;
-	let form = module && Object.hasOwn(module.default, name) ? module.default[name] : void 0;
-	if (!form) return method_not_allowed_result(event, location);
+	const remote = await get_remote_function(id, manifest);
+	if (!remote) return method_not_allowed_result(event, location);
+	let form = remote.fn;
+	const action_id = remote.additional_args;
 	if (action_id) form = with_request_store({
 		event,
 		state
@@ -2621,27 +2693,50 @@ function set_hooks(value) {
 /**
 * @param {number} status
 * @param {Request} request
-* @returns {string}
+* @param {SSRManifest} manifest
+* @returns {Promise<string>}
 */
-function format_response(status, request) {
+async function format_response(status, request, manifest) {
 	const url = new URL(request.url);
 	const requested = url.href.replace(url.origin, "");
-	let log = `${styleText(status < 400 ? ["cyan"] : ["bold", "red"], `${status}`)} ${request.method} `;
+	let log = `${styleText(status < 400 ? ["cyan"] : ["bold", "red"], `${status}`)} `;
 	if (has_data_suffix(url.pathname)) {
+		log += `${request.method} `;
 		const pathname = strip_data_suffix(url.pathname) || "/";
 		log += pathname + styleText("dim", requested.slice(pathname.length));
 	} else if (has_resolution_suffix(url.pathname)) {
+		log += `${request.method} `;
 		const pathname = strip_resolution_suffix(url.pathname) || "/";
 		log += pathname + styleText("dim", requested.slice(pathname.length));
 	} else if (has_remote_prefix(url)) {
 		const id = strip_remote_prefix(url);
-		const [file_hash, name, arg_hash] = id.split("/");
-		log += styleText("dim", `${url.pathname.slice(0, -id.length)}${file_hash}/`) + name;
-		if (arg_hash) log += styleText("dim", `/${arg_hash}`);
-		if (url.search) log += styleText("dim", url.search);
-	} else log += requested;
+		/** @type {Awaited<ReturnType<typeof get_remote_function>>} */
+		let remote;
+		try {
+			remote = await get_remote_function(id, manifest);
+		} catch {}
+		if (remote) {
+			const internals = remote.fn.__;
+			log += styleText(["bold", "magenta"], "ƒ ");
+			log += styleText("magenta", `${internals.type.replace("_", ".")} `);
+			if (internals.dev_loc) {
+				let file_link = internals.dev_loc.file;
+				if (internals.dev_loc.line != null) file_link += `#${internals.dev_loc.line}`;
+				log += `\u001B]8;;${file_link}\u0007`;
+			}
+			log += styleText(["bold"], `${remote.name}()`);
+			if (internals.dev_loc) log += "\x1B]8;;\x07";
+			if (url.search) log += " " + styleText("dim", url.search);
+		} else {
+			log += `${request.method} `;
+			const [file_hash, name, arg_hash] = id.split("/");
+			log += styleText("dim", `${url.pathname.slice(0, -id.length)}${file_hash}/`) + name;
+			if (arg_hash) log += styleText("dim", `/${arg_hash}`);
+			if (url.search) log += styleText("dim", url.search);
+		}
+	} else log += `${request.method} ${requested}`;
 	return log;
 }
-export { parse_remote_arg as $, ENDPOINT_METHODS as A, find_route as At, cookie_path_mismatch as B, stream_text as Bt, has_prerendered_path as C, SCHEME as Ct, throw_devalue_error as D, normalize_path as Dt, serialize_uses as E, make_trackable as Et, SVELTE_KIT_ASSETS as F, has_data_suffix as Ft, streaming_without_csr as G, assets as Gt, form_action_error_without_ssr as H, restore as Ht, handle_error_and_jsonify as I, has_resolution_suffix as It, normalize_error as J, prerendering as Jt, transform_page_chunk_comments as K, set_assets as Kt, cache_control_empty_directive as L, strip_data_suffix as Lt, MUTATIVE_METHODS as M, invalid_export_location as Mt, PAGE_METHODS as N, add_data_suffix as Nt, with_version_header as O, relative_pathname as Ot, REROUTED_URL_HEADER as P, add_resolution_suffix as Pt, fetch_cache_url as Q, cache_control_invalid_directive as R, strip_resolution_suffix as Rt, get_node_type as S, app_environment_deprecated as St, redirect_response as T, disable_search as Tt, load_tracking_after_return as U, save as Ut, form_action_data_without_ssr as V, text_encoder as Vt, ssr_fetch_eager as W, app_dir as Wt, TRAILING_SLASH_PARAM as X, set_prerendering as Xt, INVALIDATED_PARAM as Y, set_building as Yt, create_remote_key as Z, handle_action_request as _, split_path as _t, set_hooks as a, init_transport as at, uneval_action_response as b, once as bt, fix_stack_trace as c, uneval as ct, get_remote_action as d, create_field_proxy as dt, stringify_remote_arg as et, get_remote_id as f, deep_set as ft, handle_action_json_request as g, parse_form_key as gt, action_json_redirect as h, normalize_issue as ht, read_implementation as i, has_custom_transporters as it, IN_WEBCONTAINER as j, invalid_export as jt, BODY_DEPENDENT_METHODS as k, resolve$1 as kt, set_fix_stack_trace as l, is_form_content_type as lt, handle_remote_form_post as m, group_formdata as mt, hooks as n, validate_load_response as nt, set_manifest as o, parse as ot, handle_remote_call as p, flatten_issues as pt, get_status as q, enable_verbose_errors as qt, manifest as r, encoders as rt, set_read_implementation as s, stringify as st, format_response as t, validate_depends as tt, collect_remote_data as u, negotiate as ut, is_action_json_request as v, disallow_on_server as vt, method_not_allowed as w, decode_pathname as wt, count_non_ssi_comments as x, resolve as xt, is_action_request as y, noop as yt, content_type_invalid as z, base64_encode as zt };
+export { create_remote_key as $, BODY_DEPENDENT_METHODS as A, relative_pathname as At, cache_control_invalid_directive as B, strip_resolution_suffix as Bt, has_prerendered_path as C, resolve as Ct, serialize_uses as D, disable_search as Dt, redirect_response as E, decode_pathname as Et, REROUTED_URL_HEADER as F, add_data_suffix as Ft, load_tracking_after_return as G, save as Gt, cookie_path_mismatch as H, stream_text as Ht, SVELTE_KIT_ASSETS as I, add_resolution_suffix as It, transform_page_chunk_comments as J, set_assets as Jt, ssr_fetch_eager as K, app_dir as Kt, default_handle_error as L, has_data_suffix as Lt, IN_WEBCONTAINER as M, find_route as Mt, MUTATIVE_METHODS as N, invalid_export as Nt, throw_devalue_error as O, make_trackable as Ot, PAGE_METHODS as P, invalid_export_location as Pt, TRAILING_SLASH_PARAM as Q, set_prerendering as Qt, handle_error_and_jsonify as R, has_resolution_suffix as Rt, get_node_type as S, once as St, method_not_allowed as T, SCHEME as Tt, form_action_data_without_ssr as U, text_encoder as Ut, content_type_invalid as V, base64_encode as Vt, form_action_error_without_ssr as W, restore as Wt, normalize_error as X, prerendering as Xt, get_status as Y, enable_verbose_errors as Yt, INVALIDATED_PARAM as Z, set_building as Zt, handle_action_request as _, normalize_issue as _t, set_hooks as a, encoders as at, uneval_action_response as b, disallow_on_server as bt, fix_stack_trace as c, parse as ct, get_remote_action as d, is_form_content_type as dt, fetch_cache_url as et, get_remote_id as f, negotiate as ft, handle_action_json_request as g, group_formdata as gt, action_json_redirect as h, flatten_issues as ht, read_implementation as i, validate_load_response as it, ENDPOINT_METHODS as j, resolve$1 as jt, with_version_header as k, normalize_path as kt, set_fix_stack_trace as l, stringify as lt, handle_remote_form_post as m, deep_set as mt, hooks as n, stringify_remote_arg as nt, set_manifest as o, has_custom_transporters as ot, handle_remote_call as p, create_field_proxy as pt, streaming_without_csr as q, assets as qt, manifest as r, validate_depends as rt, set_read_implementation as s, init_transport as st, format_response as t, parse_remote_arg as tt, collect_remote_data as u, uneval as ut, is_action_json_request as v, parse_form_key as vt, is_prerendering as w, app_environment_deprecated as wt, count_non_ssi_comments as x, noop as xt, is_action_request as y, split_path as yt, cache_control_empty_directive as z, strip_data_suffix as zt };
 
 //# sourceMappingURL=internal.js.map

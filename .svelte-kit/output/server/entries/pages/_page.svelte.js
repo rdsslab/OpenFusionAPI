@@ -1,5 +1,5 @@
 import { S as escape_html, a as derived, d as stringify, n as attr_style, o as ensure_array_like, s as head, t as attr_class, v as attr } from "../../chunks/server.js";
-import { xt as resolve } from "../../chunks/internal.js";
+import { Ct as resolve } from "../../chunks/internal.js";
 import { t as onDestroy } from "../../chunks/index-server.js";
 // src/routes/+page.svelte
 function _page($$renderer, $$props) {

@@ -1,4 +1,4 @@
-import { A as ENDPOINT_METHODS, At as find_route, Bt as stream_text, C as has_prerendered_path, D as throw_devalue_error, Dt as normalize_path, E as serialize_uses, Et as make_trackable, Ft as has_data_suffix, Gt as assets, I as handle_error_and_jsonify, It as has_resolution_suffix, J as normalize_error, Lt as strip_data_suffix, Mt as invalid_export_location, N as PAGE_METHODS, Nt as add_data_suffix, O as with_version_header, Ot as relative_pathname, P as REROUTED_URL_HEADER, Pt as add_resolution_suffix, Q as fetch_cache_url, Rt as strip_resolution_suffix, S as get_node_type, T as redirect_response, Tt as disable_search, Vt as text_encoder, Wt as app_dir, X as TRAILING_SLASH_PARAM, Y as INVALIDATED_PARAM, _ as handle_action_request, a as set_hooks, at as init_transport, b as uneval_action_response, bt as once, ct as uneval, d as get_remote_action, f as get_remote_id, g as handle_action_json_request, h as action_json_redirect, i as read_implementation, it as has_custom_transporters, j as IN_WEBCONTAINER, jt as invalid_export, k as BODY_DEPENDENT_METHODS, kt as resolve, lt as is_form_content_type, m as handle_remote_form_post, n as hooks, p as handle_remote_call, q as get_status, r as manifest, rt as encoders, u as collect_remote_data, ut as negotiate, v as is_action_json_request, vt as disallow_on_server, w as method_not_allowed, wt as decode_pathname, y as is_action_request, yt as noop, zt as base64_encode } from "./internal.js";
+import { A as BODY_DEPENDENT_METHODS, At as relative_pathname, Bt as strip_resolution_suffix, C as has_prerendered_path, D as serialize_uses, Dt as disable_search, E as redirect_response, Et as decode_pathname, F as REROUTED_URL_HEADER, Ft as add_data_suffix, Ht as stream_text, It as add_resolution_suffix, Kt as app_dir, L as default_handle_error, Lt as has_data_suffix, M as IN_WEBCONTAINER, Mt as find_route, Nt as invalid_export, O as throw_devalue_error, Ot as make_trackable, P as PAGE_METHODS, Pt as invalid_export_location, Q as TRAILING_SLASH_PARAM, R as handle_error_and_jsonify, Rt as has_resolution_suffix, S as get_node_type, St as once, T as method_not_allowed, Ut as text_encoder, Vt as base64_encode, X as normalize_error, Y as get_status, Z as INVALIDATED_PARAM, _ as handle_action_request, a as set_hooks, at as encoders, b as uneval_action_response, bt as disallow_on_server, d as get_remote_action, dt as is_form_content_type, et as fetch_cache_url, f as get_remote_id, ft as negotiate, g as handle_action_json_request, h as action_json_redirect, i as read_implementation, j as ENDPOINT_METHODS, jt as resolve, k as with_version_header, kt as normalize_path, m as handle_remote_form_post, n as hooks, ot as has_custom_transporters, p as handle_remote_call, qt as assets, r as manifest, st as init_transport, u as collect_remote_data, ut as uneval, v as is_action_json_request, w as is_prerendering, xt as noop, y as is_action_request, zt as strip_data_suffix } from "./internal.js";
 import { C as prerender_endpoint_methods, E as prerender_template_nonce, G as set_headers_after_response, K as set_headers_cookie, S as prerender_actions, T as prerender_nonce, X as capture_error, _ as load_fetch_cors, b as load_promise_not_serializable, c as client_address_unsupported, d as cookies_set_after_response, f as csp_report_only_missing_report, g as header_already_set, p as endpoint_invalid_response, u as cookies_serialize_before_route, w as prerender_endpoint_not_prerenderable, x as load_response_header_not_serialized } from "./server-errors.js";
 import { explicit_public_env, rendered_env, set_env } from "../env.js";
 import { S as escape_html$1, a as derived, c as render } from "./server.js";
@@ -251,7 +251,7 @@ function server_data_serializer(event, state) {
 	let promise_id = 1;
 	let max_nodes = -1;
 	const iterator = create_async_iterator();
-	const global = "__sveltekit_1j93dch";
+	const global = "__sveltekit_11vttfg";
 	/** @param {number} index */
 	function get_replacer(index) {
 		/** @param {any} thing */
@@ -438,7 +438,7 @@ async function load_server_data({ event, state, node, parent }) {
 	}, (param) => {
 		if (is_tracking) uses.search_params.add(param);
 	});
-	if (state.prerendering || state.prerender_default === true) disable_search(url);
+	if (is_prerendering(state)) disable_search(url);
 	return {
 		type: "data",
 		data: await record_span({
@@ -1341,7 +1341,7 @@ var RenderNode = class {
 * }} opts
 */
 async function render_response({ branch, fetched, page_config, status, error = null, event, state, resolve_opts, action_result, data_serializer, error_components }) {
-	if (state.prerendering || state.prerender_default === true) {
+	if (is_prerendering(state)) {
 		if (options.csp.mode === "nonce") prerender_nonce();
 		if (options.app_template_contains_nonce) prerender_template_nonce({ tag: "%sveltekit.nonce%" });
 	}
@@ -1364,10 +1364,9 @@ async function render_response({ branch, fetched, page_config, status, error = n
 	* We use a relative path when possible to support IPFS, the internet archive, etc.
 	*/
 	let base_expression = s("");
-	const csp = new Csp(options.csp, { prerender: !!(state.prerendering || state.prerender_default === true) });
+	const csp = new Csp(options.csp, { prerender: is_prerendering(state) });
 	if (!state.prerendering?.fallback) {
-		const pathname = event.isDataRequest ? add_data_suffix(event.url.pathname) : event.url.pathname;
-		({base, assets: assets$1} = resolve_paths(pathname));
+		({base, assets: assets$1} = resolve_paths(event.url.pathname));
 		base_expression = `new URL(${s(base)}, location).pathname.slice(0, -1)`;
 	}
 	if (page_config.ssr) {
@@ -1492,12 +1491,12 @@ async function render_response({ branch, fetched, page_config, status, error = n
 			"crossorigin"
 		]);
 	}
-	const global = "__sveltekit_1j93dch";
+	const global = "__sveltekit_11vttfg";
 	const { data, chunks } = data_serializer.get_data(csp);
-	if (page_config.ssr && page_config.csr) body += `\n\t\t\t${fetched.map((item) => serialize_data(item, resolve_opts.filterSerializedResponseHeaders, !!(state.prerendering || state.prerender_default === true))).join("\n			")}`;
+	if (page_config.ssr && page_config.csr) body += `\n\t\t\t${fetched.map((item) => serialize_data(item, resolve_opts.filterSerializedResponseHeaders, is_prerendering(state))).join("\n			")}`;
 	if (page_config.csr && client) {
 		const route = client.routes?.find((r) => r.id === event.route.id) ?? null;
-		const load_env_eagerly = client.uses_env_dynamic_public && (state.prerendering || state.prerender_default === true);
+		const load_env_eagerly = client.uses_env_dynamic_public && is_prerendering(state);
 		if (load_env_eagerly) modulepreloads.add(`${app_dir}/env.js`);
 		if (!client.inline) for (const dep of modulepreloads) {
 			const path = prefixed(dep);
@@ -1516,7 +1515,7 @@ async function render_response({ branch, fetched, page_config, status, error = n
 			}
 		}
 		const blocks = [];
-		const properties = [`base: ${base_expression}`, `version: ${s("1794265564823")}`];
+		const properties = [`base: ${base_expression}`, `version: ${s("1794352002756")}`];
 		if (assets) properties.push(`assets: ${s(assets)}`);
 		if (client.uses_env_dynamic_public) properties.push(`env: ${load_env_eagerly ? "null" : devalue.uneval(rendered_env)}`);
 		if (chunks) {
@@ -1607,7 +1606,7 @@ async function render_response({ branch, fetched, page_config, status, error = n
 		"x-sveltekit-page": "true",
 		"content-type": "text/html"
 	});
-	if (state.prerendering || state.prerender_default === true) {
+	if (is_prerendering(state)) {
 		const csp_headers = csp.csp_provider.get_meta();
 		if (csp_headers) head.add_http_equiv(csp_headers);
 		if (state.prerendering?.cache) head.add_http_equiv(`<meta http-equiv="cache-control" content="${escape_html(state.prerendering.cache, true)}">`);
@@ -1854,6 +1853,7 @@ var PageNodes = class {
 * }} opts
 */
 async function respond_with_error({ event, state, error, resolve_opts }) {
+	if (event.isDataRequest) return handle_fatal_error(event, state, error);
 	if (event.request.headers.get("x-sveltekit-error")) {
 		const transformed = await handle_error_and_jsonify(event, state, error);
 		return static_error_page(transformed.status, transformed.message);
@@ -1992,7 +1992,7 @@ async function render_page(event, state, page, nodes, resolve_opts) {
 		const fetched = [];
 		const ssr = nodes.ssr();
 		const csr = nodes.csr();
-		if (ssr === false && !((state.prerendering || state.prerender_default === true) && should_prerender_data)) return await render_response({
+		if (ssr === false && !(is_prerendering(state) && should_prerender_data)) return await render_response({
 			branch: compact(nodes.data).map((node) => {
 				return {
 					node,
@@ -2017,7 +2017,7 @@ async function render_page(event, state, page, nodes, resolve_opts) {
 		/** @type {Error | null} */
 		let load_error = null;
 		const data_serializer = server_data_serializer(event, state);
-		const data_serializer_json = (state.prerendering || state.prerender_default === true) && should_prerender_data ? server_data_serializer_json(event, state) : null;
+		const data_serializer_json = is_prerendering(state) && should_prerender_data ? server_data_serializer_json(event, state) : null;
 		/** @type {Array<Promise<ServerDataNode | null>>} */
 		const server_promises = nodes.data.map((node, i) => {
 			if (load_error) throw load_error;
@@ -3138,13 +3138,10 @@ async function internal_respond(request, state) {
 							if ((await manifest.nodes[route.page.leaf]())?.server?.actions) allowed_methods.add("POST");
 							if (method === "OPTIONS") response = new Response(null, {
 								status: 204,
-								headers: { allow: Array.from(allowed_methods.values()).join(", ") }
+								headers: { allow: [...allowed_methods].join(", ") }
 							});
 							else {
-								const mod = [...allowed_methods].reduce((acc, curr) => {
-									acc[curr] = true;
-									return acc;
-								}, {});
+								const mod = Object.fromEntries([...allowed_methods].map((m) => [m, true]));
 								response = method_not_allowed(mod, method);
 							}
 						}
@@ -3252,19 +3249,7 @@ async function init() {
 			const module = await get_hooks();
 			set_hooks({
 				handle: module.handle || (({ event, resolve }) => resolve(event)),
-				handleError: module.handleError || (({ kind, error, issues }) => {
-					if (kind === "validation") {
-						console.error("Remote function schema validation failed:", issues);
-						return;
-					}
-					if (kind !== "unknown") return;
-					let e = error;
-					while (e instanceof Error) {
-						if (e.stack) console.error(e.stack);
-						e = e.cause;
-					}
-					if (e) console.error(String(e));
-				}),
+				handleError: module.handleError || default_handle_error,
 				handleFetch: module.handleFetch || (({ request, fetch }) => fetch(request)),
 				reroute: module.reroute || noop
 			});

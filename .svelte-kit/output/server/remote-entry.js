@@ -1,5 +1,5 @@
 import { A as remote_cookie_forbidden, B as remote_requested_context, D as remote_command_method, F as remote_query_live_no_value, H as remote_requested_invalid_query, I as remote_query_live_not_iterable, L as remote_query_prerender, N as remote_headers_forbidden, O as remote_command_readonly, P as remote_invalid_validator, R as remote_request_property, U as remote_requested_wrong_method, V as remote_requested_invalid_limit, W as server_api_unavailable, j as remote_cookie_path_relative, k as remote_command_render, z as remote_requested_async_validator } from "./chunks/server-errors.js";
-import { $ as parse_remote_arg, I as handle_error_and_jsonify, Jt as prerendering, M as MUTATIVE_METHODS, Wt as app_dir, Z as create_remote_key, _t as split_path, dt as create_field_proxy, et as stringify_remote_arg, ft as deep_set, gt as parse_form_key, ht as normalize_issue, mt as group_formdata, ot as parse, pt as flatten_issues, st as stringify, yt as noop } from "./chunks/internal.js";
+import { $ as create_remote_key, Kt as app_dir, N as MUTATIVE_METHODS, R as handle_error_and_jsonify, Xt as prerendering, _t as normalize_issue, ct as parse, gt as group_formdata, ht as flatten_issues, lt as stringify, mt as deep_set, nt as stringify_remote_arg, pt as create_field_proxy, tt as parse_remote_arg, vt as parse_form_key, xt as noop, yt as split_path } from "./chunks/internal.js";
 import { error } from "@sveltejs/kit";
 import { HandledHttpError, ValidationError } from "@sveltejs/kit/internal";
 import { get_request_store, with_request_store } from "@sveltejs/kit/internal/server";
@@ -9,16 +9,23 @@ import { get_request_store, with_request_store } from "@sveltejs/kit/internal/se
 /**
 * @param {any} validate_or_fn
 * @param {((arg?: any) => any) | undefined} [maybe_fn]
+* @param {(() => import('types').BaseRemoteInternals | undefined) | undefined} [get_internals]
 * @returns {(arg?: any) => MaybePromise<any>}
 */
-function create_validator(validate_or_fn, maybe_fn) {
+function create_validator(validate_or_fn, maybe_fn, get_internals) {
 	if (!maybe_fn) return (arg) => {
 		if (arg !== void 0) error(400, "Bad Request");
 	};
 	if (validate_or_fn === "unchecked") return (arg) => arg;
 	if ("~standard" in validate_or_fn) return async (arg) => {
 		const result = await validate_or_fn["~standard"].validate(arg);
-		if (result.issues) throw new ValidationError(result.issues);
+		if (result.issues) {
+			const internals = get_internals?.();
+			throw new ValidationError(result.issues, internals?.name ? {
+				name: internals.name,
+				file: internals.file
+			} : void 0);
+		}
 		return result.value;
 	};
 	remote_invalid_validator();
@@ -224,14 +231,14 @@ function get_implicit_lookup(internals, state) {
 function command(validate_or_fn, maybe_fn) {
 	/** @type {(arg?: Input) => MaybePromise<Output>} */
 	const fn = maybe_fn ?? validate_or_fn;
-	/** @type {(arg?: any) => MaybePromise<Input>} */
-	const validate = create_validator(validate_or_fn, maybe_fn);
 	/** @type {RemoteCommandInternals} */
 	const __ = {
 		type: "command",
 		id: "",
 		name: ""
 	};
+	/** @type {(arg?: any) => MaybePromise<Input>} */
+	const validate = create_validator(validate_or_fn, maybe_fn, () => __);
 	/** @type {RemoteCommand<Input, Output> & { __: RemoteCommandInternals }} */
 	const wrapper = (arg) => {
 		const { event, state } = get_request_store();
@@ -544,8 +551,6 @@ function prerender(validate_or_fn, fn_or_options, maybe_options) {
 	const options = maybe_options ?? (maybe_fn ? void 0 : fn_or_options);
 	/** @type {(arg?: Input) => MaybePromise<Output>} */
 	const fn = maybe_fn ?? validate_or_fn;
-	/** @type {(arg?: any) => MaybePromise<Input>} */
-	const validate = create_validator(validate_or_fn, maybe_fn);
 	/** @type {RemotePrerenderInternals} */
 	const __ = {
 		type: "prerender",
@@ -555,6 +560,8 @@ function prerender(validate_or_fn, fn_or_options, maybe_options) {
 		inputs: options?.inputs,
 		dynamic: options?.dynamic
 	};
+	/** @type {(arg?: any) => MaybePromise<Input>} */
+	const validate = create_validator(validate_or_fn, maybe_fn, () => __);
 	/** @type {RemotePrerenderFunction<Input, Output> & { __: RemotePrerenderInternals }} */
 	const wrapper = (arg) => {
 		const { event, state } = get_request_store();
@@ -857,7 +864,7 @@ function query(validate_or_fn, maybe_fn) {
 	/** @type {(arg?: Input) => Output} */
 	const fn = maybe_fn ?? validate_or_fn;
 	/** @type {(arg?: any) => MaybePromise<Input>} */
-	const validate = create_validator(validate_or_fn, maybe_fn);
+	const validate = create_validator(validate_or_fn, maybe_fn, () => __);
 	/** @type {RemoteQueryInternals} */
 	const __ = {
 		type: "query",
@@ -926,7 +933,7 @@ function live(validate_or_fn, maybe_fn) {
 	/** @type {(arg: Input) => RemoteLiveQueryUserFunctionReturnType<Output>} */
 	const fn = maybe_fn ?? validate_or_fn;
 	/** @type {(arg?: any) => MaybePromise<Input>} */
-	const validate = create_validator(validate_or_fn, maybe_fn);
+	const validate = create_validator(validate_or_fn, maybe_fn, () => __);
 	/**
 	* @param {any} event
 	* @param {any} state
@@ -1000,7 +1007,7 @@ function batch(validate_or_fn, maybe_fn) {
 	/** @type {(args?: Input[]) => MaybePromise<(arg: Input, idx: number) => Output>} */
 	const fn = maybe_fn ?? validate_or_fn;
 	/** @type {(arg?: any) => MaybePromise<Input>} */
-	const validate = create_validator(validate_or_fn, maybe_fn);
+	const validate = create_validator(validate_or_fn, maybe_fn, () => __);
 	/**
 	* Enqueues a single call into the current batch (creating one if necessary)
 	* and returns a promise that resolves with the result for this entry.
