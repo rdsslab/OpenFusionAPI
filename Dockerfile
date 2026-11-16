@@ -103,8 +103,12 @@ ENV HOST=:: \
 WORKDIR /app
 
 # Instalar dependencias de sistema de runtime necesarias para Chromium/Puppeteer
+# ffmpeg: extraccion de fotogramas de video en los handlers JS. En Debian el paquete
+# 'ffmpeg' instala los DOS binarios que usamos: /usr/bin/ffmpeg y /usr/bin/ffprobe
+# (no existe un paquete 'ffprobe' independiente; pedirlo rompe el build).
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends ca-certificates \
     chromium \
+    ffmpeg \
     fonts-liberation \
     libasound2 \
     libatk-bridge2.0-0 \
