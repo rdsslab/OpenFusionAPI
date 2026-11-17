@@ -47,7 +47,7 @@ function create_validator(validate_or_fn, maybe_fn, get_internals) {
 async function get_response(internals, payload, state, get_result) {
 	await 0;
 	const cache = get_cache(internals, state);
-	if (!state.is_in_remote_query) get_implicit_lookup(internals, state)[payload] = get_result;
+	if (!state.is_in_remote_query && !state.is_in_server_load) get_implicit_lookup(internals, state)[payload] = get_result;
 	return cache[payload] ??= get_result();
 }
 /**

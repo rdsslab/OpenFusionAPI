@@ -251,7 +251,7 @@ function server_data_serializer(event, state) {
 	let promise_id = 1;
 	let max_nodes = -1;
 	const iterator = create_async_iterator();
-	const global = "__sveltekit_rzbigp";
+	const global = "__sveltekit_1nyre2h";
 	/** @param {number} index */
 	function get_replacer(index) {
 		/** @param {any} thing */
@@ -439,6 +439,10 @@ async function load_server_data({ event, state, node, parent }) {
 		if (is_tracking) uses.search_params.add(param);
 	});
 	if (is_prerendering(state)) disable_search(url);
+	const load_state = {
+		...state,
+		is_in_server_load: true
+	};
 	return {
 		type: "data",
 		data: await record_span({
@@ -453,7 +457,7 @@ async function load_server_data({ event, state, node, parent }) {
 				const traced_event = merge_tracing(event, current);
 				return await with_request_store({
 					event: traced_event,
-					state
+					state: load_state
 				}, () => load.call(null, {
 					...traced_event,
 					fetch: (info, init) => {
@@ -1361,9 +1365,6 @@ var RenderNode = class {
 		this.error = error;
 	}
 };
-// node_modules/@sveltejs/kit/src/runtime/server/page/render.js
-/** @import { Component } from 'svelte'; */
-/** @import { SyncRenderOutput } from 'svelte/server' */
 /**
 * Creates the HTML response.
 * @param {{
@@ -1531,7 +1532,7 @@ async function render_response({ branch, fetched, page_config, status, error = n
 			"crossorigin"
 		]);
 	}
-	const global = "__sveltekit_rzbigp";
+	const global = "__sveltekit_1nyre2h";
 	const { data, chunks } = data_serializer.get_data(csp);
 	if (page_config.ssr && page_config.csr) body += `\n\t\t\t${fetched.map((item) => serialize_data(item, resolve_opts.filterSerializedResponseHeaders, is_prerendering(state))).join("\n			")}`;
 	if (page_config.csr && client) {
@@ -1555,7 +1556,7 @@ async function render_response({ branch, fetched, page_config, status, error = n
 			}
 		}
 		const blocks = [];
-		const properties = [`base: ${base_expression}`, `version: ${s("1794928670162")}`];
+		const properties = [`base: ${base_expression}`, `version: ${s("1794953529071")}`];
 		if (assets) properties.push(`assets: ${s(assets)}`);
 		if (client.uses_env_dynamic_public) properties.push(`env: ${load_env_eagerly ? "null" : devalue.uneval(rendered_env)}`);
 		if (chunks) {
@@ -2598,7 +2599,8 @@ function transient_fields() {
 		is_in_remote_form_or_command: false,
 		is_in_remote_query: false,
 		is_in_remote_prerender: false,
-		is_in_render: false
+		is_in_render: false,
+		is_in_server_load: false
 	};
 }
 /**
