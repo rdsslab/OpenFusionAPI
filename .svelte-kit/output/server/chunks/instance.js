@@ -251,7 +251,7 @@ function server_data_serializer(event, state) {
 	let promise_id = 1;
 	let max_nodes = -1;
 	const iterator = create_async_iterator();
-	const global = "__sveltekit_1nyre2h";
+	const global = "__sveltekit_13b360l";
 	/** @param {number} index */
 	function get_replacer(index) {
 		/** @param {any} thing */
@@ -1532,7 +1532,7 @@ async function render_response({ branch, fetched, page_config, status, error = n
 			"crossorigin"
 		]);
 	}
-	const global = "__sveltekit_1nyre2h";
+	const global = "__sveltekit_13b360l";
 	const { data, chunks } = data_serializer.get_data(csp);
 	if (page_config.ssr && page_config.csr) body += `\n\t\t\t${fetched.map((item) => serialize_data(item, resolve_opts.filterSerializedResponseHeaders, is_prerendering(state))).join("\n			")}`;
 	if (page_config.csr && client) {
@@ -1556,7 +1556,7 @@ async function render_response({ branch, fetched, page_config, status, error = n
 			}
 		}
 		const blocks = [];
-		const properties = [`base: ${base_expression}`, `version: ${s("1794953529071")}`];
+		const properties = [`base: ${base_expression}`, `version: ${s("1794959249166")}`];
 		if (assets) properties.push(`assets: ${s(assets)}`);
 		if (client.uses_env_dynamic_public) properties.push(`env: ${load_env_eagerly ? "null" : devalue.uneval(rendered_env)}`);
 		if (chunks) {
