@@ -12,17 +12,8 @@ var e=({status:e,message:t})=>`<!doctype html>
 				background: var(--bg);
 				color: var(--fg);
 				font-family:
-					system-ui,
-					-apple-system,
-					BlinkMacSystemFont,
-					'Segoe UI',
-					Roboto,
-					Oxygen,
-					Ubuntu,
-					Cantarell,
-					'Open Sans',
-					'Helvetica Neue',
-					sans-serif;
+					system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+					Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 				display: flex;
 				align-items: center;
 				justify-content: center;
@@ -79,4 +70,4 @@ var e=({status:e,message:t})=>`<!doctype html>
 	</body>
 </html>
 `;export{e as default};
-//# sourceMappingURL=Bjy-W4x2.js.map
+//# sourceMappingURL=Beqi9dRN.js.map

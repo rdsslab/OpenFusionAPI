@@ -8,7 +8,7 @@ import { merge_tracing, otel, record_span, with_request_store } from "@sveltejs/
 import * as devalue from "devalue";
 import { parseCookie, parseSetCookie, stringifySetCookie } from "cookie";
 // .svelte-kit/generated/build/shared/error-template.js
-var error_template_default = ({ status, message }) => "<!doctype html>\n<html lang=\"en\">\n	<head>\n		<meta charset=\"utf-8\" />\n		<title>" + message + "</title>\n\n		<style>\n			body {\n				--bg: white;\n				--fg: #222;\n				--divider: #ccc;\n				background: var(--bg);\n				color: var(--fg);\n				font-family:\n					system-ui,\n					-apple-system,\n					BlinkMacSystemFont,\n					'Segoe UI',\n					Roboto,\n					Oxygen,\n					Ubuntu,\n					Cantarell,\n					'Open Sans',\n					'Helvetica Neue',\n					sans-serif;\n				display: flex;\n				align-items: center;\n				justify-content: center;\n				height: 100vh;\n				margin: 0;\n			}\n\n			.error {\n				display: flex;\n				align-items: center;\n				max-width: 32rem;\n				margin: 0 1rem;\n			}\n\n			.status {\n				font-weight: 200;\n				font-size: 3rem;\n				line-height: 1;\n				position: relative;\n				top: -0.05rem;\n			}\n\n			.message {\n				border-left: 1px solid var(--divider);\n				padding: 0 0 0 1rem;\n				margin: 0 0 0 1rem;\n				min-height: 2.5rem;\n				display: flex;\n				align-items: center;\n			}\n\n			.message h1 {\n				font-weight: 400;\n				font-size: 1em;\n				margin: 0;\n			}\n\n			@media (prefers-color-scheme: dark) {\n				body {\n					--bg: #222;\n					--fg: #ddd;\n					--divider: #666;\n				}\n			}\n		</style>\n	</head>\n	<body>\n		<div class=\"error\">\n			<span class=\"status\">" + status + "</span>\n			<div class=\"message\">\n				<h1>" + message + "</h1>\n			</div>\n		</div>\n	</body>\n</html>\n";
+var error_template_default = ({ status, message }) => "<!doctype html>\n<html lang=\"en\">\n	<head>\n		<meta charset=\"utf-8\" />\n		<title>" + message + "</title>\n\n		<style>\n			body {\n				--bg: white;\n				--fg: #222;\n				--divider: #ccc;\n				background: var(--bg);\n				color: var(--fg);\n				font-family:\n					system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,\n					Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;\n				display: flex;\n				align-items: center;\n				justify-content: center;\n				height: 100vh;\n				margin: 0;\n			}\n\n			.error {\n				display: flex;\n				align-items: center;\n				max-width: 32rem;\n				margin: 0 1rem;\n			}\n\n			.status {\n				font-weight: 200;\n				font-size: 3rem;\n				line-height: 1;\n				position: relative;\n				top: -0.05rem;\n			}\n\n			.message {\n				border-left: 1px solid var(--divider);\n				padding: 0 0 0 1rem;\n				margin: 0 0 0 1rem;\n				min-height: 2.5rem;\n				display: flex;\n				align-items: center;\n			}\n\n			.message h1 {\n				font-weight: 400;\n				font-size: 1em;\n				margin: 0;\n			}\n\n			@media (prefers-color-scheme: dark) {\n				body {\n					--bg: #222;\n					--fg: #ddd;\n					--divider: #666;\n				}\n			}\n		</style>\n	</head>\n	<body>\n		<div class=\"error\">\n			<span class=\"status\">" + status + "</span>\n			<div class=\"message\">\n				<h1>" + message + "</h1>\n			</div>\n		</div>\n	</body>\n</html>\n";
 // .svelte-kit/generated/build/server.js
 var options = {
 	app_template_contains_nonce: false,
@@ -251,7 +251,7 @@ function server_data_serializer(event, state) {
 	let promise_id = 1;
 	let max_nodes = -1;
 	const iterator = create_async_iterator();
-	const global = "__sveltekit_s6hwk7";
+	const global = "__sveltekit_rzbigp";
 	/** @param {number} index */
 	function get_replacer(index) {
 		/** @param {any} thing */
@@ -682,36 +682,6 @@ function create_universal_fetch(event, prerendering, fetched, csr, resolve_opts)
 		return response;
 	};
 }
-// node_modules/@sveltejs/kit/src/utils/hash.js
-/**
-* Hash using djb2
-* @param {import('types').StrictBody[]} values
-*/
-function hash(...values) {
-	let hash = 5381;
-	for (const value of values) if (typeof value === "string") {
-		let i = value.length;
-		while (i) hash = hash * 33 ^ value.charCodeAt(--i);
-	} else if (ArrayBuffer.isView(value)) {
-		const buffer = new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
-		let i = buffer.length;
-		while (i) hash = hash * 33 ^ buffer[--i];
-	} else throw new TypeError("value must be a string or TypedArray");
-	return (hash >>> 0).toString(36);
-}
-/**
-* Hash of the headers and body a `fetch` was called with. The server-side serializer and the
-* client-side cache lookup must produce identical values for cached responses to be found.
-* @param {HeadersInit | undefined} headers
-* @param {import('types').StrictBody | null | undefined} body
-*/
-function hash_request(headers, body) {
-	/** @type {import('types').StrictBody[]} */
-	const values = [];
-	if (headers) values.push([...new Headers(headers)].join(","));
-	if (body) values.push(body);
-	return hash(...values);
-}
 // node_modules/@sveltejs/kit/src/utils/misc.js
 var s = JSON.stringify;
 // node_modules/@sveltejs/kit/src/utils/escape.js
@@ -747,6 +717,36 @@ var escape_html_regex = escape_regex(escape_html_dict);
 function escape_html(str, is_attr) {
 	const dict = is_attr ? escape_html_attr_dict : escape_html_dict;
 	return str.replace(is_attr ? escape_html_attr_regex : escape_html_regex, (match) => dict[match] ?? `&#${match.charCodeAt(0)};`);
+}
+// node_modules/@sveltejs/kit/src/utils/hash.js
+/**
+* Hash using djb2
+* @param {import('types').StrictBody[]} values
+*/
+function hash(...values) {
+	let hash = 5381;
+	for (const value of values) if (typeof value === "string") {
+		let i = value.length;
+		while (i) hash = hash * 33 ^ value.charCodeAt(--i);
+	} else if (ArrayBuffer.isView(value)) {
+		const buffer = new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+		let i = buffer.length;
+		while (i) hash = hash * 33 ^ buffer[--i];
+	} else throw new TypeError("value must be a string or TypedArray");
+	return (hash >>> 0).toString(36);
+}
+/**
+* Hash of the headers and body a `fetch` was called with. The server-side serializer and the
+* client-side cache lookup must produce identical values for cached responses to be found.
+* @param {HeadersInit | undefined} headers
+* @param {import('types').StrictBody | null | undefined} body
+*/
+function hash_request(headers, body) {
+	/** @type {import('types').StrictBody[]} */
+	const values = [];
+	if (headers) values.push([...new Headers(headers)].join(","));
+	if (body) values.push(body);
+	return hash(...values);
 }
 // node_modules/@sveltejs/kit/src/runtime/server/page/serialize_data.js
 /**
@@ -1176,6 +1176,46 @@ function create_css_import(route, url, client) {
 	if (!css) return "";
 	return `${create_client_import(client.start, paths)}.then(x => x.load_css([${css}]));\n`;
 }
+// node_modules/@sveltejs/kit/src/runtime/server/page/hash_bytes.js
+/**
+* MurmurHash3 (x86, 32-bit, seed 0) over the bytes, read as little-endian 32-bit words so every
+* platform computes the same value
+* @param {Uint8Array} bytes
+*/
+function hash_bytes(bytes) {
+	let hash = 0;
+	const length = bytes.byteLength;
+	const words = length >> 2;
+	const view = new DataView(bytes.buffer, bytes.byteOffset, length);
+	for (let i = 0; i < words; i += 1) hash = mix(hash, view.getInt32(i * 4, true));
+	const rest = words * 4;
+	let k = 0;
+	switch (length & 3) {
+		case 3: k ^= bytes[rest + 2] << 16;
+		case 2: k ^= bytes[rest + 1] << 8;
+		case 1:
+			k ^= bytes[rest];
+			k = Math.imul(k, 3432918353);
+			k = k << 15 | k >>> 17;
+			hash ^= Math.imul(k, 461845907);
+	}
+	hash ^= length;
+	hash = Math.imul(hash ^ hash >>> 16, 2246822507);
+	hash = Math.imul(hash ^ hash >>> 13, 3266489909);
+	hash ^= hash >>> 16;
+	return (hash >>> 0).toString(36);
+}
+/**
+* @param {number} hash
+* @param {number} word
+*/
+function mix(hash, word) {
+	word = Math.imul(word, 3432918353);
+	word = word << 15 | word >>> 17;
+	hash ^= Math.imul(word, 461845907);
+	hash = hash << 13 | hash >>> 19;
+	return Math.imul(hash, 5) + 3864292196 | 0;
+}
 // node_modules/@sveltejs/kit/src/runtime/app/navigation/server.js
 var afterNavigate = noop;
 disallow_on_server("disableScrollHandling", "()");
@@ -1491,7 +1531,7 @@ async function render_response({ branch, fetched, page_config, status, error = n
 			"crossorigin"
 		]);
 	}
-	const global = "__sveltekit_s6hwk7";
+	const global = "__sveltekit_rzbigp";
 	const { data, chunks } = data_serializer.get_data(csp);
 	if (page_config.ssr && page_config.csr) body += `\n\t\t\t${fetched.map((item) => serialize_data(item, resolve_opts.filterSerializedResponseHeaders, is_prerendering(state))).join("\n			")}`;
 	if (page_config.csr && client) {
@@ -1515,7 +1555,7 @@ async function render_response({ branch, fetched, page_config, status, error = n
 			}
 		}
 		const blocks = [];
-		const properties = [`base: ${base_expression}`, `version: ${s("1794926045647")}`];
+		const properties = [`base: ${base_expression}`, `version: ${s("1794928670162")}`];
 		if (assets) properties.push(`assets: ${s(assets)}`);
 		if (client.uses_env_dynamic_public) properties.push(`env: ${load_env_eagerly ? "null" : devalue.uneval(rendered_env)}`);
 		if (chunks) {
@@ -1627,11 +1667,16 @@ async function render_response({ branch, fetched, page_config, status, error = n
 		html,
 		done: true
 	}) || "";
-	if (!chunks) headers.set("etag", `"${hash(transformed)}"`);
-	return chunks ? new Response(stream_text(transformed + "\n", chunks), {
+	const encoded = chunks ? null : text_encoder.encode(transformed);
+	const needs_nonce = csp.script_needs_nonce || csp.style_needs_nonce || options.app_template_contains_nonce;
+	if (encoded && !("etag" in state.headers) && !/\bno-store\b/i.test(state.headers["cache-control"] ?? "") && !(needs_nonce && transformed.includes(csp.nonce))) headers.set("etag", `"${hash_bytes(encoded)}"`);
+	if (chunks) return new Response(stream_text(transformed + "\n", chunks), {
 		status,
 		headers
-	}) : text(transformed, {
+	});
+	const bytes = encoded;
+	headers.set("content-length", bytes.byteLength.toString());
+	return new Response(bytes, {
 		status,
 		headers
 	});
@@ -2538,6 +2583,7 @@ function add_cookies_to_headers(headers, cookies) {
 /** Per-request caches and context flags — never carried into a fork. */
 function transient_fields() {
 	return {
+		headers: {},
 		remote: {
 			data: null,
 			explicit: null,
@@ -2821,8 +2867,7 @@ async function internal_respond(request, state) {
 		}
 	}
 	for (const key of url.searchParams.keys()) if (key.startsWith("x-sveltekit-")) return text(`Cannot use reserved query parameter "${key}"`, { status: 400 });
-	/** @type {Record<string, string>} */
-	const headers = {};
+	const headers = state.headers;
 	const { cookies, new_cookies, get_cookie_header, set_internal, set_trailing_slash } = get_cookies(request, url);
 	/** @type {import('@sveltejs/kit').RequestEvent} */
 	const event = {

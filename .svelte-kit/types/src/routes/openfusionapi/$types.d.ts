@@ -6,7 +6,8 @@ type RouteParams = {  };
 type RouteId = '/openfusionapi';
 type MaybeWithVoid<T> = {} extends T ? T | void : T;
 export type RequiredKeys<T> = { [K in keyof T]-?: {} extends { [P in K]: T[K] } ? never : K; }[keyof T];
-type OutputDataShape<T> = MaybeWithVoid<Omit<App.PageData, RequiredKeys<T>> & Partial<Pick<App.PageData, keyof T & keyof App.PageData>> & Record<string, any>>
+type NotThenable = { then?: string | number | boolean | bigint | symbol | null | undefined | { bind?: never; [key: string]: any } };
+type OutputDataShape<T> = MaybeWithVoid<Omit<App.PageData, RequiredKeys<T>> & Partial<Pick<App.PageData, keyof T & keyof App.PageData>> & Record<string, any> & NotThenable>
 type EnsureDefined<T> = T extends null | undefined ? {} : T;
 type OptionalUnion<U extends Record<string, any>, A extends keyof U = U extends U ? keyof U : never> = U extends unknown ? { [P in Exclude<A, keyof U>]?: never } & U : never;
 /** @deprecated Use the `snapshot` helper from `$app/navigation` instead. */
