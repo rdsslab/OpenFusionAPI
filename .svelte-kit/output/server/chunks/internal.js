@@ -1869,7 +1869,7 @@ function is_prerendering(state) {
 * @param {Response} response
 */
 function with_version_header(response) {
-	response.headers.set("x-sveltekit-version", "1794894146321");
+	response.headers.set("x-sveltekit-version", "1794926045647");
 	return response;
 }
 /**

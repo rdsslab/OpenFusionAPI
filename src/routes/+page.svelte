@@ -219,11 +219,11 @@
 							{ value: '11', label: 'Handlers' },
 							{ value: '9', label: 'Databases' },
 							{ value: '3', label: 'Environments' },
-							{ value: '13.13.4', label: 'Latest release' }
+							{ value: '14.3.1', label: 'Latest release' }
 						]
 					},
 					strip: [
-						'Version 13.13.4',
+						'Version 14.3.1',
 						'MIT License',
 						'Docker + PM2 runtime',
 						'JSON Schema contracts',
@@ -583,11 +583,11 @@
 							{ value: '11', label: 'Handlers' },
 							{ value: '9', label: 'Bases de datos' },
 							{ value: '3', label: 'Entornos' },
-							{ value: '13.13.4', label: 'Última versión' }
+							{ value: '14.3.1', label: 'Última versión' }
 						]
 					},
 					strip: [
-						'Versión 13.13.4',
+						'Versión 14.3.1',
 						'Licencia MIT',
 						'Runtime Docker + PM2',
 						'Contratos JSON Schema',

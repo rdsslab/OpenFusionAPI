@@ -150,13 +150,13 @@ function _page($$renderer, $$props) {
 						label: "Environments"
 					},
 					{
-						value: "13.13.4",
+						value: "14.3.1",
 						label: "Latest release"
 					}
 				]
 			},
 			strip: [
-				"Version 13.13.4",
+				"Version 14.3.1",
 				"MIT License",
 				"Docker + PM2 runtime",
 				"JSON Schema contracts",
