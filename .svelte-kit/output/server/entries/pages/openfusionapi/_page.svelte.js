@@ -19971,10 +19971,10 @@ function OpenFusionAPI($$renderer, $$props) {
 // src/routes/openfusionapi/+page.svelte
 function _page($$renderer) {
 	head("gcotfn", $$renderer, ($$renderer) => {
+		$$renderer.push(`<meta name="description" content="Open Fusion API - Admin"/>`);
 		$$renderer.title(($$renderer) => {
 			$$renderer.push(`<title>OFAPI - Admin</title>`);
 		});
-		$$renderer.push(`<meta name="description" content="Open Fusion API - Admin"/>`);
 	});
 	OpenFusionAPI($$renderer, {});
 }

@@ -418,14 +418,16 @@ var segment_pattern = new RegExp(`${escape_sequence_pattern.source}|${/\[(\[)?(\
 * ); // `/blog/hello-world/something/else`
 * ```
 * @param {string} id
-* @param {Record<string, ParamValue | undefined>} params
+* @param {Record<string, ParamValue | undefined>} [params]
 * @returns {string}
 */
 function resolve_route(id, params) {
-	const segments = get_route_segments(id);
-	const has_id_trailing_slash = id != "/" && id.endsWith("/");
-	return "/" + segments.map((segment) => segment.replace(segment_pattern, (_, escape_type, escape_code, optional, rest, name) => {
+	const [route, suffix = ""] = id.split(/([?#].*)/s);
+	const segments = get_route_segments(route);
+	const has_trailing_slash = route.endsWith("/");
+	const resolved = "/" + segments.map((segment) => segment.replace(segment_pattern, (_, escape_type, escape_code, optional, rest, name) => {
 		if (escape_type) return encode_pathname_chars(decode_escape_sequence(escape_code));
+		if (!params) resolve_params_missing({ id });
 		const value = params[name];
 		if (value === void 0 || value === "") {
 			if (optional) return "";
@@ -447,7 +449,8 @@ function resolve_route(id, params) {
 			name,
 			id
 		});
-	})).filter(Boolean).join("/") + (has_id_trailing_slash ? "/" : "");
+	})).filter(Boolean).join("/");
+	return resolved + (has_trailing_slash && resolved !== "/" ? "/" : "") + suffix;
 }
 /**
 * Find the first route that matches the given path
@@ -620,10 +623,8 @@ function depends_special_scheme(_values) {
 function resolve(id, params) {
 	if (has_scheme_or_authority(id)) resolve_url_input({ id });
 	let resolved;
-	if (id[0] === "/") {
-		if (id.includes("[") && !params) resolve_params_missing({ id });
-		resolved = resolve_route(id, params ?? {});
-	} else resolved = "/" + id;
+	if (id[0] === "/") resolved = resolve_route(id, params);
+	else resolved = "/" + id;
 	return prefix_path(resolved);
 }
 /** @param {string} resolved */
@@ -1869,7 +1870,7 @@ function is_prerendering(state) {
 * @param {Response} response
 */
 function with_version_header(response) {
-	response.headers.set("x-sveltekit-version", "1794980098361");
+	response.headers.set("x-sveltekit-version", "1795448181176");
 	return response;
 }
 /**
@@ -2287,6 +2288,14 @@ async function get_remote_function(id, manifest) {
 }
 /**
 * @param {RequestEvent} event
+* @param {string} type
+* @param {'GET' | 'POST'} method
+*/
+function check_method(event, type, method) {
+	if (event.request.method !== method) throw new SvelteKitError(405, "Method Not Allowed", `\`${type}\` functions must be invoked via ${method} request, not ${event.request.method}`);
+}
+/**
+* @param {RequestEvent} event
 * @param {RequestState} state
 * @param {string} id
 */
@@ -2298,7 +2307,8 @@ async function handle_remote_call_internal(event, state, id) {
 	const internals = fn.__;
 	event.tracing.current.setAttributes({
 		"sveltekit.remote.call.type": internals.type,
-		"sveltekit.remote.call.name": internals.name
+		"sveltekit.remote.call.name": internals.name,
+		"sveltekit.remote.call.file": internals.file
 	});
 	/** @type {HeadersInit | undefined} */
 	const headers = state.prerendering ? void 0 : { "cache-control": "private, no-store" };
@@ -2307,10 +2317,10 @@ async function handle_remote_call_internal(event, state, id) {
 		const data = {};
 		switch (internals.type) {
 			case "query_live":
-				if (event.request.method !== "GET") throw new SvelteKitError(405, "Method Not Allowed", `\`query.live\` functions must be invoked via GET request, not ${event.request.method}`);
+				check_method(event, "query.live", "GET");
 				return create_live_query_response(event, state, internals, parse_remote_arg(new URL(event.request.url).searchParams.get("payload")));
 			case "query_batch": {
-				if (event.request.method !== "POST") throw new SvelteKitError(405, "Method Not Allowed", `\`query.batch\` functions must be invoked via POST request, not ${event.request.method}`);
+				check_method(event, "query.batch", "POST");
 				/** @type {{ payloads: string[] }} */
 				const { payloads } = await event.request.json();
 				const args = await Promise.all(payloads.map((payload) => parse_remote_arg(payload)));
@@ -2321,7 +2331,7 @@ async function handle_remote_call_internal(event, state, id) {
 				break;
 			}
 			case "form": {
-				if (event.request.method !== "POST") throw new SvelteKitError(405, "Method Not Allowed", `\`form\` functions must be invoked via POST request, not ${event.request.method}`);
+				check_method(event, "form", "POST");
 				if (!is_form_content_type(event.request)) throw new SvelteKitError(415, "Unsupported Media Type", `\`form\` functions expect form-encoded data — received ${event.request.headers.get("content-type")}`);
 				const { data: input, meta, form_data } = await deserialize_binary_form(event.request, internals.id);
 				state.remote.requested = create_requested_map(meta.remote_refreshes);
@@ -2341,6 +2351,7 @@ async function handle_remote_call_internal(event, state, id) {
 				break;
 			}
 			case "command": {
+				check_method(event, "command", "POST");
 				/** @type {{ payload: string, refreshes?: string[] }} */
 				const { payload, refreshes } = await event.request.json();
 				state.remote.requested = create_requested_map(refreshes);
@@ -2355,12 +2366,14 @@ async function handle_remote_call_internal(event, state, id) {
 				break;
 			}
 			case "prerender":
+				check_method(event, "prerender", "GET");
 				data._ = await with_request_store({
 					event,
 					state
 				}, () => fn(parse_remote_arg(additional_args)));
 				break;
 			case "query": {
+				check_method(event, "query", "GET");
 				const payload = new URL(event.request.url).searchParams.get("payload");
 				data._ = await with_request_store({
 					event,
