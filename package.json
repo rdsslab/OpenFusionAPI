@@ -34,7 +34,7 @@
 		"vite": "^8.3.5"
 	},
 	"dependencies": {
-		"@rdsslab/libopenfusionapi": "https://github.com/rdsslab/libOpenFusionAPI.git#v14.4.0",
+		"@rdsslab/libopenfusionapi": "https://github.com/rdsslab/libOpenFusionAPI.git",
 		"@rdsslab/libopenfusionapigui": "https://github.com/rdsslab/libOpenFusionAPIGUI.git"
 	}
 }
